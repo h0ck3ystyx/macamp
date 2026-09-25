@@ -39,7 +39,13 @@ next player ────┘
 
 The EQ uses the contract frequencies and clamps band/preamp gains to ±12 dB. Changes interpolate over roughly 36 ms to reduce zipper noise. Bypass leaves the rest of the graph active. Reset is represented by the contract default `EQSettings()`.
 
-An Apple `AUPeakLimiter` follows the EQ to protect against avoidable overload from positive preamp and band combinations. Boosted output is processed and must never be described as bit-perfect. T8 should add captured clipping/distortion measurements and a user-visible clip/headroom policy.
+`EqualizerPreset` supplies Flat, Rock, Pop, Jazz, Classical, and Bass Boost through ordinary `EQSettings`; presets do not bypass the shared command/state path.
+
+An Apple `AUPeakLimiter` follows the EQ to protect against avoidable overload from positive preamp and band combinations. Boosted output is processed and must never be described as bit-perfect. Final QA should add captured clipping/distortion measurements across preset and preamp extremes.
+
+`outputProtectionStatus()` is the documented concrete-engine indicator. It reports whether positive requested EQ/preamp gain may cause the limiter to reduce gain. The Apple limiter does not expose sample-accurate reduction through this graph, so the API does not pretend to be a measured clip meter.
+
+The offline overload probe fed a 0.9-peak sine through +12 dB gain. Its predicted unprotected peak was 3.582965; the captured post-limiter peak was 0.732994. This confirms active protection for the measured steady signal, though it is not a proof for every transient shape.
 
 Volume is clamped to 0...1 at the main mixer.
 
@@ -70,6 +76,7 @@ swift build --product AudioProbe
 .build/debug/AudioProbe engine-pair Tests/Fixtures/Audio/boundary-01.mp3 Tests/Fixtures/Audio/boundary-02.mp3
 .build/debug/AudioProbe engine-stress Tests/Fixtures/Audio/tone-aac.m4a
 .build/debug/AudioProbe engine-failure
+.build/debug/AudioProbe protection
 .build/debug/AudioProbe seek Tests/Fixtures/Audio/tone-vbr-10m.mp3 599.5
 ```
 
@@ -84,9 +91,12 @@ Observed results:
 
 Tests that instantiate AudioComponents carry an explicit disabled Swift Testing trait because the parallel package-test sandbox can abort inside `AVAudioPlayerNode` before Swift can catch an error. They remain compile-checked. Serial `AudioProbe` commands are the executable graph evidence and prevent `scripts/test.sh` from crashing.
 
+The final repository run of `./scripts/test.sh` passed 73 tests with zero failures; the five explicitly environment-dependent AudioComponent cases were skipped as designed and covered by the serial probes above.
+
 ## Remaining limits
 
 - Gapless scheduling is proven for matched-rate tracks. Mixed-rate transitions remain unpromised pending captured-output analysis.
 - Output loss and sleep handling are implemented but need hardware/manual evidence.
-- The full MVP codec matrix, two-hour fixture, AAC album boundary, corrupt/truncated corpus, channel-layout policy, and oldest-supported-macOS run belong to T8.
+- The full MVP codec matrix, two-hour seek fixture, AAC/ALAC/FLAC/Opus boundary pairs, corrupt/truncated corpus, chained Ogg rejection, silence preservation, and channel policy now have fixtures and macOS 26 evidence.
+- The oldest-supported-macOS run remains outstanding; native Ogg support must be rechecked there before final dependency decisions.
 - The position cadence and buffering defaults should be profiled in a release build on the baseline M1 machine before becoming fixed product promises.

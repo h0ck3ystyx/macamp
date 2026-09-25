@@ -4,6 +4,7 @@ import Foundation
 public enum QueueStoreError: Error, Equatable, Sendable {
     case unsupportedCommand
     case unknownEntry(QueueEntryID)
+    case unknownTrack(TrackID)
 }
 
 /// Actor-isolated queue state with stable entry identities and deterministic traversal.
@@ -168,11 +169,57 @@ public actor ProductionQueueStore: QueueStore {
         return true
     }
 
+    @discardableResult
+    public func undoLastMutation() -> Bool { undo() }
+
     public func updateMetadata(trackID: TrackID, metadata: MetadataState) {
         guard var track = state.snapshot.tracks[trackID] else { return }
         track.metadata = metadata
         state.snapshot.tracks[trackID] = track
         changed()
+    }
+
+    public func updateTrack(_ track: TrackReference) throws {
+        guard state.snapshot.tracks[track.id] != nil else {
+            throw QueueStoreError.unknownTrack(track.id)
+        }
+        recordUndo()
+        state.snapshot.tracks[track.id] = track
+        changed()
+    }
+
+    public func search(_ query: String, limit: Int? = nil) -> [QueueEntryID] {
+        let needle = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !needle.isEmpty else { return [] }
+        if let limit, limit <= 0 { return [] }
+        var matches: [QueueEntryID] = []
+        for entry in state.snapshot.entries {
+            guard let track = state.snapshot.tracks[entry.trackID] else { continue }
+            let metadata = loadedMetadata(track)
+            let values: [String] = [
+                track.lastKnownURL.deletingPathExtension().lastPathComponent,
+                metadata?.title,
+                metadata?.artist,
+                metadata?.album,
+            ].compactMap { $0 }
+            if values.contains(where: {
+                $0.range(of: needle, options: [.caseInsensitive, .diacriticInsensitive]) != nil
+            }) {
+                matches.append(entry.id)
+                if let limit, matches.count >= max(0, limit) { break }
+            }
+        }
+        return matches
+    }
+
+    public func revealURL(for entryID: QueueEntryID) -> URL? {
+        guard let entry = state.snapshot.entries.first(where: { $0.id == entryID }) else { return nil }
+        return state.snapshot.tracks[entry.trackID]?.lastKnownURL
+    }
+
+    private func loadedMetadata(_ track: TrackReference) -> TrackMetadata? {
+        guard case .loaded(let metadata) = track.metadata else { return nil }
+        return metadata
     }
 
     private func linearProposal(after current: QueueEntryID?, direction: TraversalDirection) -> QueueEntryID? {

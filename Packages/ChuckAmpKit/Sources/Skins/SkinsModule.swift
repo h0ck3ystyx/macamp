@@ -38,13 +38,41 @@ public enum SkinFontValue: String, CaseIterable, Sendable {
 public enum PrototypeSkin: String, CaseIterable, Sendable {
     case studioGraphite = "StudioGraphite"
     case paper = "Paper"
+    case terminal = "Terminal"
 
     public var skinID: String {
         switch self {
         case .studioGraphite: "studio-graphite"
         case .paper: "paper"
+        case .terminal: "terminal"
         }
     }
+}
+
+public struct SkinAccentVariation: Codable, Equatable, Sendable {
+    public var id: String
+    public var name: String
+    public var accent: String
+    public var displayBackground: String?
+
+    public init(id: String, name: String, accent: String, displayBackground: String? = nil) {
+        self.id = id
+        self.name = name
+        self.accent = accent
+        self.displayBackground = displayBackground
+    }
+}
+
+public extension SkinAccentVariation {
+    static let graphiteElectricBlue = SkinAccentVariation(
+        id: "electric-blue", name: "Electric Blue", accent: "#55B8FF"
+    )
+    static let paperPlum = SkinAccentVariation(
+        id: "plum", name: "Plum", accent: "#8B3F75"
+    )
+    static let terminalAmber = SkinAccentVariation(
+        id: "amber", name: "Amber", accent: "#FFB000", displayBackground: "#1B1200"
+    )
 }
 
 public enum SkinValidationError: Error, Equatable, Sendable, CustomStringConvertible {
@@ -96,6 +124,21 @@ public struct SkinResolver: Sendable {
             throw SkinValidationError.invalidIdentity(field: "id")
         }
         return resolved
+    }
+
+    public func resolve(variation: SkinAccentVariation, basedOn skin: ResolvedSkin) throws -> ResolvedSkin {
+        let validVariationID = variation.id.range(of: #"^[a-z0-9]+(?:[.-][a-z0-9]+)*$"#, options: .regularExpression) != nil
+        guard validVariationID, !variation.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw SkinValidationError.invalidIdentity(field: "variation")
+        }
+        var manifest = skin.manifest
+        manifest.id += "." + variation.id
+        manifest.name += " — " + variation.name
+        manifest.colors[SkinColorKey.accent.rawValue] = variation.accent
+        if let displayBackground = variation.displayBackground {
+            manifest.colors[SkinColorKey.displayBackground.rawValue] = displayBackground
+        }
+        return try resolve(manifest: manifest, rootURL: skin.rootURL)
     }
 
     /// Suitable for a future archive importer after safe extraction to a private directory.
@@ -193,12 +236,22 @@ public extension ResolvedSkin {
 public final class LiveSkinSelection {
     public private(set) var activeSkin: ResolvedSkin
     private var observers: [UUID: (ResolvedSkin) -> Void] = [:]
+    private var activePreview: SkinPackagePreview?
 
     public init(activeSkin: ResolvedSkin) { self.activeSkin = activeSkin }
 
     public func apply(_ skin: ResolvedSkin) {
+        activePreview = nil
         activeSkin = skin
         for observer in observers.values { observer(skin) }
+    }
+
+    /// Retains the preview's private extraction directory for as long as its
+    /// artwork is active. A later apply releases it.
+    public func apply(_ preview: SkinPackagePreview) {
+        activePreview = preview
+        activeSkin = preview.skin
+        for observer in observers.values { observer(preview.skin) }
     }
 
     public func apply(directory: URL, using resolver: SkinResolver = SkinResolver()) throws {

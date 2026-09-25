@@ -6,18 +6,58 @@
     "swift": "6.2.3"
   },
   "formats": [
-    {"fixture":"tone-44k-stereo.wav","codec":"lpcm","decodedFrames":88200,"decode":"pass","seek":"pass"},
-    {"fixture":"tone-44k.flac","codec":"flac","decodedFrames":88200,"decode":"pass","seek":"pass"},
-    {"fixture":"tone-aac.m4a","codec":"aac ","decodedFrames":88200,"encoderDelayFrames":1024,"trailingPaddingFrames":888,"decode":"pass","seek":"pass"},
-    {"fixture":"tone-vbr-id3v23.mp3","codec":".mp3","decodedFrames":88200,"encoderDelayFrames":576,"trailingPaddingFrames":1080,"decode":"pass","seek":"pass"},
-    {"fixture":"tone-cbr-id3v24.mp3","codec":".mp3","decodedFrames":88200,"encoderDelayFrames":576,"trailingPaddingFrames":1080,"decode":"pass","seek":"pass"},
-    {"fixture":"tone-vbr-10m.mp3","codec":".mp3","decodedFrames":26460000,"durationSeconds":600,"seekFrame":26437950,"seek":"pass"}
+    {"fixture":"tone-44k-stereo.wav","container":"WAVE","codec":"lpcm","decodedFrames":88200,"decode":"pass","seek":"pass"},
+    {"fixture":"tone-float32.wav","container":"WAVE","codec":"lpcm float32","decodedFrames":88200,"decode":"pass","seek":"pass"},
+    {"fixture":"tone-aiff-24.aiff","container":"AIFF","codec":"lpcm 24-bit","sampleRate":96000,"decodedFrames":192000,"decode":"pass","seek":"pass"},
+    {"fixture":"tone-44k.flac","container":"FLAC","codec":"flac","decodedFrames":88200,"decode":"pass","seek":"pass"},
+    {"fixture":"tone-flac-96k-24.flac","container":"FLAC","codec":"flac 24-bit","sampleRate":96000,"decodedFrames":192000,"decode":"pass","seek":"pass"},
+    {"fixture":"tone-flac-192k-24.flac","container":"FLAC","codec":"flac 24-bit","sampleRate":192000,"decodedFrames":192000,"decode":"pass","seek":"pass"},
+    {"fixture":"tone-alac-16.m4a","container":"MPEG-4","codec":"alac 16-bit","decodedFrames":88200,"decode":"pass","seek":"pass"},
+    {"fixture":"tone-alac-24.m4a","container":"MPEG-4","codec":"alac 24-bit","sampleRate":96000,"decodedFrames":192000,"decode":"pass","seek":"pass"},
+    {"fixture":"tone-aac.m4a","container":"MPEG-4","codec":"aac-lc","decodedFrames":88200,"encoderDelayFrames":1024,"trailingPaddingFrames":888,"decode":"pass","seek":"pass"},
+    {"fixture":"tone-aac-lc.aac","container":"ADTS","codec":"aac-lc","decodedFrames":90112,"trimmingMetadata":false,"decode":"pass","seek":"pass"},
+    {"fixture":"tone-he-aac.m4a","container":"MPEG-4","codec":"he-aac","decodedFrames":88200,"encoderDelayFrames":2112,"trailingPaddingFrames":892,"decode":"pass","seek":"pass"},
+    {"fixture":"tone-he-aac.aac","container":"ADTS","codec":"he-aac","decodedFrames":94208,"trimmingMetadata":false,"decode":"pass","seek":"pass"},
+    {"fixture":"tone-vbr-id3v23.mp3","container":"MPEG audio","codec":"mp3 vbr","decodedFrames":88200,"encoderDelayFrames":576,"trailingPaddingFrames":1080,"decode":"pass","seek":"pass"},
+    {"fixture":"tone-cbr-id3v24.mp3","container":"MPEG audio","codec":"mp3 cbr","decodedFrames":88200,"encoderDelayFrames":576,"trailingPaddingFrames":1080,"decode":"pass","seek":"pass"},
+    {"fixture":"tone-vorbis.ogg","container":"Ogg","codec":"vorbis","decodedFrames":88256,"encoderDelayFrames":128,"trailingPaddingFrames":832,"decode":"pass","seek":"pass"},
+    {"fixture":"tone-opus.opus","container":"Ogg","codec":"opus","decodedFrames":96000,"encoderDelayFrames":312,"trailingPaddingFrames":648,"decode":"pass","seek":"pass"},
+    {"fixture":"tone-vbr-2h.mp3","container":"MPEG audio","codec":"mp3 vbr mono","sampleRate":16000,"decodedFrames":115201152,"durationSeconds":7200.072,"seekFrame":115188000,"seek":"pass"}
   ],
   "boundaries": [
-    {"pair":"boundary WAV","expectedFrames":88200,"renderedFrames":88200,"boundarySampleDelta":0.005554199,"result":"pass"},
-    {"pair":"boundary MP3","expectedFrames":88200,"renderedFrames":88200,"boundarySampleDelta":0.0054016113,"result":"pass"}
+    {"pair":"pcm-wav","expectedFrames":88200,"renderedFrames":88200,"boundarySampleDelta":0.005554199,"result":"pass"},
+    {"pair":"flac","expectedFrames":88200,"renderedFrames":88200,"boundarySampleDelta":0.005554199,"result":"pass"},
+    {"pair":"alac","expectedFrames":88200,"renderedFrames":88200,"boundarySampleDelta":0.005554199,"result":"pass"},
+    {"pair":"mp3","expectedFrames":88200,"renderedFrames":88200,"boundarySampleDelta":0.0054016113,"result":"pass"},
+    {"pair":"aac-lc-m4a","expectedFrames":88200,"renderedFrames":88200,"boundarySampleDelta":0.005980943,"result":"pass"},
+    {"pair":"he-aac-m4a","expectedFrames":88200,"renderedFrames":88200,"boundarySampleDelta":0.0057016914,"result":"pass"},
+    {"pair":"ogg-opus","expectedFrames":96000,"renderedFrames":96000,"boundarySampleDelta":0.0039017692,"result":"pass"},
+    {"pair":"ogg-vorbis","sourceEquivalentFrames":88200,"renderedFrames":88320,"boundarySampleDelta":0.087503284,"result":"limited","reason":"independently encoded fixture exposes 60 extra decoded frames per track and no reliable end-trim guarantee"},
+    {"pair":"mixed-rate-44.1k-to-48k","transitionEvent":true,"endedEvent":true,"sampleContinuity":"not-claimed"}
   ],
-  "equalizer": {"requestedGainDB":12,"measuredGainDB":11.990494,"result":"pass"},
-  "output": {"sampleRate":48000,"channelCount":2,"engineStarted":true,"deviceChange":"not-run"},
-  "productionEngine": {"boundedBuffersPerTrack":6,"framesPerBuffer":4096,"singleTrackAAC":"ended","singleTrackFLAC":"ended","twoTrackMP3Transition":true,"rapidCommandFailureEvents":0,"typedCorruptFailure":"pass","peakLimiter":"enabled"}
+  "policies": {
+    "chainedOgg":"rejected with unsupported error",
+    "multichannel":"rejected above stereo",
+    "corrupt":"rejected",
+    "truncated":"rejected",
+    "sourceSilence":"preserved",
+    "extensionMismatch":"rejected"
+  },
+  "equalizer": {
+    "requestedGainDB":12,
+    "measuredGainDB":11.990494,
+    "presetCount":6,
+    "smoothedMilliseconds":36,
+    "peakLimiter":"enabled",
+    "overloadProbe":{"inputPeak":0.9,"requestedGainDB":12,"unprotectedPredictedPeak":3.5829647,"protectedPeak":0.73299354},
+    "protectionStatusAPI":true
+  },
+  "productionEngine": {
+    "boundedBuffersPerTrack":6,
+    "framesPerBuffer":4096,
+    "expandedFormatPlayback":"ended",
+    "twoTrackTransition":true,
+    "rapidCommandFailureEvents":0,
+    "typedCorruptFailure":"pass"
+  }
 }

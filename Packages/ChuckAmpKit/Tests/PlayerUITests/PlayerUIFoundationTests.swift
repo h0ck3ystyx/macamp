@@ -35,6 +35,31 @@ import Testing
     #expect(layout.modules.first(where: { $0.module == .equalizer })?.isVisible == false)
 }
 
+@MainActor @Test func validLayoutRestoresScaleCompactModeAndVisibility() {
+    let controller = PlayerUIWindowController()
+    let group = UUID()
+    let layout = WindowLayout(
+        scale: 1.25,
+        isCompact: true,
+        modules: [
+            ModuleLayout(module: .player, frame: WindowRect(x: 120, y: 500, width: 450, height: 50), isVisible: true, groupID: group),
+            ModuleLayout(module: .equalizer, frame: WindowRect(x: 120, y: 300, width: 450, height: 200), isVisible: true, groupID: group),
+            ModuleLayout(module: .playlist, frame: WindowRect(x: 120, y: 100, width: 450, height: 200), isVisible: false, groupID: group),
+        ]
+    )
+    controller.applyLayout(layout)
+    let restored = controller.currentLayout()
+    #expect(restored.scale == 1.25)
+    #expect(restored.isCompact)
+    #expect(restored.modules.first(where: { $0.module == .player })?.isVisible == true)
+    #expect(restored.modules.first(where: { $0.module == .equalizer })?.isVisible == true)
+    #expect(restored.modules.first(where: { $0.module == .playlist })?.isVisible == false)
+    controller.setCompactMode(false)
+    let expandedPlayer = controller.currentLayout().modules.first(where: { $0.module == .player })?.frame
+    #expect(expandedPlayer?.width == 450)
+    #expect(expandedPlayer?.height == 200)
+}
+
 @Test func presentationDistinguishesSelectedPlayingAndUnavailableRows() {
     let playingTrack = TrackID(); let missingTrack = TrackID()
     let playing = QueueEntry(trackID: playingTrack); let missing = QueueEntry(trackID: missingTrack)
@@ -53,6 +78,12 @@ import Testing
     #expect(model.rows[1].isSelected)
     #expect(model.rows[1].isUnavailable)
     #expect(model.statusText == "PAUSED")
+    var filtered = model
+    filtered.filterText = "album only"
+    var withAlbum = queue
+    withAlbum.tracks[playingTrack]?.metadata = .loaded(TrackMetadata(title: "A", artist: "Artist", album: "Album Only", duration: 60))
+    filtered.queue = withAlbum
+    #expect(filtered.rows.map(\.id) == [playing.id])
 }
 
 @Test func interactionCommandsClampAndCycle() {

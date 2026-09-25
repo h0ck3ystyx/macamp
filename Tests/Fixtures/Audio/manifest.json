@@ -6,12 +6,35 @@
     {"path":"tone-44k-stereo.wav","codec":"PCM s16","container":"WAVE","prototype":true},
     {"path":"tone-44k.flac","codec":"FLAC","container":"FLAC","prototype":true},
     {"path":"tone-aac.m4a","codec":"AAC-LC","container":"MPEG-4","prototype":true},
+    {"path":"tone-aac-lc.aac","codec":"AAC-LC","container":"ADTS"},
+    {"path":"tone-he-aac.m4a","codec":"HE-AAC","container":"MPEG-4","generator":"AudioProbe encode-he-aac"},
+    {"path":"tone-he-aac.aac","codec":"HE-AAC","container":"ADTS","generator":"AudioProbe encode-he-aac"},
+    {"path":"tone-alac-16.m4a","codec":"ALAC 16-bit","container":"MPEG-4"},
+    {"path":"tone-alac-24.m4a","codec":"ALAC 24-bit","container":"MPEG-4"},
+    {"path":"tone-flac-96k-24.flac","codec":"FLAC 24-bit","container":"FLAC","sampleRate":96000},
+    {"path":"tone-flac-192k-24.flac","codec":"FLAC 24-bit","container":"FLAC","sampleRate":192000},
+    {"path":"tone-float32.wav","codec":"PCM float32","container":"WAVE"},
+    {"path":"tone-aiff-24.aiff","codec":"PCM 24-bit","container":"AIFF"},
+    {"path":"tone-vorbis.ogg","codec":"Vorbis","container":"Ogg"},
+    {"path":"tone-opus.opus","codec":"Opus","container":"Ogg"},
+    {"path":"chained-opus.opus","codec":"Opus chained stream","container":"Ogg","expected":"policy-dependent"},
+    {"path":"multichannel-5_1.flac","codec":"FLAC","container":"FLAC","channels":6,"expected":"unsupported"},
+    {"path":"silence-bookends.flac","codec":"FLAC","container":"FLAC","expectedDecodedFrames":66150,"purpose":"preserve source silence"},
+    {"path":"truncated.mp3","codec":"MP3","container":"MPEG audio","expected":"corrupt"},
+    {"path":"corrupt.mp3","expected":"corrupt"},
     {"path":"tone-vbr-id3v23.mp3","codec":"MP3 VBR","container":"MPEG audio","prototype":true},
     {"path":"tone-cbr-id3v24.mp3","codec":"MP3 CBR","container":"MPEG audio","prototype":true},
     {"path":"tone-vbr-10m.mp3","codec":"MP3 VBR","container":"MPEG audio","durationSeconds":600,"purpose":"bounded long-file seek"},
+    {"path":"tone-vbr-2h.mp3","codec":"MP3 VBR","container":"MPEG audio","durationSeconds":7200,"purpose":"two-hour bounded seek"},
     {"path":"boundary-01.wav","codec":"PCM s16","container":"WAVE","expectedDecodedFrames":44100},
     {"path":"boundary-02.wav","codec":"PCM s16","container":"WAVE","expectedDecodedFrames":44100},
     {"path":"boundary-01.mp3","codec":"MP3 VBR","container":"MPEG audio","expectedDecodedFrames":44100,"trimming":"LAME/Xing metadata"},
     {"path":"boundary-02.mp3","codec":"MP3 VBR","container":"MPEG audio","expectedDecodedFrames":44100,"trimming":"LAME/Xing metadata"}
+    ,{"path":"boundary-01.flac + boundary-02.flac","codec":"FLAC","purpose":"gapless boundary"}
+    ,{"path":"boundary-01-alac.m4a + boundary-02-alac.m4a","codec":"ALAC","purpose":"gapless boundary"}
+    ,{"path":"boundary-01-aac.m4a + boundary-02-aac.m4a","codec":"AAC-LC","purpose":"gapless boundary"}
+    ,{"path":"boundary-01-he.m4a + boundary-02-he.m4a","codec":"HE-AAC","purpose":"gapless boundary"}
+    ,{"path":"boundary-01.opus + boundary-02.opus","codec":"Opus","purpose":"gapless boundary"}
+    ,{"path":"boundary-01.ogg + boundary-02.ogg","codec":"Vorbis","purpose":"document encoder padding limit"}
   ]
 }

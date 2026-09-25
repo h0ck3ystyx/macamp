@@ -23,7 +23,14 @@ public struct PlayerUIStateModel: Equatable, Sendable {
     public var rows: [PlayerUITrackRow] {
         let query = filterText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !query.isEmpty else { return allRows }
-        return allRows.filter { $0.title.localizedCaseInsensitiveContains(query) || ($0.detail?.localizedCaseInsensitiveContains(query) ?? false) }
+        return allRows.filter { row in
+            guard let entry = queue.entries.first(where: { $0.id == row.id }), let track = queue.tracks[entry.trackID] else { return false }
+            let metadata: TrackMetadata?
+            if case .loaded(let loaded) = track.metadata { metadata = loaded } else { metadata = nil }
+            return [row.title, row.detail, metadata?.album, track.lastKnownURL.deletingPathExtension().lastPathComponent]
+                .compactMap { $0 }
+                .contains { $0.range(of: query, options: [.caseInsensitive, .diacriticInsensitive]) != nil }
+        }
     }
 
     private var allRows: [PlayerUITrackRow] {

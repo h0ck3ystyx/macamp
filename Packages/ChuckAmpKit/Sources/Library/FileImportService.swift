@@ -80,7 +80,23 @@ public actor FileImportService {
         var failures: [FileImportFailure] = []
         for url in urls {
             do {
-                candidates.append(contentsOf: try expand(url))
+                if let playlistFormat = PortablePlaylistFormat(rawValue: url.pathExtension.lowercased()) {
+                    let playlist = try PortablePlaylistCodec().decode(
+                        Data(contentsOf: url),
+                        format: playlistFormat,
+                        relativeTo: url.deletingLastPathComponent()
+                    )
+                    candidates.append(contentsOf: playlist.localURLs)
+                    failures.append(contentsOf: playlist.issues.compactMap { issue in
+                        guard issue.kind == .unsupportedRemoteURL else { return nil }
+                        return FileImportFailure(
+                            url: url,
+                            reason: "Unsupported remote playlist entry at line \(issue.line ?? 0): \(issue.value)"
+                        )
+                    })
+                } else {
+                    candidates.append(contentsOf: try expand(url))
+                }
             } catch {
                 failures.append(FileImportFailure(url: url, reason: error.localizedDescription))
             }

@@ -86,6 +86,58 @@ import Testing
     #expect(await engine.preparedEntries.isEmpty)
 }
 
+@Test func queueUndoAndPresentationChangesPersistThroughCoordinator() async throws {
+    let tracks = makeTracks(2)
+    let entries = tracks.map { QueueEntry(trackID: $0.id) }
+    let snapshot = QueueSnapshot(
+        entries: entries,
+        tracks: Dictionary(uniqueKeysWithValues: tracks.map { ($0.id, $0) }),
+        selectedEntryID: entries[1].id
+    )
+    let queue = ProductionQueueStore(snapshot: snapshot)
+    let sessions = MemorySessions()
+    let coordinator = ProductionPlaybackCoordinator(
+        queue: queue,
+        importer: EmptyImporter(),
+        access: GrantedAccess(),
+        engine: CoordinatorEngine(),
+        sessions: sessions,
+        decoderFactory: { _ in SilenceDecoder() }
+    )
+
+    await coordinator.send(.remove([entries[1].id]))
+    #expect(await coordinator.queueSnapshot().entries.count == 1)
+    #expect(await coordinator.undoLastQueueMutation())
+    #expect(await coordinator.queueSnapshot().entries == entries)
+
+    let layout = WindowLayout(scale: 1.25, isCompact: true)
+    await coordinator.updatePresentationState(skinID: "terminal", windowLayout: layout)
+    #expect(await sessions.saved?.skinID == "terminal")
+    #expect(await sessions.saved?.windowLayout == layout)
+}
+
+@Test func partialImportPublishesNoticeAndKeepsValidTracks() async throws {
+    let track = makeTracks(1)[0]
+    let missing = URL(fileURLWithPath: "/tmp/missing-song.mp3")
+    let queue = ProductionQueueStore()
+    let coordinator = ProductionPlaybackCoordinator(
+        queue: queue,
+        importer: PartialImporter(track: track, failure: FileImportFailure(url: missing, reason: "Missing file")),
+        access: GrantedAccess(),
+        engine: CoordinatorEngine(),
+        sessions: MemorySessions(),
+        decoderFactory: { _ in SilenceDecoder() }
+    )
+    var notices = coordinator.notices.makeAsyncIterator()
+
+    await coordinator.send(.append([track.lastKnownURL, missing]))
+
+    #expect(await coordinator.queueSnapshot().entries.count == 1)
+    let notice = try #require(await notices.next())
+    #expect(notice.contains("Skipped 1 playlist item"))
+    #expect(notice.contains("missing-song.mp3"))
+}
+
 private func makeTracks(_ count: Int) -> [TrackReference] {
     (0..<count).map { TrackReference(lastKnownURL: URL(fileURLWithPath: "/tmp/coordinator-\($0).wav"), metadata: .loaded(TrackMetadata(duration: 60))) }
 }
@@ -109,6 +161,14 @@ private struct GrantedAccess: FileAccessService {
 
 private struct EmptyImporter: PlaybackURLImporting {
     func importURLs(_ urls: [URL]) async -> FileImportResult { FileImportResult(tracks: [], failures: []) }
+}
+
+private struct PartialImporter: PlaybackURLImporting {
+    let track: TrackReference
+    let failure: FileImportFailure
+    func importURLs(_ urls: [URL]) async -> FileImportResult {
+        FileImportResult(tracks: [track], failures: [failure])
+    }
 }
 
 private actor MemorySessions: SessionStore {

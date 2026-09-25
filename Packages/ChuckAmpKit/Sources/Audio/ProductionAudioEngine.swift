@@ -4,6 +4,30 @@ import AudioToolbox
 import Contracts
 import Foundation
 
+public enum EqualizerPreset: String, Codable, CaseIterable, Sendable {
+    case flat, rock, pop, jazz, classical, bassBoost
+
+    public var settings: EQSettings {
+        let gains: [Double]
+        switch self {
+        case .flat: gains = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        case .rock: gains = [4, 3, 2, 0, -1, 0, 2, 3, 4, 4]
+        case .pop: gains = [-1, 1, 3, 4, 2, -1, -1, 2, 3, 2]
+        case .jazz: gains = [3, 2, 1, 2, -1, -1, 0, 1, 3, 4]
+        case .classical: gains = [3, 2, 1, 0, -1, -1, 0, 1, 3, 4]
+        case .bassBoost: gains = [6, 5, 4, 2, 0, 0, 0, 0, 0, 0]
+        }
+        return EQSettings(isBypassed: self == .flat, preampGain: 0, bandGains: gains)
+    }
+}
+
+public struct OutputProtectionStatus: Codable, Equatable, Sendable {
+    public let limiterEnabled: Bool
+    public let requestedPositiveGainDB: Double
+    public let mayBeReducingGain: Bool
+    public let ceilingDBFS: Double
+}
+
 /// Native, bounded-buffer implementation of the frozen AudioEngineClient contract.
 /// All graph mutation is serialized by this actor; completion callbacks only enqueue
 /// actor work and never decode, allocate UI objects, or persist state.
@@ -208,6 +232,20 @@ public actor NativeAudioEngineClient: AudioEngineClient {
             if step < steps { try? await Task.sleep(for: .milliseconds(3)) }
         }
         equalizer.bypass = settings.isBypassed
+    }
+
+    /// Describes when the post-EQ peak limiter may be active. The system peak
+    /// limiter does not expose sample-accurate gain reduction, so this is a
+    /// conservative UI indicator based on requested positive gain.
+    public func outputProtectionStatus() -> OutputProtectionStatus {
+        let highestBand = equalizerSettings.bandGains.max() ?? 0
+        let positiveGain = equalizerSettings.isBypassed ? 0 : max(0, equalizerSettings.preampGain + highestBand)
+        return OutputProtectionStatus(
+            limiterEnabled: true,
+            requestedPositiveGainDB: positiveGain,
+            mayBeReducingGain: positiveGain > 0,
+            ceilingDBFS: 0
+        )
     }
 
     private func finishInitialization() {
@@ -501,8 +539,8 @@ public actor NativeAudioEngineClient: AudioEngineClient {
         else if let native = error as? NativeAudioError {
             let code: PlaybackFailure.Code
             switch native {
-            case .unsupportedChannelCount: code = .unsupported
-            case .seekOutOfRange, .invalidFrameRequest: code = .corrupt
+            case .unsupportedChannelCount, .unsupportedChainedStream: code = .unsupported
+            case .corruptFile, .seekOutOfRange, .invalidFrameRequest: code = .corrupt
             case .couldNotCreateBuffer, .renderFailed: code = .unknown
             }
             failure = PlaybackFailure(code: code, message: native.localizedDescription)

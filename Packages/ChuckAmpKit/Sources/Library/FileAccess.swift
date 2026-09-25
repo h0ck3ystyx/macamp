@@ -75,6 +75,18 @@ public actor SecurityScopedFileAccessService: FileAccessService {
             return .needsReauthorization(lastKnownURL: track.lastKnownURL)
         }
     }
+
+    public func reauthorize(_ track: TrackReference, at url: URL) throws -> TrackReference {
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            throw FileAccessError.missingFile(url)
+        }
+        return TrackReference(
+            id: track.id,
+            lastKnownURL: url,
+            securityScopedBookmark: try bookmark(for: url),
+            metadata: track.metadata
+        )
+    }
 }
 
 public actor SecurityScopedFileLease: FileAccessLease {

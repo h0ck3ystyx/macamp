@@ -7,7 +7,7 @@
     <key>CFBundleExecutable</key>
     <string>ChuckAmp</string>
     <key>CFBundleIdentifier</key>
-    <string>com.chuckamp.prototype</string>
+    <string>com.chuckamp.app</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
@@ -24,6 +24,42 @@
     <true/>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>Audio file</string>
+            <key>CFBundleTypeRole</key>
+            <string>Viewer</string>
+            <key>LSHandlerRank</key>
+            <string>Alternate</string>
+            <key>CFBundleTypeExtensions</key>
+            <array>
+                <string>mp3</string><string>m4a</string><string>aac</string><string>flac</string>
+                <string>wav</string><string>aif</string><string>aiff</string><string>ogg</string>
+                <string>oga</string><string>opus</string>
+            </array>
+        </dict>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>Playlist</string>
+            <key>CFBundleTypeRole</key>
+            <string>Viewer</string>
+            <key>LSHandlerRank</key>
+            <string>Alternate</string>
+            <key>CFBundleTypeExtensions</key>
+            <array><string>m3u</string><string>m3u8</string><string>pls</string></array>
+        </dict>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>ChuckAmp Skin</string>
+            <key>CFBundleTypeRole</key>
+            <string>Viewer</string>
+            <key>LSHandlerRank</key>
+            <string>Owner</string>
+            <key>CFBundleTypeExtensions</key>
+            <array><string>chuckskin</string></array>
+        </dict>
+    </array>
 </dict>
 </plist>
-

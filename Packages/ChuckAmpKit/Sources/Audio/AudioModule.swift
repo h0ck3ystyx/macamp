@@ -8,16 +8,20 @@ public enum AudioModule {
 }
 
 public enum NativeAudioError: Error, LocalizedError, Sendable {
+    case corruptFile(String)
     case invalidFrameRequest(Int)
     case unsupportedChannelCount(Int)
+    case unsupportedChainedStream(Int)
     case seekOutOfRange(Int64)
     case couldNotCreateBuffer
     case renderFailed(String)
 
     public var errorDescription: String? {
         switch self {
+        case .corruptFile(let reason): "Unreadable or corrupt audio: \(reason)"
         case .invalidFrameRequest(let count): "Invalid PCM frame request: \(count)"
         case .unsupportedChannelCount(let count): "ChuckAmp supports mono and stereo; file has \(count) channels"
+        case .unsupportedChainedStream(let count): "Chained Ogg streams are not supported (found \(count) logical streams)"
         case .seekOutOfRange(let frame): "Seek frame is out of range: \(frame)"
         case .couldNotCreateBuffer: "Could not allocate a PCM buffer"
         case .renderFailed(let reason): "Offline audio render failed: \(reason)"
@@ -51,8 +55,12 @@ public actor NativeAudioDecoder: Decoder {
     private var currentFrame: Int64 = 0
 
     public init(url: URL) throws {
+        if let streamCount = try Self.oggLogicalStreamCount(url: url), streamCount > 1 {
+            throw NativeAudioError.unsupportedChainedStream(streamCount)
+        }
         var opened: ExtAudioFileRef?
-        try Self.check(ExtAudioFileOpenURL(url as CFURL, &opened), operation: "open")
+        let openStatus = ExtAudioFileOpenURL(url as CFURL, &opened)
+        guard openStatus == noErr else { throw NativeAudioError.corruptFile("OSStatus \(openStatus)") }
         guard let opened else { throw NativeAudioError.renderFailed("ExtAudioFileOpenURL returned no file") }
         let handle = ExtAudioFileHandle(opened)
         var sourceFormat = AudioStreamBasicDescription()
@@ -68,9 +76,7 @@ public actor NativeAudioDecoder: Decoder {
             sampleRate: sourceFormat.mSampleRate,
             channels: AVAudioChannelCount(channels),
             interleaved: true
-        ) else {
-            throw NativeAudioError.renderFailed("could not describe the Float32 client format")
-        }
+        ) else { throw NativeAudioError.renderFailed("could not describe the Float32 client format") }
         var clientFormat = requestedFormat.streamDescription.pointee
         try Self.check(ExtAudioFileSetProperty(handle.raw, kExtAudioFileProperty_ClientDataFormat, UInt32(MemoryLayout<AudioStreamBasicDescription>.size), &clientFormat), operation: "set Float32 client format")
         let trimming = Self.readPacketTable(url: url)
@@ -121,14 +127,19 @@ public actor NativeAudioDecoder: Decoder {
     }
 
     public static func inspect(url: URL) throws -> NativeAudioInspection {
-        let file = try AVAudioFile(forReading: url)
+        if let streamCount = try oggLogicalStreamCount(url: url), streamCount > 1 {
+            throw NativeAudioError.unsupportedChainedStream(streamCount)
+        }
+        let file: AVAudioFile
+        do { file = try AVAudioFile(forReading: url) }
+        catch { throw NativeAudioError.corruptFile(error.localizedDescription) }
         let channels = Int(file.processingFormat.channelCount)
         guard (1...2).contains(channels) else { throw NativeAudioError.unsupportedChannelCount(channels) }
         let trimming = readPacketTable(url: url)
         let sampleRate = file.processingFormat.sampleRate
         return NativeAudioInspection(
             path: url.path,
-            fileType: file.fileFormat.settings[AVAudioFileTypeKey] as? String,
+            fileType: readFileType(url: url),
             codec: codecName(file.fileFormat.settings),
             sampleRate: sampleRate,
             channelCount: channels,
@@ -163,6 +174,43 @@ public actor NativeAudioDecoder: Decoder {
         var size = UInt32(MemoryLayout<AudioFilePacketTableInfo>.size)
         guard AudioFileGetProperty(audioFile, kAudioFilePropertyPacketTableInfo, &size, &info) == noErr else { return nil }
         return (Int64(info.mPrimingFrames), Int64(info.mRemainderFrames))
+    }
+
+    private static func readFileType(url: URL) -> String? {
+        var audioFile: AudioFileID?
+        guard AudioFileOpenURL(url as CFURL, .readPermission, 0, &audioFile) == noErr, let audioFile else { return nil }
+        defer { AudioFileClose(audioFile) }
+        var type: AudioFileTypeID = 0
+        var size = UInt32(MemoryLayout<AudioFileTypeID>.size)
+        guard AudioFileGetProperty(audioFile, kAudioFilePropertyFileFormat, &size, &type) == noErr else { return nil }
+        return fourCC(type)
+    }
+
+    /// Returns nil for non-Ogg input. The parser walks page headers with constant
+    /// memory so chained streams are rejected before a decoder silently plays only
+    /// the first logical bitstream.
+    private static func oggLogicalStreamCount(url: URL) throws -> Int? {
+        let handle = try FileHandle(forReadingFrom: url)
+        defer { try? handle.close() }
+        guard let prefix = try handle.read(upToCount: 4), prefix == Data("OggS".utf8) else { return nil }
+        try handle.seek(toOffset: 0)
+        var serials = Set<UInt32>()
+        while true {
+            guard let header = try handle.read(upToCount: 27), !header.isEmpty else { break }
+            guard header.count == 27, header.prefix(4) == Data("OggS".utf8), header[4] == 0 else {
+                throw NativeAudioError.corruptFile("invalid Ogg page header")
+            }
+            let serial = UInt32(header[14]) | UInt32(header[15]) << 8 | UInt32(header[16]) << 16 | UInt32(header[17]) << 24
+            if header[5] & 0x02 != 0 { serials.insert(serial) }
+            let segmentCount = Int(header[26])
+            guard let lacing = try handle.read(upToCount: segmentCount), lacing.count == segmentCount else {
+                throw NativeAudioError.corruptFile("truncated Ogg segment table")
+            }
+            let bodySize = lacing.reduce(0) { $0 + Int($1) }
+            let next = try handle.offset() + UInt64(bodySize)
+            try handle.seek(toOffset: next)
+        }
+        return serials.count
     }
 }
 
@@ -239,6 +287,13 @@ public struct OutputProbeResult: Codable, Equatable, Sendable {
     public let engineStarted: Bool
 }
 
+public struct ProtectionProbeResult: Codable, Equatable, Sendable {
+    public let inputPeak: Float
+    public let requestedGainDB: Float
+    public let unprotectedPredictedPeak: Float
+    public let protectedPeak: Float
+}
+
 public enum NativeGraphProbe {
     public static func equalizer() throws -> EqualizerProbeResult {
         let bypass = try renderTone(eqGain: 0)
@@ -257,6 +312,60 @@ public enum NativeGraphProbe {
         let started = engine.isRunning
         engine.stop()
         return OutputProbeResult(sampleRate: format.sampleRate, channelCount: Int(format.channelCount), engineStarted: started)
+    }
+
+    public static func protection() throws -> ProtectionProbeResult {
+        let format = AVAudioFormat(standardFormatWithSampleRate: 48_000, channels: 2)!
+        let frameCount: AVAudioFrameCount = 48_000
+        guard let source = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount),
+              let data = source.floatChannelData else { throw NativeAudioError.couldNotCreateBuffer }
+        source.frameLength = frameCount
+        let inputPeak: Float = 0.9
+        let requestedGain: Float = 12
+        for frame in 0..<Int(frameCount) {
+            let sample = Float(sin(2 * Double.pi * 1_000 * Double(frame) / 48_000)) * inputPeak
+            data[0][frame] = sample; data[1][frame] = sample
+        }
+        let engine = AVAudioEngine()
+        let player = AVAudioPlayerNode()
+        let eq = AVAudioUnitEQ(numberOfBands: 1)
+        eq.globalGain = requestedGain
+        let limiter = AVAudioUnitEffect(audioComponentDescription: AudioComponentDescription(
+            componentType: kAudioUnitType_Effect,
+            componentSubType: kAudioUnitSubType_PeakLimiter,
+            componentManufacturer: kAudioUnitManufacturer_Apple,
+            componentFlags: 0,
+            componentFlagsMask: 0
+        ))
+        AudioUnitSetParameter(limiter.audioUnit, kLimiterParam_AttackTime, kAudioUnitScope_Global, 0, 0.001, 0)
+        engine.attach(player); engine.attach(eq); engine.attach(limiter)
+        engine.connect(player, to: eq, format: format)
+        engine.connect(eq, to: limiter, format: format)
+        engine.connect(limiter, to: engine.mainMixerNode, format: format)
+        try engine.enableManualRenderingMode(.offline, format: format, maximumFrameCount: 4_096)
+        player.scheduleBuffer(source)
+        try engine.start(); player.play(at: AVAudioTime(sampleTime: 0, atRate: 48_000))
+        guard let rendered = AVAudioPCMBuffer(pcmFormat: engine.manualRenderingFormat, frameCapacity: 4_096) else {
+            throw NativeAudioError.couldNotCreateBuffer
+        }
+        var peak: Float = 0
+        var remaining = Int64(frameCount)
+        while remaining > 0 {
+            let count = AVAudioFrameCount(min(Int64(rendered.frameCapacity), remaining))
+            let status = try engine.renderOffline(count, to: rendered)
+            guard status == .success, let channels = rendered.floatChannelData else {
+                throw NativeAudioError.renderFailed("protection render status \(status.rawValue)")
+            }
+            for frame in 0..<Int(rendered.frameLength) { peak = max(peak, abs(channels[0][frame])) }
+            remaining -= Int64(rendered.frameLength)
+        }
+        player.stop(); engine.stop()
+        return ProtectionProbeResult(
+            inputPeak: inputPeak,
+            requestedGainDB: requestedGain,
+            unprotectedPredictedPeak: inputPeak * pow(10, requestedGain / 20),
+            protectedPeak: peak
+        )
     }
 
     private static func renderTone(eqGain: Float) throws -> Float {

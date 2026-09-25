@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "terminal",
+  "name": "Terminal",
+  "author": "ChuckAmp Project",
+  "version": "1.0.0",
+  "license": "Original artwork; distributed with ChuckAmp",
+  "colors": {
+    "color.window.background": "#111612",
+    "color.display.background": "#071008",
+    "color.text.primary": "#B8FFC5",
+    "color.text.secondary": "#79A980",
+    "color.accent": "#4CFF70",
+    "color.border": "#335C3B"
+  },
+  "fonts": {
+    "font.track": "system-monospaced",
+    "font.technical": "system-monospaced",
+    "font.controls": "system-monospaced"
+  },
+  "assets": {
+    "asset.window.frame": "art/frame.svg",
+    "asset.transport.play": "art/play.svg",
+    "asset.transport.pause": "art/pause.svg"
+  }
+}

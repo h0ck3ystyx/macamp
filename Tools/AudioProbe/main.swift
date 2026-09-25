@@ -59,12 +59,18 @@ struct AudioProbe {
         case "engine-failure":
             guard paths.isEmpty else { return usage() }
             try await engineFailure()
+        case "encode-he-aac":
+            guard paths.count == 2 else { return usage() }
+            try encodeHEAAC(input: fileURL(paths[0]), output: fileURL(paths[1]))
         case "eq":
             guard paths.isEmpty else { return usage() }
             try printJSON(NativeGraphProbe.equalizer())
         case "output":
             guard paths.isEmpty else { return usage() }
             try printJSON(NativeGraphProbe.output())
+        case "protection":
+            guard paths.isEmpty else { return usage() }
+            try printJSON(NativeGraphProbe.protection())
         default:
             usage(); exit(2)
         }
@@ -184,6 +190,25 @@ struct AudioProbe {
         }
     }
 
+    private static func encodeHEAAC(input: URL, output: URL) throws {
+        let source = try AVAudioFile(forReading: input)
+        let settings: [String: Any] = [
+            AVFormatIDKey: kAudioFormatMPEG4AAC_HE,
+            AVSampleRateKey: source.processingFormat.sampleRate,
+            AVNumberOfChannelsKey: source.processingFormat.channelCount,
+            AVEncoderBitRateKey: 48_000,
+        ]
+        let destination = try AVAudioFile(forWriting: output, settings: settings)
+        guard let buffer = AVAudioPCMBuffer(pcmFormat: source.processingFormat, frameCapacity: 16_384) else {
+            throw PlaybackFailure(code: .unknown, message: "Could not allocate AAC encoder buffer")
+        }
+        while source.framePosition < source.length {
+            try source.read(into: buffer, frameCount: min(buffer.frameCapacity, AVAudioFrameCount(source.length - source.framePosition)))
+            try destination.write(from: buffer)
+        }
+        try printJSONObject(["result": "encoded", "path": output.path])
+    }
+
     private static func fileURL(_ path: String) -> URL { URL(fileURLWithPath: path).standardizedFileURL }
     private static func printJSON<T: Encodable>(_ value: T) throws {
         let encoder = JSONEncoder(); encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -194,7 +219,7 @@ struct AudioProbe {
         print(String(decoding: data, as: UTF8.self))
     }
     private static func usage() {
-        print("Usage:\n  AudioProbe inspect <file> [file ...]\n  AudioProbe decode <file>\n  AudioProbe seek <file> <seconds>\n  AudioProbe boundary <first-file> <second-file>\n  AudioProbe play <file>\n  AudioProbe engine-play <file>\n  AudioProbe engine-pair <first-file> <second-file>\n  AudioProbe engine-stress <file>\n  AudioProbe engine-failure\n  AudioProbe eq\n  AudioProbe output")
+        print("Usage:\n  AudioProbe inspect <file> [file ...]\n  AudioProbe decode <file>\n  AudioProbe seek <file> <seconds>\n  AudioProbe boundary <first-file> <second-file>\n  AudioProbe play <file>\n  AudioProbe engine-play <file>\n  AudioProbe engine-pair <first-file> <second-file>\n  AudioProbe engine-stress <file>\n  AudioProbe engine-failure\n  AudioProbe encode-he-aac <input> <output.m4a-or-aac>\n  AudioProbe eq\n  AudioProbe protection\n  AudioProbe output")
     }
 }
 

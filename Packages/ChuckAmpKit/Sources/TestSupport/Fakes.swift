@@ -34,6 +34,12 @@ public actor FakeQueueStore: QueueStore {
         }
     }
 
+    public func updateTrack(_ track: TrackReference) async throws {
+        guard value.tracks[track.id] != nil else { return }
+        value.revision += 1
+        value.tracks[track.id] = track
+    }
+
     public func apply(_ command: PlayerCommand) async throws {
         value.revision += 1
         switch command {
@@ -44,6 +50,8 @@ public actor FakeQueueStore: QueueStore {
         default: break
         }
     }
+
+    public func undoLastMutation() async -> Bool { false }
 
     public func proposedEntry(after current: QueueEntryID?, direction: TraversalDirection, cause: TraversalCause) async -> QueueEntryID? {
         guard !value.entries.isEmpty else { return nil }

@@ -35,7 +35,11 @@ public protocol QueueStore: Sendable {
     func snapshot() async -> QueueSnapshot
     func replace(with tracks: [TrackReference]) async
     func append(_ tracks: [TrackReference]) async
+    /// Replaces the durable reference for an existing track while preserving every
+    /// queue entry that points at its stable TrackID.
+    func updateTrack(_ track: TrackReference) async throws
     func apply(_ command: PlayerCommand) async throws
+    @discardableResult func undoLastMutation() async -> Bool
     func proposedEntry(after current: QueueEntryID?, direction: TraversalDirection, cause: TraversalCause) async -> QueueEntryID?
     func commitPlaying(_ entryID: QueueEntryID?, generation: PlaybackGeneration) async
 }
@@ -134,4 +138,16 @@ public enum FileAccessResolution: Sendable {
 public protocol FileAccessService: Sendable {
     func bookmark(for url: URL) async throws -> Data
     func resolve(_ track: TrackReference) async throws -> FileAccessResolution
+    func reauthorize(_ track: TrackReference, at url: URL) async throws -> TrackReference
+}
+
+public extension FileAccessService {
+    func reauthorize(_ track: TrackReference, at url: URL) async throws -> TrackReference {
+        TrackReference(
+            id: track.id,
+            lastKnownURL: url,
+            securityScopedBookmark: try await bookmark(for: url),
+            metadata: track.metadata
+        )
+    }
 }

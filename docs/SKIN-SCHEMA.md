@@ -1,6 +1,6 @@
 # ChuckAmp skin schema v1
 
-September 25, 2026 · Prototype contract
+September 25, 2026 · Schema version 1
 
 ChuckAmp skins are declarative directories. A skin changes presentation only; it cannot define actions, layouts, scripts, network access, or audio behavior. Graphite, Paper, and creator-authored skins all pass through `SkinResolver` and produce the shared `ResolvedSkin` contract.
 
@@ -15,7 +15,7 @@ MySkin/
     pause.svg
 ```
 
-The prototype reads directories. The MVP `.chuckskin` ZIP importer will safely extract a package and then invoke the same resolver. Packaging, ZIP limits, previews, import/export, image dimension checks, and decoded-memory limits remain MVP work.
+The creator workflow edits a directory and exports it as a `.chuckskin` ZIP. Import and preview safely extract to an app-controlled directory and invoke the same resolver. The archive must contain `manifest.json` at its root, without an extra enclosing directory.
 
 `manifest.json` uses this shape:
 
@@ -79,7 +79,7 @@ The frame, play, and pause roles are required in the prototype so every valid sk
 | `asset.eq.track` | No | Equalizer slider track |
 | `asset.eq.thumb` | No | Equalizer slider thumb |
 
-The prototype artwork is original, lightweight SVG. The renderer should load each resolved URL through AppKit and retain native accessible controls and hit targets beneath or around decorative imagery. The app owns button actions, enabled state, focus order, labels, and layout.
+Bundled artwork is original, lightweight SVG. PNG and other single-frame image types recognized by ImageIO are supported. SVG is restricted to an offline profile with numeric width and height; scripts, document types, entities, links, and CSS `url()` references are rejected. The renderer should load each resolved URL through AppKit and retain native accessible controls and hit targets beneath or around decorative imagery. The app owns button actions, enabled state, focus order, labels, high-contrast behavior, readable-font overrides, and layout.
 
 ## Resolution and live application
 
@@ -98,12 +98,19 @@ selection.apply(paper)
 
 Resolve first and apply second. A validation failure therefore leaves the current skin unchanged. `LiveSkinSelection` is main-actor isolated and has no dependency on the queue or audio engine, so applying a skin cannot mutate playback state.
 
+For an external preview, retain the returned `SkinPackagePreview` or pass it to `LiveSkinSelection.apply(_:)`; this retains its private extracted artwork until another skin is applied.
+
+Accent variations change only `color.accent` and, optionally, `color.display.background`. `SkinResolver.resolve(variation:basedOn:)` creates an in-memory variation. `SkinPackageManager.save(variation:basedOn:)` saves a variation as an independently installed, exportable skin while reusing the base artwork.
+
 Use `ResolvedSkin.color(_:)`, `font(_:)`, and `asset(_:)` with the public enums. Views must not branch on `manifest.id` or a bundled-skin name.
 
 ## Bundled skins and creator example
 
 - `Skins/StudioGraphite` is the default charcoal and amber direction.
 - `Skins/Paper` is a light warm-gray direction with teal controls.
+- `Skins/Terminal` is a dark monospaced direction with green controls.
 - `Skins/CreatorExample` is a copyable, editable example.
 
 The app packager must copy bundled skin directories into the application resources and pass their resource URLs to `SkinResolver`. Swift Package resource wiring and application composition remain coordinator-owned.
+
+See `docs/SKIN-PACKAGES.md` for archive limits, import/export APIs, and the complete creator workflow.

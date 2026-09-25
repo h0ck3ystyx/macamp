@@ -15,7 +15,7 @@ Status: frozen for wave 1. Changes require coordinator review because audio, dat
 
 The UI and Mac integrations emit `PlayerCommand` values. `PlaybackCoordinator` is the only component that translates those commands into queue and audio changes. Presentation reads immutable `PlaybackSnapshot` and `QueueSnapshot` values.
 
-`QueueStore` owns visible order, selection, shuffle traversal history, repeat policy, and the proposed next entry. Proposals include a `TraversalCause`: manual Next advances even under Repeat One, while an automatic end may repeat the current entry. `PlaybackCoordinator` stages that proposal with `AudioEngineClient`. The queue advances only after an engine transition event with the matching `PlaybackGeneration`. Old callbacks are ignored.
+`QueueStore` owns visible order, selection, shuffle traversal history, repeat policy, Undo, and the proposed next entry. `updateTrack(_:)` refreshes an existing durable file reference while preserving entry identities and traversal state. Proposals include a `TraversalCause`: manual Next advances even under Repeat One, while an automatic end may repeat the current entry. `PlaybackCoordinator` stages that proposal with `AudioEngineClient`. The queue advances only after an engine transition event with the matching `PlaybackGeneration`. Old callbacks are ignored.
 
 The same file may produce several `QueueEntry` values. A `TrackReference` carries source identity and an optional bookmark; its last-known URL is not proof of access. A resolved `FileAccessLease` stays alive for the decoder/prefetch lifetime and must be released on cancellation.
 
@@ -31,7 +31,7 @@ The same file may produce several `QueueEntry` values. A `TrackReference` carrie
 
 ## Persistence and skin rules
 
-`SessionState` is explicitly versioned. Implementations write atomically and restore a previously playing session as paused. Migration failures preserve the old file for recovery.
+`SessionState` is explicitly versioned. Schema 2 persists selection, shuffle, and repeat policy in addition to the queue, audio, skin, and window fields; schema-1 decoding supplies safe defaults before the Library store migrates it. Implementations write atomically and restore a previously playing session as paused. Migration failures preserve the old file for recovery.
 
 `SkinManifest` is declarative data. `ResolvedSkin` contains validated local asset URLs only. A skin cannot define actions, network access, scripts, or audio behavior. View code consumes canonical style keys and must not special-case a bundled skin.
 

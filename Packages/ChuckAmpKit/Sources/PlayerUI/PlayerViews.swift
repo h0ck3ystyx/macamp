@@ -202,9 +202,14 @@ final class EqualizerViewController: ThemedViewController {
         super.loadView()
         let model = self.model; let actions = self.actions
         let heading = label("10-BAND EQUALIZER", size: 11, bold: true)
+        let highestGain = model.playback.equalizer.bandGains.max() ?? 0
+        let protectionActive = !model.playback.equalizer.isBypassed && model.playback.equalizer.preampGain + highestGain > 0
+        let protection = label(protectionActive ? "LIMIT" : "SAFE", size: 9, bold: true, color: protectionActive ? .systemOrange : theme.secondaryText)
+        protection.setAccessibilityLabel(protectionActive ? "Output protection may be reducing gain" : "Output protection ready")
+        protection.toolTip = "A peak limiter protects the output when EQ boost could clip. Reduce preamp gain for more headroom."
         let bypass = ActionButton(title: "Bypass", action: { [model, actions] in actions.send(model.toggleBypassCommand) }); bypass.setButtonType(.switch); bypass.state = model.playback.equalizer.isBypassed ? .on : .off; bypass.setAccessibilityLabel("Bypass equalizer")
         let reset = button("RESET", label: "Reset equalizer", action: { [model, actions] in actions.send(model.resetEqualizerCommand) })
-        let header = NSStackView(views: [heading, NSView(), bypass, reset]); header.spacing = 8
+        let header = NSStackView(views: [heading, NSView(), protection, bypass, reset]); header.spacing = 8
         let frequencies = ["PRE", "31", "62", "125", "250", "500", "1k", "2k", "4k", "8k", "16k"]
         let sliders = NSStackView(); sliders.orientation = .horizontal; sliders.distribution = .fillEqually; sliders.spacing = 3
         for (index, frequency) in frequencies.enumerated() {
@@ -225,6 +230,7 @@ final class EqualizerViewController: ThemedViewController {
 final class PlaylistViewController: ThemedViewController, NSTableViewDataSource, NSTableViewDelegate {
     private let model: PlayerUIStateModel; private let actions: PlayerUIActions
     private weak var tableView: NSTableView?
+    private weak var searchField: NSSearchField?
     private var isRestoringSelection = false
     init(theme: PlayerUITheme, model: PlayerUIStateModel, actions: PlayerUIActions) { self.model = model; self.actions = actions; super.init(theme: theme) }
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
@@ -232,9 +238,9 @@ final class PlaylistViewController: ThemedViewController, NSTableViewDataSource,
         super.loadView()
         let model = self.model; let actions = self.actions
         (view as? AudioDropView)?.onDrop = { actions.receiveFiles($0, false) }
-        let heading = label("PLAYLIST", size: 11, bold: true); let search = CommandSearchField(value: model.filterText, handler: actions.search); search.placeholderString = "Search"; search.setAccessibilityLabel("Search playlist"); search.isEnabled = !model.queue.entries.isEmpty
+        let heading = label("PLAYLIST", size: 11, bold: true); let search = CommandSearchField(value: model.filterText, handler: actions.search); search.placeholderString = "Search"; search.setAccessibilityLabel("Search playlist"); search.isEnabled = !model.queue.entries.isEmpty; searchField = search
         let header = NSStackView(views: [heading, NSView(), search]); header.spacing = 8
-        let table = PlaylistTableView(); table.headerView = nil; table.backgroundColor = theme.panel; table.rowHeight = 28; table.delegate = self; table.dataSource = self; table.allowsMultipleSelection = true
+        let table = PlaylistTableView(); table.headerView = nil; table.backgroundColor = theme.panel; table.rowHeight = 28; table.delegate = self; table.dataSource = self; table.allowsMultipleSelection = false
         table.target = self; table.doubleAction = #selector(activateSelection); table.activateSelection = { [weak self] in self?.activateSelection() }; tableView = table
         let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("track")); column.resizingMask = .autoresizingMask; table.addTableColumn(column); table.setAccessibilityLabel("Playlist tracks")
         let scroll = NSScrollView(); scroll.documentView = table; scroll.hasVerticalScroller = true; scroll.drawsBackground = false
@@ -253,6 +259,11 @@ final class PlaylistViewController: ThemedViewController, NSTableViewDataSource,
             empty.translatesAutoresizingMaskIntoConstraints = false; scroll.addSubview(empty)
             NSLayoutConstraint.activate([empty.centerXAnchor.constraint(equalTo: scroll.centerXAnchor), empty.centerYAnchor.constraint(equalTo: scroll.centerYAnchor)])
         }
+    }
+    func focusSearch() { view.window?.makeFirstResponder(searchField) }
+    func revealPlaying() {
+        guard let row = model.rows.firstIndex(where: \.isPlaying) else { return }
+        tableView?.scrollRowToVisible(row)
     }
     func numberOfRows(in tableView: NSTableView) -> Int { model.rows.count }
     func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {

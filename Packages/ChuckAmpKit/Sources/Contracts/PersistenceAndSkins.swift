@@ -47,12 +47,15 @@ public struct WindowLayout: Codable, Equatable, Sendable {
 }
 
 public struct SessionState: Codable, Equatable, Sendable {
-    public static let currentSchemaVersion = 1
+    public static let currentSchemaVersion = 2
 
     public var schemaVersion: Int
     public var queue: [QueueEntry]
     public var tracks: [TrackReference]
     public var currentEntryID: QueueEntryID?
+    public var selectedEntryID: QueueEntryID?
+    public var isShuffled: Bool
+    public var repeatMode: RepeatMode
     public var position: TimeInterval
     public var volume: Double
     public var equalizer: EQSettings
@@ -64,6 +67,9 @@ public struct SessionState: Codable, Equatable, Sendable {
         queue: [QueueEntry] = [],
         tracks: [TrackReference] = [],
         currentEntryID: QueueEntryID? = nil,
+        selectedEntryID: QueueEntryID? = nil,
+        isShuffled: Bool = false,
+        repeatMode: RepeatMode = .off,
         position: TimeInterval = 0,
         volume: Double = 1,
         equalizer: EQSettings = EQSettings(),
@@ -74,11 +80,35 @@ public struct SessionState: Codable, Equatable, Sendable {
         self.queue = queue
         self.tracks = tracks
         self.currentEntryID = currentEntryID
+        self.selectedEntryID = selectedEntryID
+        self.isShuffled = isShuffled
+        self.repeatMode = repeatMode
         self.position = position
         self.volume = volume
         self.equalizer = equalizer
         self.skinID = skinID
         self.windowLayout = windowLayout
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case schemaVersion, queue, tracks, currentEntryID, selectedEntryID, isShuffled, repeatMode
+        case position, volume, equalizer, skinID, windowLayout
+    }
+
+    public init(from decoder: any Swift.Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        schemaVersion = try values.decode(Int.self, forKey: .schemaVersion)
+        queue = try values.decode([QueueEntry].self, forKey: .queue)
+        tracks = try values.decode([TrackReference].self, forKey: .tracks)
+        currentEntryID = try values.decodeIfPresent(QueueEntryID.self, forKey: .currentEntryID)
+        selectedEntryID = try values.decodeIfPresent(QueueEntryID.self, forKey: .selectedEntryID)
+        isShuffled = try values.decodeIfPresent(Bool.self, forKey: .isShuffled) ?? false
+        repeatMode = try values.decodeIfPresent(RepeatMode.self, forKey: .repeatMode) ?? .off
+        position = try values.decode(TimeInterval.self, forKey: .position)
+        volume = try values.decode(Double.self, forKey: .volume)
+        equalizer = try values.decode(EQSettings.self, forKey: .equalizer)
+        skinID = try values.decode(String.self, forKey: .skinID)
+        windowLayout = try values.decode(WindowLayout.self, forKey: .windowLayout)
     }
 }
 
@@ -132,4 +162,3 @@ public struct ResolvedSkin: Equatable, Sendable {
         self.resolvedAssets = resolvedAssets
     }
 }
-

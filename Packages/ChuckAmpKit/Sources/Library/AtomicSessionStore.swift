@@ -44,8 +44,16 @@ public actor AtomicSessionStore: SessionStore {
     }
 
     private func decode(_ data: Data) throws -> SessionState {
-        let decoded = try JSONDecoder().decode(SessionState.self, from: data)
-        guard decoded.schemaVersion == SessionState.currentSchemaVersion else {
+        var decoded = try JSONDecoder().decode(SessionState.self, from: data)
+        switch decoded.schemaVersion {
+        case SessionState.currentSchemaVersion:
+            break
+        case 1:
+            // Contracts supplies backward-compatible defaults for fields introduced in v2.
+            // The next ordinary save durably rewrites the migrated representation while load
+            // leaves the source file untouched for recovery if startup is interrupted.
+            decoded.schemaVersion = SessionState.currentSchemaVersion
+        default:
             throw SessionStoreError.unsupportedSchema(found: decoded.schemaVersion, supported: SessionState.currentSchemaVersion)
         }
         try validate(decoded)
@@ -74,8 +82,24 @@ public actor AtomicSessionStore: SessionStore {
         if let current = state.currentEntryID, !state.queue.contains(where: { $0.id == current }) {
             throw SessionStoreError.invalidState("Current entry is absent from the queue")
         }
+        if let selected = state.selectedEntryID, !state.queue.contains(where: { $0.id == selected }) {
+            throw SessionStoreError.invalidState("Selected entry is absent from the queue")
+        }
         guard state.position.isFinite, state.position >= 0 else {
             throw SessionStoreError.invalidState("Position must be finite and nonnegative")
+        }
+        guard state.volume.isFinite, (0...1).contains(state.volume) else {
+            throw SessionStoreError.invalidState("Volume must be finite and between zero and one")
+        }
+        guard state.equalizer.preampGain.isFinite,
+              state.equalizer.bandGains.allSatisfy(\.isFinite) else {
+            throw SessionStoreError.invalidState("Equalizer gains must be finite")
+        }
+        guard !state.skinID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw SessionStoreError.invalidState("Skin identifier must not be empty")
+        }
+        guard state.windowLayout.scale.isFinite, state.windowLayout.scale > 0 else {
+            throw SessionStoreError.invalidState("Window scale must be finite and positive")
         }
     }
 }
@@ -90,6 +114,17 @@ public enum SessionRestoration {
             position: state.position,
             volume: state.volume,
             equalizer: state.equalizer
+        )
+    }
+
+    public static func queueSnapshot(from state: SessionState) -> QueueSnapshot {
+        QueueSnapshot(
+            entries: state.queue,
+            tracks: Dictionary(state.tracks.map { ($0.id, $0) }, uniquingKeysWith: { _, latest in latest }),
+            selectedEntryID: state.selectedEntryID,
+            playingEntryID: state.currentEntryID,
+            isShuffled: state.isShuffled,
+            repeatMode: state.repeatMode
         )
     }
 }

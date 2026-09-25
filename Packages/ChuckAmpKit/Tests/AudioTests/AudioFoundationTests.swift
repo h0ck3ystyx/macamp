@@ -32,6 +32,48 @@ import Testing
     await #expect(throws: NativeAudioError.self) { try await decoder.read(maxFrames: 1_048_577) }
 }
 
+@Test func equalizerPresetsAreCompleteAndWithinSupportedRange() {
+    #expect(EqualizerPreset.allCases.count >= 5)
+    for preset in EqualizerPreset.allCases {
+        #expect(preset.settings.bandGains.count == EQSettings.frequencies.count)
+        #expect(preset.settings.bandGains.allSatisfy { (-12...12).contains($0) })
+    }
+}
+
+@Test func contentInspectionRejectsAnExtensionThatContradictsThePayload() throws {
+    let wave = try makeWave(frameCount: 128, sampleRate: 44_100)
+    let disguised = wave.deletingPathExtension().appendingPathExtension("mp3")
+    try FileManager.default.moveItem(at: wave, to: disguised)
+    defer { try? FileManager.default.removeItem(at: disguised) }
+    #expect(throws: NativeAudioError.self) { try NativeAudioDecoder.inspect(url: disguised) }
+}
+
+@Test func rejectsMultichannelRatherThanApplyingImplicitDownmix() async throws {
+    let url = try makeWave(frameCount: 64, sampleRate: 48_000, channelCount: 6)
+    defer { try? FileManager.default.removeItem(at: url) }
+    #expect(throws: NativeAudioError.self) { try NativeAudioDecoder(url: url) }
+}
+
+@Test func rejectsChainedOggBeforeNativeDecoderSilentlyStopsAtFirstStream() throws {
+    let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathExtension("opus")
+    try makeEmptyOggPage(serial: 1) .write(to: url)
+    let handle = try FileHandle(forWritingTo: url)
+    try handle.seekToEnd()
+    try handle.write(contentsOf: makeEmptyOggPage(serial: 2))
+    try handle.close()
+    defer { try? FileManager.default.removeItem(at: url) }
+    #expect(throws: NativeAudioError.self) { try NativeAudioDecoder(url: url) }
+}
+
+@Test func decoderPreservesLeadingAndTrailingMusicalSilence() async throws {
+    let url = try makeWave(frameCount: 1_000, sampleRate: 1_000, silentPrefix: 100, silentSuffix: 150)
+    defer { try? FileManager.default.removeItem(at: url) }
+    let decoder = try NativeAudioDecoder(url: url)
+    let chunk = try await decoder.read(maxFrames: 1_000)
+    #expect(chunk.interleavedSamples.prefix(100).allSatisfy { $0 == 0 })
+    #expect(chunk.interleavedSamples.suffix(150).allSatisfy { $0 == 0 })
+}
+
 @Test(.disabled("Requires an AudioComponent host; exercised by AudioProbe boundary outside the package-test sandbox"))
 func schedulesTwoLosslessTracksOnOneTimeline() throws {
     let first = try makeWave(frameCount: 2_205, sampleRate: 44_100, phaseFrame: 0)
@@ -140,22 +182,42 @@ private actor RecordingDecoder: Decoder {
     }
 }
 
-private func makeWave(frameCount: Int, sampleRate: Int, phaseFrame: Int = 0) throws -> URL {
+private func makeWave(
+    frameCount: Int,
+    sampleRate: Int,
+    phaseFrame: Int = 0,
+    channelCount: Int = 1,
+    silentPrefix: Int = 0,
+    silentSuffix: Int = 0
+) throws -> URL {
     var samples = [Int16]()
-    samples.reserveCapacity(frameCount)
+    samples.reserveCapacity(frameCount * channelCount)
     for index in 0..<frameCount {
         let phase = 2 * Double.pi * 440 * Double(index + phaseFrame) / Double(sampleRate)
-        samples.append(Int16(sin(phase) * 16_000))
+        let sample: Int16 = index < silentPrefix || index >= frameCount - silentSuffix ? 0 : Int16(sin(phase) * 16_000)
+        for _ in 0..<channelCount { samples.append(sample) }
     }
     let dataBytes = UInt32(samples.count * MemoryLayout<Int16>.size)
     var data = Data()
     func append<T>(_ value: T) { var little = value; withUnsafeBytes(of: &little) { data.append(contentsOf: $0) } }
     data.append(contentsOf: "RIFF".utf8); append(UInt32(36) + dataBytes)
-    data.append(contentsOf: "WAVEfmt ".utf8); append(UInt32(16)); append(UInt16(1)); append(UInt16(1))
-    append(UInt32(sampleRate)); append(UInt32(sampleRate * 2)); append(UInt16(2)); append(UInt16(16))
+    data.append(contentsOf: "WAVEfmt ".utf8); append(UInt32(16)); append(UInt16(1)); append(UInt16(channelCount))
+    append(UInt32(sampleRate)); append(UInt32(sampleRate * 2 * channelCount)); append(UInt16(2 * channelCount)); append(UInt16(16))
     data.append(contentsOf: "data".utf8); append(dataBytes)
     samples.withUnsafeBytes { data.append(contentsOf: $0) }
     let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathExtension("wav")
     try data.write(to: url)
     return url
+}
+
+private func makeEmptyOggPage(serial: UInt32) -> Data {
+    var data = Data("OggS".utf8)
+    data.append(0) // version
+    data.append(0x02) // beginning of stream
+    data.append(contentsOf: Array(repeating: 0, count: 8)) // granule position
+    data.append(UInt8(serial & 0xff)); data.append(UInt8((serial >> 8) & 0xff))
+    data.append(UInt8((serial >> 16) & 0xff)); data.append(UInt8((serial >> 24) & 0xff))
+    data.append(contentsOf: Array(repeating: 0, count: 8)) // sequence + checksum
+    data.append(0) // no segments
+    return data
 }

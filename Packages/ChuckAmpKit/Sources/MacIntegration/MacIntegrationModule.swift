@@ -19,6 +19,7 @@ public typealias PlaybackDecoderFactory = @Sendable (URL) async throws -> any De
 /// durable session state. Commands and engine callbacks are serialized by this actor.
 public actor ProductionPlaybackCoordinator: PlaybackCoordinator {
     public nonisolated let snapshots: AsyncStream<PlaybackSnapshot>
+    public nonisolated let notices: AsyncStream<String>
 
     private struct PreparedTrack: Sendable {
         let entryID: QueueEntryID
@@ -27,6 +28,7 @@ public actor ProductionPlaybackCoordinator: PlaybackCoordinator {
     }
 
     private let continuation: AsyncStream<PlaybackSnapshot>.Continuation
+    private let noticeContinuation: AsyncStream<String>.Continuation
     private let queue: any QueueStore
     private let importer: any PlaybackURLImporting
     private let access: any FileAccessService
@@ -40,6 +42,7 @@ public actor ProductionPlaybackCoordinator: PlaybackCoordinator {
     private var current: PreparedTrack?
     private var stagedNext: PreparedTrack?
     private var automaticFailureAttempts = Set<QueueEntryID>()
+    private var lastNotice: String?
 
     public init(
         queue: any QueueStore,
@@ -51,8 +54,11 @@ public actor ProductionPlaybackCoordinator: PlaybackCoordinator {
         decoderFactory: @escaping PlaybackDecoderFactory
     ) {
         let stream = AsyncStream.makeStream(of: PlaybackSnapshot.self, bufferingPolicy: .bufferingNewest(64))
+        let noticeStream = AsyncStream.makeStream(of: String.self, bufferingPolicy: .bufferingNewest(16))
         snapshots = stream.stream
+        notices = noticeStream.stream
         continuation = stream.continuation
+        noticeContinuation = noticeStream.continuation
         self.queue = queue
         self.importer = importer
         self.access = access
@@ -74,23 +80,14 @@ public actor ProductionPlaybackCoordinator: PlaybackCoordinator {
 
     deinit {
         continuation.finish()
+        noticeContinuation.finish()
     }
 
     /// Loads durable state before constructing the queue, preserving entry identities.
     /// Restored playback is published paused and acquires audio resources only on Play.
     public static func makeProduction(sessionStore: any SessionStore) async throws -> ProductionPlaybackCoordinator {
         let restored = try await sessionStore.load()
-        let queueSnapshot: QueueSnapshot
-        if let restored {
-            queueSnapshot = QueueSnapshot(
-                entries: restored.queue,
-                tracks: Dictionary(restored.tracks.map { ($0.id, $0) }, uniquingKeysWith: { _, latest in latest }),
-                selectedEntryID: restored.currentEntryID,
-                playingEntryID: restored.currentEntryID
-            )
-        } else {
-            queueSnapshot = QueueSnapshot()
-        }
+        let queueSnapshot = restored.map(SessionRestoration.queueSnapshot(from:)) ?? QueueSnapshot()
         let access = SecurityScopedFileAccessService()
         return ProductionPlaybackCoordinator(
             queue: ProductionQueueStore(snapshot: queueSnapshot),
@@ -135,12 +132,76 @@ public actor ProductionPlaybackCoordinator: PlaybackCoordinator {
         await queue.snapshot()
     }
 
+    @discardableResult
+    public func undoLastQueueMutation() async -> Bool {
+        guard await queue.undoLastMutation() else { return false }
+        let snapshot = await queue.snapshot()
+        if let currentID = value.currentEntryID,
+           !snapshot.entries.contains(where: { $0.id == currentID }) {
+            await releaseAllTracks(stoppingEngine: true)
+            value.currentEntryID = nil
+            value.position = 0
+            value.duration = nil
+            value.state = snapshot.entries.isEmpty ? .idle : .stopped
+        } else {
+            await restageNext()
+        }
+        publish()
+        await persist()
+        return true
+    }
+
+    public func updatePresentationState(skinID: String? = nil, windowLayout: WindowLayout? = nil) async {
+        if let skinID { sessionTemplate.skinID = skinID }
+        if let windowLayout { sessionTemplate.windowLayout = windowLayout }
+        await persist()
+    }
+
+    public func openTracks(_ tracks: [TrackReference]) async {
+        guard !tracks.isEmpty else { return }
+        await releaseAllTracks(stoppingEngine: true)
+        await queue.replace(with: tracks)
+        value.currentEntryID = nil
+        value.position = 0
+        value.duration = nil
+        await traverse(.forward, cause: .manual, shouldPlay: true)
+    }
+
+    /// Refreshes a stale security-scoped bookmark without changing stable track or
+    /// queue-entry identities. A currently loaded item is prepared again at its
+    /// prior position so the new access lease is used immediately.
+    public func reauthorize(trackID: TrackID, at url: URL) async throws {
+        let snapshot = await queue.snapshot()
+        guard let track = snapshot.tracks[trackID] else {
+            throw PlaybackFailure(code: .inaccessible, message: "The selected track is no longer in the queue")
+        }
+        let refreshed = try await access.reauthorize(track, at: url)
+        try await queue.updateTrack(refreshed)
+        await persist()
+
+        if let currentEntryID = value.currentEntryID,
+           snapshot.entries.first(where: { $0.id == currentEntryID })?.trackID == trackID {
+            let wasPlaying = value.state == .playing
+            let position = value.position
+            try await prepareCurrent(
+                entryID: currentEntryID,
+                shouldPlay: wasPlaying,
+                initialPosition: position
+            )
+        } else {
+            await restageNext()
+            publish()
+            await persist()
+        }
+    }
+
     private func open(_ urls: [URL]) async {
         let result = await importer.importURLs(urls)
         guard !result.tracks.isEmpty else {
             if let failure = result.failures.first { fail(.init(code: .inaccessible, message: failure.reason)) }
             return
         }
+        reportImportFailures(result.failures)
         await releaseAllTracks(stoppingEngine: true)
         await queue.replace(with: result.tracks)
         value.currentEntryID = nil
@@ -151,7 +212,8 @@ public actor ProductionPlaybackCoordinator: PlaybackCoordinator {
 
     private func append(_ urls: [URL]) async {
         let result = await importer.importURLs(urls)
-        guard !result.tracks.isEmpty else { return }
+        guard !result.tracks.isEmpty else { reportImportFailures(result.failures); return }
+        reportImportFailures(result.failures)
         await queue.append(result.tracks)
         if current != nil || value.currentEntryID != nil { await restageNext() }
         publish(); await persist()
@@ -429,6 +491,9 @@ public actor ProductionPlaybackCoordinator: PlaybackCoordinator {
         state.queue = queueValue.entries
         state.tracks = queueValue.tracks.values.filter { referenced.contains($0.id) }.sorted { $0.id.rawValue.uuidString < $1.id.rawValue.uuidString }
         state.currentEntryID = durableCurrent
+        state.selectedEntryID = queueValue.selectedEntryID
+        state.isShuffled = queueValue.isShuffled
+        state.repeatMode = queueValue.repeatMode
         state.position = durableCurrent == nil ? 0 : value.position
         state.volume = value.volume
         state.equalizer = value.equalizer
@@ -436,7 +501,22 @@ public actor ProductionPlaybackCoordinator: PlaybackCoordinator {
             try await sessions.save(state)
             sessionTemplate = state
             lastPersistedPosition = state.position
-        } catch { }
+        } catch {
+            reportNotice("ChuckAmp couldn’t save the current session: \(error.localizedDescription)")
+        }
+    }
+
+    private func reportImportFailures(_ failures: [FileImportFailure]) {
+        guard !failures.isEmpty else { return }
+        let examples = failures.prefix(3).map { $0.url.lastPathComponent.isEmpty ? $0.url.absoluteString : $0.url.lastPathComponent }
+        let suffix = failures.count > examples.count ? " and \(failures.count - examples.count) more" : ""
+        reportNotice("Skipped \(failures.count) playlist item\(failures.count == 1 ? "" : "s"): \(examples.joined(separator: ", "))\(suffix).")
+    }
+
+    private func reportNotice(_ message: String) {
+        guard message != lastNotice else { return }
+        lastNotice = message
+        noticeContinuation.yield(message)
     }
 
     private func nextGeneration() -> PlaybackGeneration {
@@ -448,6 +528,15 @@ public actor ProductionPlaybackCoordinator: PlaybackCoordinator {
     private func fail(_ failure: PlaybackFailure) { value.state = .failed(failure); publish() }
     private func playbackFailure(_ error: Error) -> PlaybackFailure {
         if let failure = error as? PlaybackFailure { return failure }
+        if let native = error as? NativeAudioError {
+            let code: PlaybackFailure.Code
+            switch native {
+            case .unsupportedChannelCount, .unsupportedChainedStream: code = .unsupported
+            case .corruptFile: code = .corrupt
+            default: code = .unknown
+            }
+            return PlaybackFailure(code: code, message: native.localizedDescription)
+        }
         return PlaybackFailure(code: .unknown, message: error.localizedDescription)
     }
 }

@@ -43,6 +43,7 @@ public final class PlayerUIWindowController: NSObject {
 
     public weak var commandRouter: PlayerUICommandRouting?
     public var importFeedback: (([URL], Bool) -> Void)?
+    public var layoutDidChange: ((WindowLayout) -> Void)?
     public private(set) var previewSkin: PlayerUISkinPreview
     public private(set) var isCompact = false
 
@@ -54,6 +55,7 @@ public final class PlayerUIWindowController: NSObject {
     private var lastPlayerOrigin: NSPoint?
     private var connectedModules: Set<PlayerModule> = [.player, .playlist]
     private var visibleModules: Set<PlayerModule> = [.player, .playlist]
+    private var uiScale: Double = 1
 
     public init(previewSkin: PlayerUISkinPreview = .graphite, playback: PlaybackSnapshot = PlaybackSnapshot(), queue: QueueSnapshot = QueueSnapshot(), snapDistance: CGFloat = 10) {
         self.previewSkin = previewSkin; self.model = PlayerUIStateModel(playback: playback, queue: queue); self.snapDistance = snapDistance
@@ -83,6 +85,19 @@ public final class PlayerUIWindowController: NSObject {
     public func setPlaylistFilter(_ text: String) {
         model.filterText = text
         windows[.playlist]?.contentViewController = PlaylistViewController(theme: theme, model: model, actions: actions)
+    }
+
+    public func revealPlayingTrack() {
+        guard model.playback.currentEntryID != nil else { return }
+        setPlaylistFilter("")
+        setModule(.playlist, visible: true)
+        (windows[.playlist]?.contentViewController as? PlaylistViewController)?.revealPlaying()
+    }
+
+    public func focusPlaylistSearch() {
+        setModule(.playlist, visible: true)
+        windows[.playlist]?.makeKeyAndOrderFront(nil)
+        (windows[.playlist]?.contentViewController as? PlaylistViewController)?.focusSearch()
     }
 
     public func applySkin(_ skin: ResolvedSkin) {
@@ -126,6 +141,7 @@ public final class PlayerUIWindowController: NSObject {
         }
         if visible { visibleModules.insert(module); window.makeKeyAndOrderFront(nil) }
         else { visibleModules.remove(module); window.orderOut(nil) }
+        notifyLayoutChanged()
     }
 
     public func toggleCompactMode() { setCompactMode(!isCompact) }
@@ -134,16 +150,18 @@ public final class PlayerUIWindowController: NSObject {
         guard compact != isCompact, let player = windows[.player] else { return }
         isCompact = compact
         let oldTop = player.frame.maxY
-        let size = compact ? Self.compactPlayerSize : Self.defaultPlayerSize
+        let baseSize = compact ? Self.compactPlayerSize : Self.defaultPlayerSize
+        let size = NSSize(width: baseSize.width * uiScale, height: baseSize.height * uiScale)
         let secondaryDelta = player.frame.height - size.height
         isApplyingLayout = true
+        player.contentViewController = compact ? CompactPlayerViewController(theme: theme, model: model, actions: actions) : PlayerViewController(theme: theme, model: model, actions: actions)
         player.setFrame(NSRect(x: player.frame.minX, y: oldTop - size.height, width: size.width, height: size.height), display: true)
         for module in connectedModules where module != .player {
             guard let window = windows[module] else { continue }
             window.setFrameOrigin(NSPoint(x: window.frame.minX, y: window.frame.minY + secondaryDelta))
         }
-        player.contentViewController = compact ? CompactPlayerViewController(theme: theme, model: model, actions: actions) : PlayerViewController(theme: theme, model: model, actions: actions)
         isApplyingLayout = false
+        notifyLayoutChanged()
     }
 
     public func applyPreviewSkin(_ skin: PlayerUISkinPreview) {
@@ -167,10 +185,69 @@ public final class PlayerUIWindowController: NSObject {
         windows[.equalizer]?.orderOut(nil); visibleModules = [.player, .playlist]
         connectedModules = [.player, .equalizer, .playlist]; lastPlayerOrigin = playerFrame.origin
         isApplyingLayout = false
+        uiScale = 1
+        notifyLayoutChanged()
+    }
+
+    /// Restores only frames that can be recovered onto an attached display. Invalid
+    /// or empty layouts fall back to the normal stacked layout.
+    public func applyLayout(_ layout: WindowLayout) {
+        guard !layout.modules.isEmpty, layout.scale.isFinite, (0.75...2).contains(layout.scale) else {
+            resetLayout()
+            return
+        }
+        isApplyingLayout = true
+        uiScale = layout.scale
+        visibleModules.removeAll()
+        connectedModules.removeAll()
+        isCompact = layout.isCompact
+        windows[.player]?.contentViewController = isCompact
+            ? CompactPlayerViewController(theme: theme, model: model, actions: actions)
+            : PlayerViewController(theme: theme, model: model, actions: actions)
+        let grouped = Dictionary(grouping: layout.modules.compactMap(\.groupID), by: { $0 })
+        let connectedGroup = grouped.max(by: { $0.value.count < $1.value.count })?.key
+        for saved in layout.modules {
+            guard let window = windows[saved.module], saved.frame.width.isFinite, saved.frame.height.isFinite,
+                  saved.frame.x.isFinite, saved.frame.y.isFinite, saved.frame.width >= 100, saved.frame.height >= 36 else { continue }
+            let proposed = NSRect(x: saved.frame.x, y: saved.frame.y, width: saved.frame.width, height: saved.frame.height)
+            window.setFrame(recover(proposed), display: true)
+            if saved.isVisible { visibleModules.insert(saved.module) }
+            if saved.groupID == connectedGroup { connectedModules.insert(saved.module) }
+        }
+        visibleModules.insert(.player)
+        connectedModules.insert(.player)
+        for (module, window) in windows {
+            if visibleModules.contains(module) { window.orderFront(nil) } else { window.orderOut(nil) }
+        }
+        lastPlayerOrigin = windows[.player]?.frame.origin
+        isApplyingLayout = false
+        notifyLayoutChanged()
+    }
+
+    public func setScale(_ scale: Double) {
+        guard [1.0, 1.25, 1.5].contains(scale), scale != uiScale else { return }
+        let ratio = scale / uiScale
+        isApplyingLayout = true
+        let anchorX = windows[.player]?.frame.minX ?? 0
+        let anchorY = windows[.player]?.frame.maxY ?? 0
+        for (module, window) in windows {
+            let old = window.frame
+            let newSize = NSSize(width: old.width * ratio, height: old.height * ratio)
+            let newTop = anchorY + (old.maxY - anchorY) * ratio
+            let newX = anchorX + (old.minX - anchorX) * ratio
+            window.minSize = module == .playlist
+                ? NSSize(width: Self.defaultPlaylistSize.width * scale, height: 180 * scale)
+                : newSize
+            window.setFrame(recover(NSRect(x: newX, y: newTop - newSize.height, width: newSize.width, height: newSize.height)), display: true)
+        }
+        uiScale = scale
+        lastPlayerOrigin = windows[.player]?.frame.origin
+        isApplyingLayout = false
+        notifyLayoutChanged()
     }
 
     public func currentLayout() -> WindowLayout {
-        WindowLayout(scale: 1, isCompact: isCompact, modules: PlayerModule.allCases.compactMap { module in
+        WindowLayout(scale: uiScale, isCompact: isCompact, modules: PlayerModule.allCases.compactMap { module in
             guard let window = windows[module] else { return nil }
             return ModuleLayout(module: module, frame: WindowRect(x: window.frame.minX, y: window.frame.minY, width: window.frame.width, height: window.frame.height), isVisible: visibleModules.contains(module), groupID: connectedModules.contains(module) ? Self.previewGroupID : nil)
         })
@@ -183,6 +260,25 @@ public final class PlayerUIWindowController: NSObject {
         PlayerUIActions(send: { [weak self] in self?.dispatch($0) }, compact: { [weak self] in self?.toggleCompactMode() }, showEqualizer: { [weak self] in self?.setModule(.equalizer, visible: true) }, showPlaylist: { [weak self] in self?.setModule(.playlist, visible: true) }, importFiles: { [weak self] replace in self?.openFiles(replacingQueue: replace) }, receiveFiles: { [weak self] urls, replace in self?.receiveFiles(urls, replacingQueue: replace) }, search: { [weak self] in self?.setPlaylistFilter($0) })
     }
     private func shouldShow(_ module: PlayerModule) -> Bool { visibleModules.contains(module) }
+
+    private func recover(_ frame: NSRect) -> NSRect {
+        let screens = NSScreen.screens.map(\.visibleFrame)
+        guard let visible = screens.first(where: { $0.intersects(frame) }) ?? NSScreen.main?.visibleFrame ?? screens.first else { return frame }
+        let width = min(frame.width, visible.width)
+        let height = min(frame.height, visible.height)
+        return NSRect(
+            x: min(max(frame.minX, visible.minX), visible.maxX - width),
+            y: min(max(frame.minY, visible.minY), visible.maxY - height),
+            width: width,
+            height: height
+        )
+    }
+
+    private func notifyLayoutChanged() {
+        guard !isApplyingLayout else { return }
+        layoutDidChange?(currentLayout())
+    }
+
 
     private func createWindows() {
         windows[.player] = makeWindow(module: .player, size: Self.defaultPlayerSize, resizable: false)
@@ -220,10 +316,12 @@ public final class PlayerUIWindowController: NSObject {
     fileprivate func windowDidMove(_ window: NSWindow) {
         guard !isApplyingLayout, let module = module(for: window) else { return }
         if module == .player { moveConnectedWindows(with: window) } else { snapSecondaryWindow(module, window: window) }
+        notifyLayoutChanged()
     }
     fileprivate func windowShouldClose(_ window: NSWindow) -> Bool {
         guard let module = module(for: window) else { return true }
         if module == .player { hideAll() } else { visibleModules.remove(module); window.orderOut(nil) }
+        notifyLayoutChanged()
         return false
     }
     private func module(for window: NSWindow) -> PlayerModule? { windows.first(where: { $0.value === window })?.key }

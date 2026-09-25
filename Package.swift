@@ -15,11 +15,16 @@ let package = Package(
         .library(name: "ChuckAmpPlayerUI", targets: ["PlayerUI"]),
         .library(name: "ChuckAmpMacIntegration", targets: ["MacIntegration"]),
     ],
+    dependencies: [
+        .package(url: "https://github.com/weichsel/ZIPFoundation.git", exact: "0.9.19"),
+    ],
     targets: [
         .target(name: "Contracts", path: "Packages/ChuckAmpKit/Sources/Contracts"),
         .target(
             name: "Audio",
-            dependencies: ["Contracts"],
+            dependencies: [
+                "Contracts",
+            ],
             path: "Packages/ChuckAmpKit/Sources/Audio"
         ),
         .target(
@@ -29,7 +34,10 @@ let package = Package(
         ),
         .target(
             name: "Skins",
-            dependencies: ["Contracts"],
+            dependencies: [
+                "Contracts",
+                .product(name: "ZIPFoundation", package: "ZIPFoundation"),
+            ],
             path: "Packages/ChuckAmpKit/Sources/Skins"
         ),
         .target(
@@ -79,7 +87,11 @@ let package = Package(
         ),
         .testTarget(
             name: "SkinsTests",
-            dependencies: ["Contracts", "Skins"],
+            dependencies: [
+                "Contracts",
+                "Skins",
+                .product(name: "ZIPFoundation", package: "ZIPFoundation"),
+            ],
             path: "Packages/ChuckAmpKit/Tests/SkinsTests"
         ),
         .testTarget(
