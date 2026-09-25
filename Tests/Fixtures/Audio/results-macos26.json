@@ -1,0 +1,23 @@
+{
+  "environment": {
+    "architecture": "arm64",
+    "macOS": "26.5.2 (25F84)",
+    "xcode": "26.2 (17C52)",
+    "swift": "6.2.3"
+  },
+  "formats": [
+    {"fixture":"tone-44k-stereo.wav","codec":"lpcm","decodedFrames":88200,"decode":"pass","seek":"pass"},
+    {"fixture":"tone-44k.flac","codec":"flac","decodedFrames":88200,"decode":"pass","seek":"pass"},
+    {"fixture":"tone-aac.m4a","codec":"aac ","decodedFrames":88200,"encoderDelayFrames":1024,"trailingPaddingFrames":888,"decode":"pass","seek":"pass"},
+    {"fixture":"tone-vbr-id3v23.mp3","codec":".mp3","decodedFrames":88200,"encoderDelayFrames":576,"trailingPaddingFrames":1080,"decode":"pass","seek":"pass"},
+    {"fixture":"tone-cbr-id3v24.mp3","codec":".mp3","decodedFrames":88200,"encoderDelayFrames":576,"trailingPaddingFrames":1080,"decode":"pass","seek":"pass"},
+    {"fixture":"tone-vbr-10m.mp3","codec":".mp3","decodedFrames":26460000,"durationSeconds":600,"seekFrame":26437950,"seek":"pass"}
+  ],
+  "boundaries": [
+    {"pair":"boundary WAV","expectedFrames":88200,"renderedFrames":88200,"boundarySampleDelta":0.005554199,"result":"pass"},
+    {"pair":"boundary MP3","expectedFrames":88200,"renderedFrames":88200,"boundarySampleDelta":0.0054016113,"result":"pass"}
+  ],
+  "equalizer": {"requestedGainDB":12,"measuredGainDB":11.990494,"result":"pass"},
+  "output": {"sampleRate":48000,"channelCount":2,"engineStarted":true,"deviceChange":"not-run"},
+  "productionEngine": {"boundedBuffersPerTrack":6,"framesPerBuffer":4096,"singleTrackAAC":"ended","singleTrackFLAC":"ended","twoTrackMP3Transition":true,"rapidCommandFailureEvents":0,"typedCorruptFailure":"pass","peakLimiter":"enabled"}
+}

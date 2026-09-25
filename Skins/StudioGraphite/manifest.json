@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "studio-graphite",
+  "name": "Studio Graphite",
+  "author": "ChuckAmp Project",
+  "version": "1.0.0",
+  "license": "Original artwork; distributed with ChuckAmp",
+  "colors": {
+    "color.window.background": "#1B1B1B",
+    "color.display.background": "#262626",
+    "color.text.primary": "#FFD157",
+    "color.text.secondary": "#C2C2C2",
+    "color.accent": "#FF8F1F",
+    "color.border": "#575757"
+  },
+  "fonts": {
+    "font.track": "system-rounded",
+    "font.technical": "system-monospaced",
+    "font.controls": "system"
+  },
+  "assets": {
+    "asset.window.frame": "art/frame.svg",
+    "asset.transport.play": "art/play.svg",
+    "asset.transport.pause": "art/pause.svg"
+  }
+}

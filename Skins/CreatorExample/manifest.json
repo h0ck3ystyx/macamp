@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "your-name.example",
+  "name": "Your Example Skin",
+  "author": "Your Name",
+  "version": "0.1.0",
+  "license": "Choose a license before sharing",
+  "colors": {
+    "color.window.background": "#28213A",
+    "color.display.background": "#171221",
+    "color.text.primary": "#F5E9FF",
+    "color.text.secondary": "#BEB2CD",
+    "color.accent": "#6EE7C7",
+    "color.border": "#695C7B"
+  },
+  "fonts": {
+    "font.track": "system-rounded",
+    "font.technical": "system-monospaced",
+    "font.controls": "system"
+  },
+  "assets": {
+    "asset.window.frame": "art/frame.svg",
+    "asset.transport.play": "art/play.svg",
+    "asset.transport.pause": "art/pause.svg"
+  }
+}

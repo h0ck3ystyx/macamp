@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "paper",
+  "name": "Paper",
+  "author": "ChuckAmp Project",
+  "version": "1.0.0",
+  "license": "Original artwork; distributed with ChuckAmp",
+  "colors": {
+    "color.window.background": "#EDE8DD",
+    "color.display.background": "#FBF8F0",
+    "color.text.primary": "#1F292E",
+    "color.text.secondary": "#4C5252",
+    "color.accent": "#0A6E7A",
+    "color.border": "#948C7D"
+  },
+  "fonts": {
+    "font.track": "system",
+    "font.technical": "system-monospaced",
+    "font.controls": "system-rounded"
+  },
+  "assets": {
+    "asset.window.frame": "art/frame.svg",
+    "asset.transport.play": "art/play.svg",
+    "asset.transport.pause": "art/pause.svg"
+  }
+}
