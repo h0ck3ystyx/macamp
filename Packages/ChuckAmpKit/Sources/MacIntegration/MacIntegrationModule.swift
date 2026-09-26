@@ -132,6 +132,12 @@ public actor ProductionPlaybackCoordinator: PlaybackCoordinator {
         await queue.snapshot()
     }
 
+    public func clearQueue() async {
+        let entryIDs = await queue.snapshot().entries.map(\.id)
+        guard !entryIDs.isEmpty else { return }
+        await mutateQueue(.remove(entryIDs))
+    }
+
     @discardableResult
     public func undoLastQueueMutation() async -> Bool {
         guard await queue.undoLastMutation() else { return false }

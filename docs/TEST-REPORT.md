@@ -1,13 +1,13 @@
 # ChuckAmp MVP candidate test report
 
-Date: September 25, 2026  
+Date: September 26, 2026
 Host: Apple silicon Mac mini, 16 GB  
 OS/toolchain: macOS 26.5.2, Xcode 26.2, Swift 6.2.3  
 Artifact: `build/ChuckAmp.app`, ad-hoc signed local candidate
 
 ## Automated results
 
-- `./scripts/test.sh`: 76 passed, 0 failed; 5 AudioComponent-host cases intentionally skipped in the parallel Swift Testing host and covered by the serial probes below.
+- `./scripts/test.sh`: 78 passed, 0 failed; 5 AudioComponent-host cases intentionally skipped in the parallel Swift Testing host and covered by the serial probes below.
 - 10,000-entry data measurement in the debug test: playlist parse and missing reporting 0.159 seconds; queue append plus search 0.037 seconds; combined under 0.25 seconds.
 - `./scripts/package-app.sh`: release build succeeded and produced `build/ChuckAmp.app`.
 - `codesign --verify --deep --strict --verbose=2 build/ChuckAmp.app`: valid on disk and satisfies its designated requirement.
@@ -32,8 +32,13 @@ Expanded frame and boundary results are in `Tests/Fixtures/Audio/results-macos26
 - Portable playlists cover M3U/M3U8 import/export, PLS import, relative paths, duplicate order, UTF-8/Latin-1 handling, missing files, and unsupported remote entries.
 - Session tests cover schema 1→2 migration, atomic backup recovery, queue policy restoration, and paused relaunch semantics.
 - Skin tests cover preview/install/export/remove, creator and accent round trips, traversal, symlink, duplicate, corrupt image, file-count, compressed/expanded-byte, image-dimension, and decoded-memory rejection.
-- Coordinator and UI tests cover Undo, partial-import notices, presentation persistence, layout recovery, scale/compact restoration, accessibility labels, queue state distinctions, and command routing.
+- Coordinator and UI tests cover Undo, clearing the queue, partial-import notices, presentation persistence, layout recovery, scale/compact restoration, accessibility labels, queue state distinctions, and command routing.
+- File-access tests cover strict sandbox authorization and the readable-path recovery used when an ad-hoc development rebuild invalidates an older scoped bookmark.
+
+## Interactive smoke result
+
+With the Mac unlocked, the rebuilt app restored the existing nine-item queue. Playing the selected fixture advanced into a previously saved MP3 from Downloads, confirming that the old invalidated bookmark recovered through readable local access. The playlist displayed its new accessible `CLR` control, and playback was stopped normally afterward.
 
 ## Not run
 
-The Mac was locked during final visual automation, so the post-integration menu and layout smoke check was not rerun. The accepted prototype UI had already been visually exercised before this wave. macOS 14 codec behavior, VoiceOver, multi-display/Spaces behavior, removable-volume reauthorization, physical device disconnect/sleep-wake, long-run CPU/memory, five-participant usability, Developer ID signing, and notarization require environments, hardware, participants, or credentials not available in this run.
+macOS 14 codec behavior, a complete VoiceOver audit, multi-display/Spaces behavior, removable-volume reauthorization, physical device disconnect/sleep-wake, long-run CPU/memory, five-participant usability, Developer ID signing, and notarization require environments, hardware, participants, or credentials not available in this run.

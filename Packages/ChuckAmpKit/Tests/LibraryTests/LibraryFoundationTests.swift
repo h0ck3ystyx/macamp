@@ -149,6 +149,27 @@ import Testing
     }
 }
 
+@Test func invalidScopedBookmarkFallsBackToReadablePathForLocalBuild() async throws {
+    enum FixtureError: Error { case invalidBookmark }
+    let file = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    try Data([1, 2, 3]).write(to: file)
+    defer { try? FileManager.default.removeItem(at: file) }
+    let service = SecurityScopedFileAccessService(
+        bookmarkCreator: { _ in Data([1]) },
+        bookmarkResolver: { _ in throw FixtureError.invalidBookmark },
+        allowsDirectFileAccessFallback: true
+    )
+    let track = TrackReference(lastKnownURL: file, securityScopedBookmark: Data([1]))
+
+    switch try await service.resolve(track) {
+    case .needsReauthorization:
+        Issue.record("A readable local file should survive an invalidated development bookmark")
+    case .granted(let lease):
+        #expect(lease.url == file)
+        await lease.release()
+    }
+}
+
 @Test func sessionStoreFallsBackAfterInterruptedOrCorruptPrimaryWrite() async throws {
     let directory = try temporaryDirectory()
     defer { try? FileManager.default.removeItem(at: directory) }

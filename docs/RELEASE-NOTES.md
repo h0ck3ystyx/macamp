@@ -4,6 +4,8 @@ This build expands the accepted prototype into an MVP candidate with the full te
 
 New user-facing features include the Terminal skin, saved accent variations, `.chuckskin` import/export/remove, creator-starter export, M3U/M3U8 import/export, PLS import, named playlists, playlist Undo/search/reveal, Locate/Reauthorize, EQ presets with limiter indication, Finder document handling, and 100/125/150 percent interface scales.
 
+The September 26 maintenance update fixes restored local files reporting that authorization was required after an ad-hoc development rebuild. It also adds Clear Playlist to the Edit menu and a `CLR` playlist control; clearing is persisted and can be undone.
+
 Known limits:
 
 - ADTS AAC and independently encoded Vorbis pairs do not receive a gapless guarantee because their fixtures do not expose reliable end trimming.

@@ -4,7 +4,7 @@ Statuses: `planned`, `in progress`, `pass`, `fail`, `blocked`, `not run`. Eviden
 
 | ID | Requirement | Owner | Prototype gate | MVP gate | Status | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| FOUND-01 | Reproducible unsigned build, tests, app bundle | T0/T10 | yes | yes | pass | 2026-09-25: debug/release builds, 76 tests, ad-hoc signed `build/ChuckAmp.app`; signature/plist verified |
+| FOUND-01 | Reproducible unsigned build, tests, app bundle | T0/T10 | yes | yes | pass | 2026-09-26: debug/release builds, 78 tests, ad-hoc signed `build/ChuckAmp.app`; signature/plist verified |
 | FOUND-02 | Shared contracts and concurrency/ownership rules | T0 | yes | yes | pass | 2026-09-25: Swift 6 contracts compiled; `docs/CONTRACTS.md` records ownership and invariants |
 | AUD-01 | Transport and required codec/container matrix | T1/T4/T8 | subset | full | pass | Serial bounded decode passed PCM/AIFF, FLAC, ALAC, AAC-LC, HE-AAC M4A/ADTS, MP3, Vorbis, and Opus on macOS 26 |
 | AUD-02 | Gapless supported album playback | T1/T4/T8 | lossless + MP3 proof | full fixtures | pass | Clean matched-rate FLAC/ALAC/AAC-LC/HE-AAC/MP3/Opus boundaries; ADTS/Vorbis/mixed-rate limits documented |
@@ -17,7 +17,7 @@ Statuses: `planned`, `in progress`, `pass`, `fail`, `blocked`, `not run`. Eviden
 | LIST-02 | M3U/M3U8 import/export and PLS import | T9 | no | yes | pass | 22 Library tests cover ordering, relative paths, encoding, remote/missing reporting, and export round trips |
 | LIST-03 | Queue and named playlists stay distinct | T9 | no | yes | pass | Atomic named-playlist catalog and UI menu; independence/Undo persistence test passes |
 | LIST-04 | Atomic state persistence and recovery | T2/T7/T9 | core | full | pass | Atomic primary/backup tests; packaged app persists session paused |
-| LIST-05 | Persistent authorized access and reauthorization | T2/T9 | core | full | pass | Bookmark lease/stale-access tests; real NSOpenPanel app smoke |
+| LIST-05 | Persistent authorized access and reauthorization | T2/T9 | core | full | pass | Bookmark lease/stale-access tests plus restored playback smoke with bookmarks invalidated by an ad-hoc rebuild |
 | LIST-06 | Responsive 10,000-entry playlist | T5/T9 | no | yes | pass | Debug measurement: parse 0.159 s plus actor append/search 0.037 s |
 | UI-01 | Player, EQ, playlist modules and compact mode | T3/T5 | yes | yes | pass | Packaged app visually verified in all four surfaces |
 | UI-02 | Snapping, grouping, detach, hide/close, reset layout | T3/T5 | yes | full displays/Spaces | pass | Geometry/tests and app menu; full display/Spaces matrix remains MVP |

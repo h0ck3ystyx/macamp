@@ -22,26 +22,54 @@ public actor SecurityScopedFileAccessService: FileAccessService {
 
     private let bookmarkCreator: BookmarkCreator
     private let bookmarkResolver: BookmarkResolver
+    private let allowsDirectFileAccessFallback: Bool
+    private let requiresAcquiredSecurityScope: Bool
 
     public init() {
-        self.bookmarkCreator = { url in
-            try url.bookmarkData(options: [.withSecurityScope], includingResourceValuesForKeys: nil, relativeTo: nil)
-        }
-        self.bookmarkResolver = { data in
-            var stale = false
-            let url = try URL(
-                resolvingBookmarkData: data,
-                options: [.withSecurityScope, .withoutUI],
-                relativeTo: nil,
-                bookmarkDataIsStale: &stale
-            )
-            return BookmarkResolution(url: url, isStale: stale)
+        let isSandboxed = ProcessInfo.processInfo.environment["APP_SANDBOX_CONTAINER_ID"] != nil
+        allowsDirectFileAccessFallback = !isSandboxed
+        requiresAcquiredSecurityScope = isSandboxed
+        if isSandboxed {
+            bookmarkCreator = { url in
+                try url.bookmarkData(options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess], includingResourceValuesForKeys: nil, relativeTo: nil)
+            }
+            bookmarkResolver = { data in
+                var stale = false
+                let url = try URL(
+                    resolvingBookmarkData: data,
+                    options: [.withSecurityScope, .withoutUI],
+                    relativeTo: nil,
+                    bookmarkDataIsStale: &stale
+                )
+                return BookmarkResolution(url: url, isStale: stale)
+            }
+        } else {
+            bookmarkCreator = { url in
+                try url.bookmarkData(options: [.minimalBookmark], includingResourceValuesForKeys: nil, relativeTo: nil)
+            }
+            bookmarkResolver = { data in
+                var stale = false
+                let url = try URL(
+                    resolvingBookmarkData: data,
+                    options: [],
+                    relativeTo: nil,
+                    bookmarkDataIsStale: &stale
+                )
+                return BookmarkResolution(url: url, isStale: stale)
+            }
         }
     }
 
-    public init(bookmarkCreator: @escaping BookmarkCreator, bookmarkResolver: @escaping BookmarkResolver) {
+    public init(
+        bookmarkCreator: @escaping BookmarkCreator,
+        bookmarkResolver: @escaping BookmarkResolver,
+        allowsDirectFileAccessFallback: Bool = false,
+        requiresAcquiredSecurityScope: Bool = false
+    ) {
         self.bookmarkCreator = bookmarkCreator
         self.bookmarkResolver = bookmarkResolver
+        self.allowsDirectFileAccessFallback = allowsDirectFileAccessFallback
+        self.requiresAcquiredSecurityScope = requiresAcquiredSecurityScope
     }
 
     public func bookmark(for url: URL) throws -> Data {
@@ -57,23 +85,33 @@ public actor SecurityScopedFileAccessService: FileAccessService {
 
     public func resolve(_ track: TrackReference) throws -> FileAccessResolution {
         guard let bookmark = track.securityScopedBookmark else {
-            guard FileManager.default.fileExists(atPath: track.lastKnownURL.path) else {
-                return .needsReauthorization(lastKnownURL: track.lastKnownURL)
-            }
-            let acquired = track.lastKnownURL.startAccessingSecurityScopedResource()
-            return .granted(SecurityScopedFileLease(url: track.lastKnownURL, didAcquireScope: acquired))
+            return directResolution(for: track.lastKnownURL)
         }
 
         do {
             let resolution = try bookmarkResolver(bookmark)
-            guard !resolution.isStale, FileManager.default.fileExists(atPath: resolution.url.path) else {
-                return .needsReauthorization(lastKnownURL: resolution.url)
+            guard !resolution.isStale else {
+                return directResolution(for: resolution.url)
             }
             let acquired = resolution.url.startAccessingSecurityScopedResource()
+            guard acquired || !requiresAcquiredSecurityScope || allowsDirectAccess(to: resolution.url) else {
+                return .needsReauthorization(lastKnownURL: resolution.url)
+            }
             return .granted(SecurityScopedFileLease(url: resolution.url, didAcquireScope: acquired))
         } catch {
-            return .needsReauthorization(lastKnownURL: track.lastKnownURL)
+            return directResolution(for: track.lastKnownURL)
         }
+    }
+
+    private func directResolution(for url: URL) -> FileAccessResolution {
+        guard allowsDirectAccess(to: url) else {
+            return .needsReauthorization(lastKnownURL: url)
+        }
+        return .granted(SecurityScopedFileLease(url: url, didAcquireScope: false))
+    }
+
+    private func allowsDirectAccess(to url: URL) -> Bool {
+        allowsDirectFileAccessFallback && FileManager.default.isReadableFile(atPath: url.path)
     }
 
     public func reauthorize(_ track: TrackReference, at url: URL) throws -> TrackReference {

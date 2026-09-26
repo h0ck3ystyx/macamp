@@ -68,6 +68,7 @@ final class ChuckAmpApplicationDelegate: NSObject, NSApplicationDelegate {
     @objc private func usePaperSkin() { loadBundledSkin(.paper) }
     @objc private func useTerminalSkin() { loadBundledSkin(.terminal) }
     @objc private func undoQueueMutation() { Task { _ = await coordinator?.undoLastQueueMutation() } }
+    @objc private func clearPlaylist() { Task { await coordinator?.clearQueue() } }
     @objc private func focusPlaylistSearch() { playerWindows?.focusPlaylistSearch() }
     @objc private func revealPlayingTrack() { playerWindows?.revealPlayingTrack() }
     @objc private func scale100() { playerWindows?.setScale(1) }
@@ -414,6 +415,8 @@ final class ChuckAmpApplicationDelegate: NSObject, NSApplicationDelegate {
         let editMenu = NSMenu(title: "Edit")
         let undoItem = editMenu.addItem(withTitle: "Undo Playlist Change", action: #selector(undoQueueMutation), keyEquivalent: "z")
         undoItem.target = self
+        let clearItem = editMenu.addItem(withTitle: "Clear Playlist", action: #selector(clearPlaylist), keyEquivalent: "")
+        clearItem.target = self
         editMenu.addItem(.separator())
         let findItem = editMenu.addItem(withTitle: "Find in Playlist", action: #selector(focusPlaylistSearch), keyEquivalent: "f")
         findItem.target = self

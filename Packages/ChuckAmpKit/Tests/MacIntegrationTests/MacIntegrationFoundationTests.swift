@@ -138,6 +138,35 @@ import Testing
     #expect(notice.contains("missing-song.mp3"))
 }
 
+@Test func clearQueueStopsPlaybackPersistsEmptyStateAndCanUndo() async throws {
+    let tracks = makeTracks(2)
+    let entries = tracks.map { QueueEntry(trackID: $0.id) }
+    let queue = ProductionQueueStore(snapshot: QueueSnapshot(
+        entries: entries,
+        tracks: Dictionary(uniqueKeysWithValues: tracks.map { ($0.id, $0) }),
+        selectedEntryID: entries[0].id
+    ))
+    let engine = CoordinatorEngine()
+    let sessions = MemorySessions()
+    let coordinator = ProductionPlaybackCoordinator(
+        queue: queue,
+        importer: EmptyImporter(),
+        access: GrantedAccess(),
+        engine: engine,
+        sessions: sessions,
+        decoderFactory: { _ in SilenceDecoder() }
+    )
+    await coordinator.send(.play)
+
+    await coordinator.clearQueue()
+
+    #expect(await coordinator.queueSnapshot().entries.isEmpty)
+    #expect(await sessions.saved?.queue.isEmpty == true)
+    #expect(await engine.stopped.count == 1)
+    #expect(await coordinator.undoLastQueueMutation())
+    #expect(await coordinator.queueSnapshot().entries == entries)
+}
+
 private func makeTracks(_ count: Int) -> [TrackReference] {
     (0..<count).map { TrackReference(lastKnownURL: URL(fileURLWithPath: "/tmp/coordinator-\($0).wav"), metadata: .loaded(TrackMetadata(duration: 60))) }
 }
@@ -189,6 +218,7 @@ private actor CoordinatorEngine: AudioEngineClient {
     var next: AudioTrackPreparation?
     var preparedEntries: [QueueEntryID] = []
     var played: [PlaybackGeneration] = []
+    var stopped: [PlaybackGeneration] = []
 
     init() {
         let stream = AsyncStream.makeStream(of: AudioEngineEvent.self)
@@ -201,7 +231,7 @@ private actor CoordinatorEngine: AudioEngineClient {
     func updateNext(_ next: AudioTrackPreparation?) async throws { self.next = next }
     func play(generation: PlaybackGeneration) async throws { played.append(generation) }
     func pause(generation: PlaybackGeneration) async {}
-    func stop(generation: PlaybackGeneration) async {}
+    func stop(generation: PlaybackGeneration) async { stopped.append(generation) }
     func seek(to time: TimeInterval, generation: PlaybackGeneration) async throws {}
     func setVolume(_ volume: Double) async {}
     func setEqualizer(_ settings: EQSettings) async {}
