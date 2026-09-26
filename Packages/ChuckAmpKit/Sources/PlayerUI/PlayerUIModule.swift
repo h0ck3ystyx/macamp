@@ -75,16 +75,16 @@ public final class PlayerUIWindowController: NSObject {
         (windows[.player]?.contentViewController as? PlayerViewController)?.update(model)
         (windows[.player]?.contentViewController as? CompactPlayerViewController)?.update(model)
         if oldModel.playback.equalizer != playback.equalizer {
-            windows[.equalizer]?.contentViewController = EqualizerViewController(theme: theme, model: model, actions: actions)
+            replaceContentController(EqualizerViewController(theme: theme, model: model, actions: actions), for: .equalizer)
         }
         if oldModel.queue != queue {
-            windows[.playlist]?.contentViewController = PlaylistViewController(theme: theme, model: model, actions: actions)
+            replaceContentController(PlaylistViewController(theme: theme, model: model, actions: actions), for: .playlist)
         }
     }
 
     public func setPlaylistFilter(_ text: String) {
         model.filterText = text
-        windows[.playlist]?.contentViewController = PlaylistViewController(theme: theme, model: model, actions: actions)
+        replaceContentController(PlaylistViewController(theme: theme, model: model, actions: actions), for: .playlist)
     }
 
     public func revealPlayingTrack() {
@@ -288,9 +288,21 @@ public final class PlayerUIWindowController: NSObject {
     }
 
     private func refreshContent() {
-        windows[.player]?.contentViewController = isCompact ? CompactPlayerViewController(theme: theme, model: model, actions: actions) : PlayerViewController(theme: theme, model: model, actions: actions)
-        windows[.equalizer]?.contentViewController = EqualizerViewController(theme: theme, model: model, actions: actions)
-        windows[.playlist]?.contentViewController = PlaylistViewController(theme: theme, model: model, actions: actions)
+        replaceContentController(isCompact ? CompactPlayerViewController(theme: theme, model: model, actions: actions) : PlayerViewController(theme: theme, model: model, actions: actions), for: .player)
+        replaceContentController(EqualizerViewController(theme: theme, model: model, actions: actions), for: .equalizer)
+        replaceContentController(PlaylistViewController(theme: theme, model: model, actions: actions), for: .playlist)
+    }
+
+    /// AppKit may resize a window to a replacement controller's fitting size. Queue,
+    /// EQ, search, and skin refreshes must retain the user's window geometry.
+    private func replaceContentController(_ controller: NSViewController, for module: PlayerModule) {
+        guard let window = windows[module] else { return }
+        let frame = window.frame
+        let wasApplyingLayout = isApplyingLayout
+        isApplyingLayout = true
+        window.contentViewController = controller
+        if window.frame != frame { window.setFrame(frame, display: true) }
+        isApplyingLayout = wasApplyingLayout
     }
 
     private func makeWindow(module: PlayerModule, size: NSSize, resizable: Bool) -> NSWindow {

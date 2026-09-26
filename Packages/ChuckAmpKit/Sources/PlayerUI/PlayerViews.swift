@@ -65,9 +65,23 @@ class ThemedViewController: NSViewController {
         label.textColor = color ?? theme.text; label.lineBreakMode = .byTruncatingTail; return label
     }
     func button(_ title: String, label: String, image: NSImage? = nil, action: @escaping () -> Void) -> NSButton {
-        let button = ActionButton(title: title, action: action); button.bezelStyle = .texturedRounded
+        let button = ActionButton(title: title, action: action)
+        button.isBordered = false
+        button.wantsLayer = true
+        button.layer?.backgroundColor = theme.panel.cgColor
+        button.layer?.borderColor = theme.border.cgColor
+        button.layer?.borderWidth = 1
+        button.layer?.cornerRadius = 5
+        button.contentTintColor = theme.accent
+        styleButtonTitle(button, title: title)
         if let image { button.image = image; button.imagePosition = .imageOnly; button.imageScaling = .scaleProportionallyDown }
         button.font = theme.controlFont; button.setAccessibilityLabel(label); button.toolTip = label; return button
+    }
+    func styleButtonTitle(_ button: NSButton?, title: String) {
+        button?.attributedTitle = NSAttributedString(
+            string: title,
+            attributes: [.foregroundColor: theme.text, .font: theme.controlFont]
+        )
     }
 }
 
@@ -135,7 +149,9 @@ final class PlayerViewController: ThemedViewController {
         statusLabel?.stringValue = [model.statusText, model.technicalText].compactMap { $0 }.joined(separator: " · ")
         statusLabel?.textColor = model.playback.state.isFailure ? .systemRed : theme.secondaryText
         progressSlider?.maxValue = max(model.playback.duration ?? 1, 1); progressSlider?.doubleValue = model.playback.position; progressSlider?.isEnabled = model.playback.duration != nil
-        volumeSlider?.doubleValue = model.playback.volume; playButton?.title = model.playback.state.isPlaying ? "Ⅱ" : "▶︎"; playButton?.image = theme.images[model.playback.state.isPlaying ? .pause : .play]
+        volumeSlider?.doubleValue = model.playback.volume
+        styleButtonTitle(playButton, title: model.playback.state.isPlaying ? "Ⅱ" : "▶︎")
+        playButton?.image = theme.images[model.playback.state.isPlaying ? .pause : .play]
     }
     private static func clock(_ seconds: TimeInterval) -> String { String(format: "%02d:%02d", Int(seconds) / 60, Int(seconds) % 60) }
 }
@@ -188,7 +204,9 @@ final class CompactPlayerViewController: ThemedViewController {
         NSLayoutConstraint.activate([row.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 5), row.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -5), row.topAnchor.constraint(equalTo: view.topAnchor, constant: 4), row.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -4)])
     }
     func update(_ model: PlayerUIStateModel) {
-        self.model = model; playButton?.title = model.playback.state.isPlaying ? "Ⅱ" : "▶︎"; playButton?.image = theme.images[model.playback.state.isPlaying ? .pause : .play]
+        self.model = model
+        styleButtonTitle(playButton, title: model.playback.state.isPlaying ? "Ⅱ" : "▶︎")
+        playButton?.image = theme.images[model.playback.state.isPlaying ? .pause : .play]
         titleLabel?.stringValue = "\(model.artist) — \(model.title)"; titleLabel?.setAccessibilityLabel("Now playing, \(model.title) by \(model.artist)")
         elapsedLabel?.stringValue = String(format: "%02d:%02d", Int(model.playback.position) / 60, Int(model.playback.position) % 60)
     }

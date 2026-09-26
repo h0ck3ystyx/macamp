@@ -6,6 +6,8 @@ New user-facing features include the Terminal skin, saved accent variations, `.c
 
 The September 26 maintenance update fixes restored local files reporting that authorization was required after an ad-hoc development rebuild. It also adds Clear Playlist to the Edit menu and a `CLR` playlist control; clearing is persisted and can be undone.
 
+The same update preserves user-resized window frames when queue selection, search, EQ state, or skin changes refresh a module. Studio Graphite buttons now use explicit skin foreground, background, accent, and border colors so every control remains visible regardless of the macOS appearance.
+
 Known limits:
 
 - ADTS AAC and independently encoded Vorbis pairs do not receive a gapless guarantee because their fixtures do not expose reliable end trimming.

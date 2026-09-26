@@ -60,6 +60,27 @@ import Testing
     #expect(expandedPlayer?.height == 200)
 }
 
+@MainActor @Test func playlistRefreshKeepsUserResizedFrame() throws {
+    let controller = PlayerUIWindowController()
+    var layout = controller.currentLayout()
+    let playlistIndex = try #require(layout.modules.firstIndex(where: { $0.module == .playlist }))
+    layout.modules[playlistIndex].frame.width += 180
+    layout.modules[playlistIndex].frame.height += 140
+    controller.applyLayout(layout)
+    let expandedFrame = try #require(controller.currentLayout().modules.first(where: { $0.module == .playlist })?.frame)
+
+    let track = TrackReference(lastKnownURL: URL(fileURLWithPath: "/music/selection.mp3"))
+    let entry = QueueEntry(trackID: track.id)
+    var queue = QueueSnapshot(entries: [entry], tracks: [track.id: track])
+    controller.update(playback: PlaybackSnapshot(), queue: queue)
+    queue.selectedEntryID = entry.id
+    controller.update(playback: PlaybackSnapshot(), queue: queue)
+
+    #expect(controller.currentLayout().modules.first(where: { $0.module == .playlist })?.frame == expandedFrame)
+    controller.applyPreviewSkin(.paper)
+    #expect(controller.currentLayout().modules.first(where: { $0.module == .playlist })?.frame == expandedFrame)
+}
+
 @Test func presentationDistinguishesSelectedPlayingAndUnavailableRows() {
     let playingTrack = TrackID(); let missingTrack = TrackID()
     let playing = QueueEntry(trackID: playingTrack); let missing = QueueEntry(trackID: missingTrack)
@@ -122,6 +143,18 @@ import Testing
     #expect(labels.contains("Stop"))
     #expect(labels.contains("Next track"))
     #expect(labels.contains("Open audio"))
+}
+
+@MainActor @Test func graphiteButtonsHaveExplicitVisibleStyling() throws {
+    let noOp = PlayerUIActions(send: { _ in }, compact: {}, showEqualizer: {}, showPlaylist: {}, importFiles: { _ in }, receiveFiles: { _, _ in }, search: { _ in })
+    let controller = PlayerViewController(theme: PlayerUITheme(.graphite), model: PlayerUIStateModel(), actions: noOp)
+    _ = controller.view
+    let buttons = allSubviews(of: controller.view).compactMap { $0 as? NSButton }
+    let open = try #require(buttons.first(where: { $0.accessibilityLabel() == "Open audio" }))
+    #expect(!open.isBordered)
+    #expect(open.layer?.backgroundColor != nil)
+    #expect(open.layer?.borderColor != nil)
+    #expect(open.attributedTitle.attribute(.foregroundColor, at: 0, effectiveRange: nil) is NSColor)
 }
 
 @MainActor private func allSubviews(of view: NSView) -> [NSView] {
