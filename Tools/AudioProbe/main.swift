@@ -144,7 +144,7 @@ struct AudioProbe {
 
     private static func engineStress(_ url: URL) async throws {
         let decoder = try NativeAudioDecoder(url: url)
-        let engine = NativeAudioEngineClient(framesPerBuffer: 1_024, maximumScheduledBuffers: 3)
+        let engine = NativeAudioEngineClient(framesPerBuffer: 1_024, maximumScheduledBuffers: 3, targetBufferDuration: 0)
         let entryID = QueueEntryID()
         let first = PlaybackGeneration(rawValue: 10)
         let sought = PlaybackGeneration(rawValue: 11)

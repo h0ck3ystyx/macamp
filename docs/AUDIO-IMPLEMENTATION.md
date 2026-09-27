@@ -17,7 +17,7 @@ The engine accepts decoder existentials and does not own security-scoped access 
 
 ## Scheduling and memory bounds
 
-The default decode block is 4,096 frames and each track may retain at most six scheduled buffers. Stereo Float32 therefore uses 192 KiB of scheduled PCM per track, plus small framework overhead. Current and next use approximately 384 KiB of explicitly managed scheduled PCM at the default settings. Decode resumes only after a playback completion returns a buffer slot.
+The production buffering policy targets 250 ms per decoded block and retains at most sixteen scheduled buffers per track, giving current and prefetched tracks four seconds of coverage at their own sample rates. It keeps a 4,096-frame minimum and caps blocks at 65,536 frames. Stereo Float32 uses about 1.35 MiB per track at 44.1 kHz and 5.86 MiB per track at 192 kHz; current plus next remain below 12 MiB at 192 kHz. Decode resumes after a playback completion returns a buffer slot. Stress probes can explicitly disable duration scaling and use tiny queues to exercise refill and cancellation behavior.
 
 Current and next use separate `AVAudioPlayerNode` lanes connected to the same engine clock. The next lane receives an absolute host start time derived from the current decoded frame length. Replacing next stops and flushes only its lane; current playback is not restarted. On natural completion, the matching next token is promoted and a generation-tagged transition event is emitted.
 

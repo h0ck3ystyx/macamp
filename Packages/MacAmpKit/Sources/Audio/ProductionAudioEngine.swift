@@ -28,6 +28,22 @@ public struct OutputProtectionStatus: Codable, Equatable, Sendable {
     public let ceilingDBFS: Double
 }
 
+struct PlaybackBufferingPolicy: Equatable, Sendable {
+    let minimumFramesPerBuffer: Int
+    let maximumScheduledBuffers: Int
+    let targetBufferDuration: TimeInterval
+
+    func framesPerBuffer(sampleRate: Double) -> Int {
+        guard targetBufferDuration > 0, sampleRate.isFinite, sampleRate > 0 else { return minimumFramesPerBuffer }
+        let durationFrames = Int(ceil(sampleRate * targetBufferDuration))
+        return min(65_536, max(minimumFramesPerBuffer, durationFrames))
+    }
+
+    func queuedDuration(sampleRate: Double) -> TimeInterval {
+        Double(framesPerBuffer(sampleRate: sampleRate) * maximumScheduledBuffers) / sampleRate
+    }
+}
+
 /// Native, bounded-buffer implementation of the frozen AudioEngineClient contract.
 /// All graph mutation is serialized by this actor; completion callbacks only enqueue
 /// actor work and never decode, allocate UI objects, or persist state.
@@ -72,8 +88,7 @@ public actor NativeAudioEngineClient: AudioEngineClient {
         componentFlagsMask: 0
     ))
     private let observerBag = ObserverBag()
-    private let framesPerBuffer: Int
-    private let maximumScheduledBuffers: Int
+    private let bufferingPolicy: PlaybackBufferingPolicy
 
     private var current: TrackState?
     private var next: TrackState?
@@ -83,14 +98,22 @@ public actor NativeAudioEngineClient: AudioEngineClient {
     private var equalizerSettings = EQSettings()
     private var graphReady = false
 
-    public init(framesPerBuffer: Int = 4_096, maximumScheduledBuffers: Int = 6) {
+    public init(
+        framesPerBuffer: Int = 4_096,
+        maximumScheduledBuffers: Int = 16,
+        targetBufferDuration: TimeInterval = 0.25
+    ) {
         precondition((256...65_536).contains(framesPerBuffer))
         precondition((2...32).contains(maximumScheduledBuffers))
+        precondition(targetBufferDuration.isFinite && (0...1).contains(targetBufferDuration))
         let stream = AsyncStream.makeStream(of: AudioEngineEvent.self, bufferingPolicy: .bufferingNewest(256))
         self.events = stream.stream
         self.continuation = stream.continuation
-        self.framesPerBuffer = framesPerBuffer
-        self.maximumScheduledBuffers = maximumScheduledBuffers
+        self.bufferingPolicy = PlaybackBufferingPolicy(
+            minimumFramesPerBuffer: framesPerBuffer,
+            maximumScheduledBuffers: maximumScheduledBuffers,
+            targetBufferDuration: targetBufferDuration
+        )
 
         for (index, frequency) in EQSettings.frequencies.enumerated() {
             equalizer.bands[index].filterType = .parametric
@@ -339,7 +362,8 @@ public actor NativeAudioEngineClient: AudioEngineClient {
             }
         }
 
-        while state.scheduledBuffers < maximumScheduledBuffers, !state.reachedEnd {
+        let framesPerBuffer = bufferingPolicy.framesPerBuffer(sampleRate: state.format.sampleRate)
+        while state.scheduledBuffers < bufferingPolicy.maximumScheduledBuffers, !state.reachedEnd {
             let chunk: PCMChunk
             do { chunk = try await state.preparation.decoder.read(maxFrames: framesPerBuffer) }
             catch {

@@ -1,4 +1,4 @@
-import Audio
+@testable import Audio
 import Contracts
 import Foundation
 import Testing
@@ -64,6 +64,14 @@ import Testing
     }
 }
 
+@Test func bufferingPolicyKeepsHighRateAudioAheadOfPlayback() {
+    let policy = PlaybackBufferingPolicy(minimumFramesPerBuffer: 4_096, maximumScheduledBuffers: 16, targetBufferDuration: 0.25)
+    #expect(policy.framesPerBuffer(sampleRate: 44_100) == 11_025)
+    #expect(policy.framesPerBuffer(sampleRate: 192_000) == 48_000)
+    #expect(policy.queuedDuration(sampleRate: 44_100) == 4)
+    #expect(policy.queuedDuration(sampleRate: 192_000) == 4)
+}
+
 @Test func contentInspectionRejectsAnExtensionThatContradictsThePayload() throws {
     let wave = try makeWave(frameCount: 128, sampleRate: 44_100)
     let disguised = wave.deletingPathExtension().appendingPathExtension("mp3")
@@ -117,7 +125,7 @@ func productionEngineBoundsPrefetchAndRejectsStaleCommands() async throws {
     let decoder = RecordingDecoder(frameCount: 100_000)
     let entry = QueueEntryID()
     let generation = PlaybackGeneration(rawValue: 8)
-    let engine = NativeAudioEngineClient(framesPerBuffer: 1_024, maximumScheduledBuffers: 3)
+    let engine = NativeAudioEngineClient(framesPerBuffer: 1_024, maximumScheduledBuffers: 3, targetBufferDuration: 0)
     var events = engine.events.makeAsyncIterator()
     try await engine.prepare(
         current: AudioTrackPreparation(entryID: entry, generation: generation, decoder: decoder),
@@ -134,7 +142,7 @@ func productionEngineBoundsPrefetchAndRejectsStaleCommands() async throws {
 func productionEngineSeekInvalidatesBufferedWorkAndUsesNewGeneration() async throws {
     let decoder = RecordingDecoder(frameCount: 96_000)
     let entry = QueueEntryID()
-    let engine = NativeAudioEngineClient(framesPerBuffer: 2_048, maximumScheduledBuffers: 2)
+    let engine = NativeAudioEngineClient(framesPerBuffer: 2_048, maximumScheduledBuffers: 2, targetBufferDuration: 0)
     let initial = PlaybackGeneration(rawValue: 1)
     let sought = PlaybackGeneration(rawValue: 2)
     var events = engine.events.makeAsyncIterator()
@@ -151,7 +159,7 @@ func replacingNextCancelsItsBoundedPrefetchWithoutReadingFurther() async throws 
     let discarded = RecordingDecoder(frameCount: 480_000)
     let replacement = RecordingDecoder(frameCount: 480_000)
     let generation = PlaybackGeneration(rawValue: 4)
-    let engine = NativeAudioEngineClient(framesPerBuffer: 1_024, maximumScheduledBuffers: 2)
+    let engine = NativeAudioEngineClient(framesPerBuffer: 1_024, maximumScheduledBuffers: 2, targetBufferDuration: 0)
     try await engine.prepare(
         current: AudioTrackPreparation(entryID: QueueEntryID(), generation: generation, decoder: current),
         next: AudioTrackPreparation(entryID: QueueEntryID(), generation: generation, decoder: discarded)
