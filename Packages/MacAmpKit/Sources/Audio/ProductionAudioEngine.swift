@@ -3,6 +3,7 @@
 import AudioToolbox
 import Contracts
 import Foundation
+import OSLog
 
 public enum EqualizerPreset: String, Codable, CaseIterable, Sendable {
     case flat, rock, pop, jazz, classical, bassBoost
@@ -63,6 +64,7 @@ public actor NativeAudioEngineClient: AudioEngineClient {
         var reachedEnd = false
         var baseFrame: Int64 = 0
         var playedFrames: Int64 = 0
+        var hasReportedLowWater = false
     }
 
     private final class ObserverBag: @unchecked Sendable {
@@ -75,6 +77,7 @@ public actor NativeAudioEngineClient: AudioEngineClient {
     }
 
     private let continuation: AsyncStream<AudioEngineEvent>.Continuation
+    private static let bufferLog = Logger(subsystem: "com.macamp.app", category: "AudioBuffer")
     private let engine = AVAudioEngine()
     private let playerA = AVAudioPlayerNode()
     private let playerB = AVAudioPlayerNode()
@@ -100,7 +103,7 @@ public actor NativeAudioEngineClient: AudioEngineClient {
 
     public init(
         framesPerBuffer: Int = 4_096,
-        maximumScheduledBuffers: Int = 16,
+        maximumScheduledBuffers: Int = 32,
         targetBufferDuration: TimeInterval = 0.25
     ) {
         precondition((256...65_536).contains(framesPerBuffer))
@@ -137,6 +140,7 @@ public actor NativeAudioEngineClient: AudioEngineClient {
         try validate(format)
         try configure(lane: .a, for: format)
         current = TrackState(preparation: preparation, format: format, lane: .a, token: UUID())
+        logBufferPlan(for: preparation, format: format, role: "current")
         try await fillCurrent()
 
         if let nextPreparation {
@@ -304,6 +308,7 @@ public actor NativeAudioEngineClient: AudioEngineClient {
         try validate(format)
         try configure(lane: lane, for: format)
         next = TrackState(preparation: preparation, format: format, lane: lane, token: UUID())
+        logBufferPlan(for: preparation, format: format, role: "prefetch")
         try await fillNext()
     }
 
@@ -365,13 +370,25 @@ public actor NativeAudioEngineClient: AudioEngineClient {
         let framesPerBuffer = bufferingPolicy.framesPerBuffer(sampleRate: state.format.sampleRate)
         while state.scheduledBuffers < bufferingPolicy.maximumScheduledBuffers, !state.reachedEnd {
             let chunk: PCMChunk
+            let readStarted = ProcessInfo.processInfo.systemUptime
             do { chunk = try await state.preparation.decoder.read(maxFrames: framesPerBuffer) }
             catch {
                 assign(state, to: location)
                 yieldFailure(error, generation: state.preparation.generation)
                 throw error
             }
-            guard stateFor(location)?.token == token else { return }
+            let readDuration = ProcessInfo.processInfo.systemUptime - readStarted
+            if readDuration >= max(0.1, bufferingPolicy.targetBufferDuration) {
+                Self.bufferLog.warning(
+                    "Slow decode/read entry=\(state.preparation.entryID.rawValue.uuidString, privacy: .public) codec=\(state.format.codec, privacy: .public) rate=\(state.format.sampleRate, format: .fixed(precision: 0)) frames=\(framesPerBuffer) elapsed=\(readDuration, format: .fixed(precision: 3))s"
+                )
+            }
+            // Decoder reads cross an actor boundary. Buffer completions can run
+            // while the read is suspended, so refresh the shared counters before
+            // scheduling the new block instead of overwriting those completions
+            // with the pre-read snapshot.
+            guard let refreshed = stateFor(location), refreshed.token == token else { return }
+            state = refreshed
             if chunk.frameCount == 0 {
                 state.reachedEnd = true
                 assign(state, to: location)
@@ -381,6 +398,7 @@ public actor NativeAudioEngineClient: AudioEngineClient {
             let buffer = try makeBuffer(chunk: chunk, format: state.format)
             state.scheduledBuffers += 1
             state.reachedEnd = chunk.isEndOfStream
+            if state.scheduledBuffers >= 4 { state.hasReportedLowWater = false }
             assign(state, to: location)
             node(for: state.lane).scheduleBuffer(buffer, completionCallbackType: .dataPlayedBack) { [weak self] _ in
                 Task { await self?.bufferCompleted(token: token, frames: chunk.frameCount, wasEnd: chunk.isEndOfStream) }
@@ -392,6 +410,7 @@ public actor NativeAudioEngineClient: AudioEngineClient {
         if var state = current, state.token == token {
             state.scheduledBuffers = max(0, state.scheduledBuffers - 1)
             state.playedFrames += Int64(frames)
+            logLowWaterIfNeeded(&state, wasEnd: wasEnd)
             current = state
             if wasEnd { finishCurrent(state) }
             else { try? await fillCurrent() }
@@ -403,6 +422,35 @@ public actor NativeAudioEngineClient: AudioEngineClient {
             next = state
             if wasEnd, current?.token != token { return }
             try? await fillNext()
+        }
+    }
+
+    private func logBufferPlan(for preparation: AudioTrackPreparation, format: AudioFormatDescription, role: String) {
+        let frames = bufferingPolicy.framesPerBuffer(sampleRate: format.sampleRate)
+        let seconds = bufferingPolicy.queuedDuration(sampleRate: format.sampleRate)
+        Self.bufferLog.info(
+            "Buffer plan role=\(role, privacy: .public) entry=\(preparation.entryID.rawValue.uuidString, privacy: .public) codec=\(format.codec, privacy: .public) rate=\(format.sampleRate, format: .fixed(precision: 0)) framesPerBuffer=\(frames) buffers=\(self.bufferingPolicy.maximumScheduledBuffers) coverage=\(seconds, format: .fixed(precision: 2))s"
+        )
+    }
+
+    private func logLowWaterIfNeeded(_ state: inout TrackState, wasEnd: Bool) {
+        guard isPlaying, !wasEnd, !state.reachedEnd, state.scheduledBuffers <= 2 else { return }
+        let frames = bufferingPolicy.framesPerBuffer(sampleRate: state.format.sampleRate)
+        let remaining = Double(state.scheduledBuffers * frames) / state.format.sampleRate
+        let entryID = state.preparation.entryID.rawValue.uuidString
+        let codec = state.format.codec
+        let sampleRate = state.format.sampleRate
+        let scheduledBuffers = state.scheduledBuffers
+        if state.scheduledBuffers == 0 {
+            Self.bufferLog.error(
+                "Buffer underrun entry=\(entryID, privacy: .public) codec=\(codec, privacy: .public) rate=\(sampleRate, format: .fixed(precision: 0))"
+            )
+            state.hasReportedLowWater = true
+        } else if !state.hasReportedLowWater {
+            Self.bufferLog.warning(
+                "Buffer low water entry=\(entryID, privacy: .public) queuedBuffers=\(scheduledBuffers) remaining=\(remaining, format: .fixed(precision: 3))s"
+            )
+            state.hasReportedLowWater = true
         }
     }
 

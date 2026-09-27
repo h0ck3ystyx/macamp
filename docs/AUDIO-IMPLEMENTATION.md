@@ -17,7 +17,9 @@ The engine accepts decoder existentials and does not own security-scoped access 
 
 ## Scheduling and memory bounds
 
-The production buffering policy targets 250 ms per decoded block and retains at most sixteen scheduled buffers per track, giving current and prefetched tracks four seconds of coverage at their own sample rates. It keeps a 4,096-frame minimum and caps blocks at 65,536 frames. Stereo Float32 uses about 1.35 MiB per track at 44.1 kHz and 5.86 MiB per track at 192 kHz; current plus next remain below 12 MiB at 192 kHz. Decode resumes after a playback completion returns a buffer slot. Stress probes can explicitly disable duration scaling and use tiny queues to exercise refill and cancellation behavior.
+The production buffering policy targets 250 ms per decoded block and retains at most thirty-two scheduled buffers per track, giving current and prefetched tracks eight seconds of coverage at their own sample rates. It keeps a 4,096-frame minimum and caps blocks at 65,536 frames. Stereo Float32 uses about 2.69 MiB per track at 44.1 kHz and 11.72 MiB per track at 192 kHz; current plus next remain below 24 MiB at 192 kHz. Decode resumes after a playback completion returns a buffer slot. Stress probes can explicitly disable duration scaling and use tiny queues to exercise refill and cancellation behavior.
+
+The `com.macamp.app` / `AudioBuffer` unified-log category records each track's buffer plan. Reads taking at least the target block duration emit a slow-read warning. An active track falling to two queued buffers emits a rate-limited low-water warning, and reaching zero before end-of-stream emits an underrun error. See `docs/AUDIO-TROUBLESHOOTING.md` for capture commands.
 
 Current and next use separate `AVAudioPlayerNode` lanes connected to the same engine clock. The next lane receives an absolute host start time derived from the current decoded frame length. Replacing next stops and flushes only its lane; current playback is not restarted. On natural completion, the matching next token is promoted and a generation-tagged transition event is emitted.
 

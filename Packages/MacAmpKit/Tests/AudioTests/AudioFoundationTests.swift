@@ -65,11 +65,11 @@ import Testing
 }
 
 @Test func bufferingPolicyKeepsHighRateAudioAheadOfPlayback() {
-    let policy = PlaybackBufferingPolicy(minimumFramesPerBuffer: 4_096, maximumScheduledBuffers: 16, targetBufferDuration: 0.25)
+    let policy = PlaybackBufferingPolicy(minimumFramesPerBuffer: 4_096, maximumScheduledBuffers: 32, targetBufferDuration: 0.25)
     #expect(policy.framesPerBuffer(sampleRate: 44_100) == 11_025)
     #expect(policy.framesPerBuffer(sampleRate: 192_000) == 48_000)
-    #expect(policy.queuedDuration(sampleRate: 44_100) == 4)
-    #expect(policy.queuedDuration(sampleRate: 192_000) == 4)
+    #expect(policy.queuedDuration(sampleRate: 44_100) == 8)
+    #expect(policy.queuedDuration(sampleRate: 192_000) == 8)
 }
 
 @Test func contentInspectionRejectsAnExtensionThatContradictsThePayload() throws {
