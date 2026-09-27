@@ -1,5 +1,6 @@
 @preconcurrency import AVFoundation
 import AudioToolbox
+import CFLACDecoder
 import Contracts
 import Foundation
 
@@ -47,14 +48,47 @@ private final class ExtAudioFileHandle: @unchecked Sendable {
     deinit { ExtAudioFileDispose(raw) }
 }
 
+private final class FLACDecoderHandle: @unchecked Sendable {
+    let raw: OpaquePointer
+    init(_ raw: OpaquePointer) { self.raw = raw }
+    deinit { macamp_flac_close(raw) }
+}
+
 /// A bounded, seekable decoder backed by codecs exposed through AVFoundation.
 /// Multichannel input is rejected until the product has an explicit downmix policy.
 public actor NativeAudioDecoder: Decoder {
-    private let file: ExtAudioFileHandle
+    private enum Backend: @unchecked Sendable {
+        case system(ExtAudioFileHandle)
+        case flac(FLACDecoderHandle)
+    }
+
+    private let backend: Backend
     private let description: AudioFormatDescription
     private var currentFrame: Int64 = 0
 
     public init(url: URL) throws {
+        if try Self.hasFLACSignature(url: url) {
+            let opened = url.withUnsafeFileSystemRepresentation { path in
+                path.flatMap(macamp_flac_open)
+            }
+            guard let opened else { throw NativeAudioError.corruptFile("software FLAC decoder could not open the stream") }
+            let handle = FLACDecoderHandle(opened)
+            let channels = Int(macamp_flac_channels(handle.raw))
+            let sampleRate = Double(macamp_flac_sample_rate(handle.raw))
+            let frameCount = macamp_flac_total_frames(handle.raw)
+            guard (1...2).contains(channels) else { throw NativeAudioError.unsupportedChannelCount(channels) }
+            guard sampleRate > 0, frameCount <= UInt64(Int64.max) else {
+                throw NativeAudioError.corruptFile("FLAC stream has invalid format metadata")
+            }
+            self.backend = .flac(handle)
+            self.description = AudioFormatDescription(
+                codec: "flac",
+                sampleRate: sampleRate,
+                channelCount: channels,
+                frameCount: Int64(frameCount)
+            )
+            return
+        }
         if let streamCount = try Self.oggLogicalStreamCount(url: url), streamCount > 1 {
             throw NativeAudioError.unsupportedChainedStream(streamCount)
         }
@@ -80,7 +114,7 @@ public actor NativeAudioDecoder: Decoder {
         var clientFormat = requestedFormat.streamDescription.pointee
         try Self.check(ExtAudioFileSetProperty(handle.raw, kExtAudioFileProperty_ClientDataFormat, UInt32(MemoryLayout<AudioStreamBasicDescription>.size), &clientFormat), operation: "set Float32 client format")
         let trimming = Self.readPacketTable(url: url)
-        self.file = handle
+        self.backend = .system(handle)
         self.description = AudioFormatDescription(
             codec: Self.fourCC(sourceFormat.mFormatID),
             sampleRate: sourceFormat.mSampleRate,
@@ -95,7 +129,14 @@ public actor NativeAudioDecoder: Decoder {
 
     public func seek(toFrame frame: Int64) throws {
         guard frame >= 0, frame <= description.frameCount ?? 0 else { throw NativeAudioError.seekOutOfRange(frame) }
-        try Self.check(ExtAudioFileSeek(file.raw, frame), operation: "seek")
+        switch backend {
+        case .system(let file):
+            try Self.check(ExtAudioFileSeek(file.raw, frame), operation: "seek")
+        case .flac(let file):
+            guard macamp_flac_seek(file.raw, UInt64(frame)) != 0 else {
+                throw NativeAudioError.renderFailed("FLAC seek failed")
+            }
+        }
         currentFrame = frame
     }
 
@@ -108,22 +149,38 @@ public actor NativeAudioDecoder: Decoder {
         let requested = UInt32(min(Int64(maxFrames), length - currentFrame))
         let channels = description.channelCount
         var samples = [Float](repeating: 0, count: Int(requested) * channels)
-        var framesRead = requested
-        let status = samples.withUnsafeMutableBytes { bytes -> OSStatus in
-            var list = AudioBufferList(
-                mNumberBuffers: 1,
-                mBuffers: AudioBuffer(
-                    mNumberChannels: UInt32(channels),
-                    mDataByteSize: UInt32(bytes.count),
-                    mData: bytes.baseAddress
+        let framesRead: UInt32
+        switch backend {
+        case .system(let file):
+            var systemFramesRead = requested
+            let status = samples.withUnsafeMutableBytes { bytes -> OSStatus in
+                var list = AudioBufferList(
+                    mNumberBuffers: 1,
+                    mBuffers: AudioBuffer(
+                        mNumberChannels: UInt32(channels),
+                        mDataByteSize: UInt32(bytes.count),
+                        mData: bytes.baseAddress
+                    )
                 )
-            )
-            return ExtAudioFileRead(file.raw, &framesRead, &list)
+                return ExtAudioFileRead(file.raw, &systemFramesRead, &list)
+            }
+            try Self.check(status, operation: "decode")
+            framesRead = systemFramesRead
+        case .flac(let file):
+            let decoded = samples.withUnsafeMutableBufferPointer { buffer in
+                macamp_flac_read_f32(file.raw, UInt64(requested), buffer.baseAddress)
+            }
+            framesRead = UInt32(decoded)
         }
-        try Self.check(status, operation: "decode")
         samples.removeLast(samples.count - Int(framesRead) * channels)
         currentFrame += Int64(framesRead)
         return PCMChunk(interleavedSamples: samples, frameCount: Int(framesRead), isEndOfStream: currentFrame >= length || framesRead == 0)
+    }
+
+    private static func hasFLACSignature(url: URL) throws -> Bool {
+        let handle = try FileHandle(forReadingFrom: url)
+        defer { try? handle.close() }
+        return try handle.read(upToCount: 4) == Data([0x66, 0x4c, 0x61, 0x43])
     }
 
     public static func inspect(url: URL) throws -> NativeAudioInspection {

@@ -24,6 +24,30 @@ import Testing
     #expect(last.isEndOfStream)
 }
 
+@Test func flacFallbackDecodesAndSeeksWithoutCoreAudioConversion() async throws {
+    let url = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+        .appendingPathComponent("Tests/Fixtures/Audio/tone-44k.flac")
+    let decoder = try NativeAudioDecoder(url: url)
+    let format = await decoder.format
+    #expect(format.codec == "flac")
+    #expect(format.sampleRate == 44_100)
+    #expect(format.channelCount == 2)
+    #expect(format.frameCount == 88_200)
+    let first = try await decoder.read(maxFrames: 4_096)
+    #expect(first.frameCount == 4_096)
+    #expect(first.interleavedSamples.count == 8_192)
+    try await decoder.seek(toFrame: 87_500)
+    let last = try await decoder.read(maxFrames: 4_096)
+    #expect(last.frameCount == 700)
+    #expect(last.isEndOfStream)
+}
+
+@Test func flacFallbackRetainsMonoStereoPolicy() throws {
+    let url = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+        .appendingPathComponent("Tests/Fixtures/Audio/multichannel-5_1.flac")
+    #expect(throws: NativeAudioError.self) { try NativeAudioDecoder(url: url) }
+}
+
 @Test func rejectsOutOfRangeSeekAndUnboundedRead() async throws {
     let url = try makeWave(frameCount: 100, sampleRate: 44_100)
     defer { try? FileManager.default.removeItem(at: url) }

@@ -19,11 +19,17 @@ let package = Package(
         .package(url: "https://github.com/weichsel/ZIPFoundation.git", exact: "0.9.19"),
     ],
     targets: [
+        .target(
+            name: "CFLACDecoder",
+            path: "Packages/MacAmpKit/Sources/CFLACDecoder",
+            publicHeadersPath: "include"
+        ),
         .target(name: "Contracts", path: "Packages/MacAmpKit/Sources/Contracts"),
         .target(
             name: "Audio",
             dependencies: [
                 "Contracts",
+                "CFLACDecoder",
             ],
             path: "Packages/MacAmpKit/Sources/Audio"
         ),

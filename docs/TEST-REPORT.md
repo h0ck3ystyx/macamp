@@ -7,7 +7,7 @@ Artifact: `build/MacAmp.app`, ad-hoc signed local candidate
 
 ## Automated results
 
-- `./scripts/test.sh`: 91 passed, 0 failed; 5 AudioComponent-host cases intentionally skipped in the parallel Swift Testing host and covered by the serial probes below.
+- `./scripts/test.sh`: 93 passed, 0 failed; 5 AudioComponent-host cases intentionally skipped in the parallel Swift Testing host and covered by the serial probes below.
 - 10,000-entry data measurement in the debug test: playlist parse and missing reporting 0.159 seconds; queue append plus search 0.037 seconds; combined under 0.25 seconds.
 - `./scripts/package-app.sh`: release build succeeded and produced `build/MacAmp.app`.
 - `codesign --verify --deep --strict --verbose=2 build/MacAmp.app`: valid on disk and satisfies its designated requirement.
@@ -19,6 +19,7 @@ Artifact: `build/MacAmp.app`, ad-hoc signed local candidate
 The probes were run outside the command filesystem sandbox so macOS could load its codec and AudioComponent plug-ins.
 
 - Bounded decode passed for AAC-LC/M4A, 192 kHz 24-bit FLAC, 24-bit ALAC, HE-AAC/ADTS, Ogg Vorbis, and Ogg Opus.
+- September 27 regression: the current Core Audio build returned `fmt?` while configuring Float32 output for both bundled and user-library FLAC files. The pinned `dr_flac` path decoded the affected 25 MB, 8,773,160-frame library track completely in 2.88 seconds and restored bounded reads and seeks for 16/24-bit FLAC.
 - Production engine stress ended at generation 12 with zero failure events.
 - The tagged MP3 pair emitted a matching transition and end event.
 - Corrupt input produced a typed `corrupt` failure at generation 21.
@@ -47,6 +48,8 @@ The playlist was enlarged to 650 × 520 points. Selection, a one-result search, 
 After follow-up testing, the default stack was rebalanced at every scale to give the equalizer 40 additional content points while keeping the total stack height unchanged. Restored frames are clamped to the current module minimums so legacy undersized equalizer layouts recover automatically.
 
 The September 27 accessibility pass inspected the packaged app through the macOS AX tree. The player exposed dynamic Play/Pause, elapsed/total seek time, volume percent, and state-aware transport controls; the equalizer exposed preamp plus all ten bands with signed decibel values; the playlist exposed its search, table, and valid mutation controls. Space toggled Play/Pause with the seek slider focused and returned to the original state on the second press. The detailed release checklist is in `docs/ACCESSIBILITY-CHECKLIST.md`.
+
+The packaged FLAC-fallback build restored the saved external-volume queue and played `08 - Socialite` as `FLAC · 44.1 kHz · Stereo`. Its live position advanced from 00:09 to 00:12 during a three-second AX observation, after which playback stopped normally.
 
 ## Not run
 

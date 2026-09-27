@@ -19,7 +19,7 @@ Schedule current and next tracks on one `AVAudioPlayerNode` timeline using expli
 
 Use `AVAudioUnitEQ` for the ten-band equalizer. A focused 1 kHz test requested +12 dB and measured +11.990 dB in offline rendering, so the component provides the required audible processing. T4 still needs parameter smoothing, preamp, bypass, reset, headroom/protection, and response tests for all ten proposed bands.
 
-No runtime codec dependency is required on the tested macOS 26 machine. Native `ExtAudioFile` successfully decoded ALAC, AIFF, AAC-LC/HE-AAC in MPEG-4 and ADTS, high-rate 24-bit FLAC, float WAV, Ogg Vorbis, and Ogg Opus. Keep decoder adapters behind the same contract and repeat the matrix on macOS 14 before removing the fallback contingency. Add `libvorbisfile` or `libopusfile` only if that oldest-supported-OS run reveals a real native gap; the current evidence does not justify another shipped dependency.
+Native `ExtAudioFile` decodes ALAC, AIFF, AAC-LC/HE-AAC in MPEG-4 and ADTS, float WAV, Ogg Vorbis, and Ogg Opus. A later macOS 26 update began rejecting FLAC-to-Float32 client conversion with Core Audio `fmt?` (`1718449215`), including files that passed the original feasibility run. MacAmp therefore uses a pinned, bounded `dr_flac` adapter for FLAC and retains the shared decoder contract for every format. Repeat the full matrix on macOS 14; add other software codec adapters only if that run reveals a concrete native gap.
 
 ## Prototype format results
 
