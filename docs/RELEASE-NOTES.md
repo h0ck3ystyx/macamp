@@ -8,6 +8,8 @@ The September 26 maintenance update fixes restored local files reporting that au
 
 The same update preserves user-resized window frames when queue selection, search, EQ state, or skin changes refresh a module. Studio Graphite buttons now use explicit skin foreground, background, accent, and border colors so every control remains visible regardless of the macOS appearance.
 
+The stabilization pass makes interface scaling apply to typography, layout spacing, and control hit targets as well as window dimensions. Attached modules remain flush at every supported scale, Reset Layout is stable with long metadata, playlist resize events persist across relaunch, and closing the equalizer now closes the gap above the playlist.
+
 Known limits:
 
 - ADTS AAC and independently encoded Vorbis pairs do not receive a gapless guarantee because their fixtures do not expose reliable end trimming.

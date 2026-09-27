@@ -7,7 +7,7 @@ Artifact: `build/ChuckAmp.app`, ad-hoc signed local candidate
 
 ## Automated results
 
-- `./scripts/test.sh`: 80 passed, 0 failed; 5 AudioComponent-host cases intentionally skipped in the parallel Swift Testing host and covered by the serial probes below.
+- `./scripts/test.sh`: 83 passed, 0 failed; 5 AudioComponent-host cases intentionally skipped in the parallel Swift Testing host and covered by the serial probes below.
 - 10,000-entry data measurement in the debug test: playlist parse and missing reporting 0.159 seconds; queue append plus search 0.037 seconds; combined under 0.25 seconds.
 - `./scripts/package-app.sh`: release build succeeded and produced `build/ChuckAmp.app`.
 - `codesign --verify --deep --strict --verbose=2 build/ChuckAmp.app`: valid on disk and satisfies its designated requirement.
@@ -32,14 +32,16 @@ Expanded frame and boundary results are in `Tests/Fixtures/Audio/results-macos26
 - Portable playlists cover M3U/M3U8 import/export, PLS import, relative paths, duplicate order, UTF-8/Latin-1 handling, missing files, and unsupported remote entries.
 - Session tests cover schema 1→2 migration, atomic backup recovery, queue policy restoration, and paused relaunch semantics.
 - Skin tests cover preview/install/export/remove, creator and accent round trips, traversal, symlink, duplicate, corrupt image, file-count, compressed/expanded-byte, image-dimension, and decoded-memory rejection.
-- Coordinator and UI tests cover Undo, clearing the queue, partial-import notices, presentation persistence, layout recovery, resized-frame preservation, scale/compact restoration, explicit skin control styling, accessibility labels, queue state distinctions, and command routing.
+- Coordinator and UI tests cover Undo, clearing the queue, partial-import notices, presentation persistence, layout recovery, resized-frame preservation, scale/compact restoration, scaled typography, attached-window reflow, explicit skin control styling, accessibility labels, queue state distinctions, and command routing.
 - File-access tests cover strict sandbox authorization and the readable-path recovery used when an ad-hoc development rebuild invalidates an older scoped bookmark.
 
 ## Interactive smoke result
 
 With the Mac unlocked, the rebuilt app restored the existing nine-item queue. Playing the selected fixture advanced into a previously saved MP3 from Downloads, confirming that the old invalidated bookmark recovered through readable local access. The playlist displayed its new accessible `CLR` control, and playback was stopped normally afterward.
 
-The playlist was then enlarged to 600 × 500 points and a different track selected; it remained 600 × 500. A focused visual capture confirmed that Studio Graphite’s transport, utility, and playlist controls are visible against the dark skin.
+The live UI matrix exercised Studio Graphite, Paper, and Terminal at 100%, 125%, and 150%. Each skin retained identical module geometry at a given scale; controls, typography, and hit targets enlarged with the interface, and the three attached windows remained flush. Focused captures confirmed usable contrast for every skin, including Studio Graphite’s transport, utility, and playlist controls.
+
+The playlist was enlarged to 650 × 520 points. Selection, a one-result search, clearing the search, compact/expanded player transitions, and a quit/relaunch cycle all retained that exact size. Closing the equalizer through its title-bar close control moved the attached playlist up by the equalizer height; reopening it restored the three-window stack.
 
 ## Not run
 

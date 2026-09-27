@@ -4,7 +4,7 @@ Statuses: `planned`, `in progress`, `pass`, `fail`, `blocked`, `not run`. Eviden
 
 | ID | Requirement | Owner | Prototype gate | MVP gate | Status | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| FOUND-01 | Reproducible unsigned build, tests, app bundle | T0/T10 | yes | yes | pass | 2026-09-26: debug/release builds, 80 tests, ad-hoc signed `build/ChuckAmp.app`; signature/plist verified |
+| FOUND-01 | Reproducible unsigned build, tests, app bundle | T0/T10 | yes | yes | pass | 2026-09-26: debug/release builds, 83 tests, ad-hoc signed `build/ChuckAmp.app`; signature/plist verified |
 | FOUND-02 | Shared contracts and concurrency/ownership rules | T0 | yes | yes | pass | 2026-09-25: Swift 6 contracts compiled; `docs/CONTRACTS.md` records ownership and invariants |
 | AUD-01 | Transport and required codec/container matrix | T1/T4/T8 | subset | full | pass | Serial bounded decode passed PCM/AIFF, FLAC, ALAC, AAC-LC, HE-AAC M4A/ADTS, MP3, Vorbis, and Opus on macOS 26 |
 | AUD-02 | Gapless supported album playback | T1/T4/T8 | lossless + MP3 proof | full fixtures | pass | Clean matched-rate FLAC/ALAC/AAC-LC/HE-AAC/MP3/Opus boundaries; ADTS/Vorbis/mixed-rate limits documented |
@@ -20,7 +20,7 @@ Statuses: `planned`, `in progress`, `pass`, `fail`, `blocked`, `not run`. Eviden
 | LIST-05 | Persistent authorized access and reauthorization | T2/T9 | core | full | pass | Bookmark lease/stale-access tests plus restored playback smoke with bookmarks invalidated by an ad-hoc rebuild |
 | LIST-06 | Responsive 10,000-entry playlist | T5/T9 | no | yes | pass | Debug measurement: parse 0.159 s plus actor append/search 0.037 s |
 | UI-01 | Player, EQ, playlist modules and compact mode | T3/T5 | yes | yes | pass | Packaged app visually verified in all four surfaces |
-| UI-02 | Snapping, grouping, detach, hide/close, reset layout | T3/T5 | yes | full displays/Spaces | pass | Geometry/tests, app menu, and 600 × 500 selection-refresh smoke preserve window size; full display/Spaces matrix remains external |
+| UI-02 | Snapping, grouping, detach, hide/close, reset layout | T3/T5 | yes | full displays/Spaces | pass | Geometry tests and live 3-skin × 3-scale matrix; 650 × 520 playlist survives selection/search/compact/relaunch and equalizer close reflows the stack; full display/Spaces matrix remains external |
 | UI-03 | Open/add/drop/folder ordering and feedback | T2/T5 | yes | yes | pass | NSOpenPanel WAV smoke plus importer/UI tests |
 | UI-04 | Shuffle/repeat/previous/removal/filter semantics | T2/T5/T9 | core except filter/Undo | full | pass | Deterministic queue, filter, Undo, and named-playlist tests pass |
 | SKIN-01 | Public schema; import/preview/apply/export/remove | T6 | bundled apply | full | pass | Bundled skins and external `.chuckskin` preview/install/export/remove workflow pass package tests |

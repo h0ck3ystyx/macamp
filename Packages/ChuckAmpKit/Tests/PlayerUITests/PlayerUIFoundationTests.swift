@@ -26,13 +26,30 @@ import Testing
     #expect(PlayerUISkinPreview.allCases == [.graphite, .paper])
 }
 
+@Test func interfaceScaleEnlargesThemeTypography() {
+    let normal = PlayerUITheme(.graphite)
+    let enlarged = PlayerUITheme(.graphite, scale: 1.5)
+    #expect(enlarged.trackFont.pointSize == normal.trackFont.pointSize * 1.5)
+    #expect(enlarged.technicalFont.pointSize == normal.technicalFont.pointSize * 1.5)
+    #expect(enlarged.controlFont.pointSize == normal.controlFont.pointSize * 1.5)
+}
+
 @MainActor @Test func resetLayoutKeepsRequiredModulesRecoverable() {
-    let controller = PlayerUIWindowController()
+    let track = TrackReference(
+        lastKnownURL: URL(fileURLWithPath: "/music/long.mp3"),
+        metadata: .loaded(TrackMetadata(title: "A very long restored track title that must truncate instead of resizing the player window", artist: "An equally long artist name"))
+    )
+    let entry = QueueEntry(trackID: track.id)
+    let queue = QueueSnapshot(entries: [entry], tracks: [track.id: track], playingEntryID: entry.id)
+    let controller = PlayerUIWindowController(playback: PlaybackSnapshot(state: .paused, currentEntryID: entry.id), queue: queue)
     let layout = controller.currentLayout()
     #expect(layout.isCompact == false)
     #expect(layout.modules.first(where: { $0.module == .player })?.isVisible == true)
     #expect(layout.modules.first(where: { $0.module == .playlist })?.isVisible == true)
     #expect(layout.modules.first(where: { $0.module == .equalizer })?.isVisible == false)
+    #expect(layout.modules.first(where: { $0.module == .player })?.frame.width == 360)
+    #expect((layout.modules.first(where: { $0.module == .player })?.frame.height ?? 0) > 160)
+    #expect(layout.modules.first(where: { $0.module == .playlist })?.frame.width == 360)
 }
 
 @MainActor @Test func validLayoutRestoresScaleCompactModeAndVisibility() {
@@ -57,7 +74,7 @@ import Testing
     controller.setCompactMode(false)
     let expandedPlayer = controller.currentLayout().modules.first(where: { $0.module == .player })?.frame
     #expect(expandedPlayer?.width == 450)
-    #expect(expandedPlayer?.height == 200)
+    #expect((expandedPlayer?.height ?? 0) > 200)
 }
 
 @MainActor @Test func playlistRefreshKeepsUserResizedFrame() throws {
@@ -79,6 +96,37 @@ import Testing
     #expect(controller.currentLayout().modules.first(where: { $0.module == .playlist })?.frame == expandedFrame)
     controller.applyPreviewSkin(.paper)
     #expect(controller.currentLayout().modules.first(where: { $0.module == .playlist })?.frame == expandedFrame)
+}
+
+@Test func interfaceScaleReattachesConnectedFrames() throws {
+    let oldPlayer = NSRect(x: 100, y: 700, width: 360, height: 192)
+    let oldEqualizer = NSRect(x: 100, y: 508, width: 360, height: 192)
+    let newPlayer = NSRect(x: 100, y: 660, width: 450, height: 232)
+    let newEqualizer = try #require(WindowScaleGeometry.attachedFrame(
+        movingOld: oldEqualizer,
+        movingSize: NSSize(width: 450, height: 232),
+        anchorOld: oldPlayer,
+        anchorNew: newPlayer
+    ))
+    #expect(newEqualizer == NSRect(x: 100, y: 428, width: 450, height: 232))
+}
+
+@MainActor @Test func hidingEqualizerClosesGapInConnectedStack() throws {
+    let controller = PlayerUIWindowController()
+    controller.setModule(.equalizer, visible: true)
+    let shown = controller.currentLayout()
+    let shownPlayer = try #require(shown.modules.first(where: { $0.module == .player })?.frame)
+    let shownEqualizer = try #require(shown.modules.first(where: { $0.module == .equalizer })?.frame)
+    let shownPlaylist = try #require(shown.modules.first(where: { $0.module == .playlist })?.frame)
+    #expect(shownPlaylist.y + shownPlaylist.height == shownEqualizer.y)
+    #expect(shownEqualizer.y + shownEqualizer.height == shownPlayer.y)
+
+    controller.setModule(.equalizer, visible: false)
+    let hidden = controller.currentLayout()
+    let hiddenPlayer = try #require(hidden.modules.first(where: { $0.module == .player })?.frame)
+    let hiddenPlaylist = try #require(hidden.modules.first(where: { $0.module == .playlist })?.frame)
+    #expect(hiddenPlaylist.y + hiddenPlaylist.height == hiddenPlayer.y)
+    #expect(hidden.modules.first(where: { $0.module == .equalizer })?.isVisible == false)
 }
 
 @Test func presentationDistinguishesSelectedPlayingAndUnavailableRows() {
