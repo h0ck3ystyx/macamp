@@ -21,6 +21,8 @@ The default decode block is 4,096 frames and each track may retain at most six s
 
 Current and next use separate `AVAudioPlayerNode` lanes connected to the same engine clock. The next lane receives an absolute host start time derived from the current decoded frame length. Replacing next stops and flushes only its lane; current playback is not restarted. On natural completion, the matching next token is promoted and a generation-tagged transition event is emitted.
 
+Each player lane connects to the track mixer using the decoder's noninterleaved Float32 sample rate and channel count. The mixer converts that declared source format to the hardware output rate. A nil connection format incorrectly interpreted 192 kHz buffers at a 48 kHz device rate, producing 4× slow playback; explicit per-lane formats also allow adjacent tracks to use different rates.
+
 Every prepare, seek, next replacement, stop, and output reset changes the track token. Late buffer completions from old tokens are ignored. Generation checks reject stale transport and next-prefetch requests before they mutate active state.
 
 ## Position and transport

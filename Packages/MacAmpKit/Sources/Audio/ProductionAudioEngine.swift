@@ -112,6 +112,7 @@ public actor NativeAudioEngineClient: AudioEngineClient {
 
         let format = await preparation.decoder.format
         try validate(format)
+        try configure(lane: .a, for: format)
         current = TrackState(preparation: preparation, format: format, lane: .a, token: UUID())
         try await fillCurrent()
 
@@ -268,8 +269,6 @@ public actor NativeAudioEngineClient: AudioEngineClient {
         engine.attach(trackMixer)
         engine.attach(equalizer)
         engine.attach(peakLimiter)
-        engine.connect(playerA, to: trackMixer, format: nil)
-        engine.connect(playerB, to: trackMixer, format: nil)
         engine.connect(trackMixer, to: equalizer, format: nil)
         engine.connect(equalizer, to: peakLimiter, format: nil)
         engine.connect(peakLimiter, to: engine.mainMixerNode, format: nil)
@@ -280,8 +279,28 @@ public actor NativeAudioEngineClient: AudioEngineClient {
     private func installNext(_ preparation: AudioTrackPreparation, lane: Lane) async throws {
         let format = await preparation.decoder.format
         try validate(format)
+        try configure(lane: lane, for: format)
         next = TrackState(preparation: preparation, format: format, lane: lane, token: UUID())
         try await fillNext()
+    }
+
+    /// Each player lane must declare the decoder's PCM rate. Leaving the
+    /// connection format nil binds the lane to the hardware graph rate and
+    /// makes, for example, 192 kHz source frames run at 48 kHz (4× slow).
+    /// The mixer owns sample-rate conversion from this lane format to output.
+    private func configure(lane: Lane, for format: AudioFormatDescription) throws {
+        guard let audioFormat = AVAudioFormat(
+            commonFormat: .pcmFormatFloat32,
+            sampleRate: format.sampleRate,
+            channels: AVAudioChannelCount(format.channelCount),
+            interleaved: false
+        ) else {
+            throw PlaybackFailure(code: .unsupported, message: "Could not configure the source audio format")
+        }
+        let player = node(for: lane)
+        player.stop()
+        engine.disconnectNodeOutput(player)
+        engine.connect(player, to: trackMixer, format: audioFormat)
     }
 
     private func validate(_ format: AudioFormatDescription) throws {

@@ -20,6 +20,7 @@ The probes were run outside the command filesystem sandbox so macOS could load i
 
 - Bounded decode passed for AAC-LC/M4A, 192 kHz 24-bit FLAC, 24-bit ALAC, HE-AAC/ADTS, Ogg Vorbis, and Ogg Opus.
 - September 27 regression: the current Core Audio build returned `fmt?` while configuring Float32 output for both bundled and user-library FLAC files. The pinned `dr_flac` path decoded the affected 25 MB, 8,773,160-frame library track completely in 2.88 seconds and restored bounded reads and seeks for 16/24-bit FLAC.
+- Sample-rate timing regression: the one-second 192 kHz FLAC took 4.65 seconds when its player lane inherited a 48 kHz graph format. With explicit source-rate lane formats it took 1.52 seconds including engine startup; the two-second 44.1 kHz fixture took 2.27 seconds. Mixed 44.1→192 kHz and 192→44.1 kHz pairs both transitioned and ended in 3.24 seconds.
 - Production engine stress ended at generation 12 with zero failure events.
 - The tagged MP3 pair emitted a matching transition and end event.
 - Corrupt input produced a typed `corrupt` failure at generation 21.
