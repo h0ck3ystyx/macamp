@@ -433,7 +433,7 @@ extension PlayerUIWindowController {
         var mask: NSWindow.StyleMask = [.titled, .closable, .miniaturizable]
         if resizable { mask.insert(.resizable) }
         let window = NSWindow(contentRect: NSRect(origin: .zero, size: size), styleMask: mask, backing: .buffered, defer: false)
-        window.title = title(for: module); window.identifier = NSUserInterfaceItemIdentifier("ChuckAmp.\(module.rawValue)")
+        window.title = title(for: module); window.identifier = NSUserInterfaceItemIdentifier("MacAmp.\(module.rawValue)")
         window.titleVisibility = .visible; window.isMovableByWindowBackground = true
         window.tabbingMode = .disallowed; window.collectionBehavior = [.fullScreenAuxiliary]
         window.contentMinSize = module == .playlist ? NSSize(width: 360, height: 180) : size
@@ -442,7 +442,7 @@ extension PlayerUIWindowController {
     }
 
     private func title(for module: PlayerModule) -> String {
-        switch module { case .player: "ChuckAmp Player"; case .equalizer: "ChuckAmp Equalizer"; case .playlist: "ChuckAmp Playlist" }
+        switch module { case .player: "MacAmp Player"; case .equalizer: "MacAmp Equalizer"; case .playlist: "MacAmp Playlist" }
     }
 
     fileprivate func windowWillMove(_ window: NSWindow) {

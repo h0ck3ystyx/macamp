@@ -3,34 +3,34 @@
 import PackageDescription
 
 let package = Package(
-    name: "ChuckAmp",
+    name: "MacAmp",
     platforms: [.macOS(.v14)],
     products: [
-        .executable(name: "ChuckAmp", targets: ["ChuckAmpApp"]),
+        .executable(name: "MacAmp", targets: ["MacAmpApp"]),
         .executable(name: "AudioProbe", targets: ["AudioProbe"]),
-        .library(name: "ChuckAmpContracts", targets: ["Contracts"]),
-        .library(name: "ChuckAmpAudio", targets: ["Audio"]),
-        .library(name: "ChuckAmpLibrary", targets: ["Library"]),
-        .library(name: "ChuckAmpSkins", targets: ["Skins"]),
-        .library(name: "ChuckAmpPlayerUI", targets: ["PlayerUI"]),
-        .library(name: "ChuckAmpMacIntegration", targets: ["MacIntegration"]),
+        .library(name: "MacAmpContracts", targets: ["Contracts"]),
+        .library(name: "MacAmpAudio", targets: ["Audio"]),
+        .library(name: "MacAmpLibrary", targets: ["Library"]),
+        .library(name: "MacAmpSkins", targets: ["Skins"]),
+        .library(name: "MacAmpPlayerUI", targets: ["PlayerUI"]),
+        .library(name: "MacAmpMacIntegration", targets: ["MacIntegration"]),
     ],
     dependencies: [
         .package(url: "https://github.com/weichsel/ZIPFoundation.git", exact: "0.9.19"),
     ],
     targets: [
-        .target(name: "Contracts", path: "Packages/ChuckAmpKit/Sources/Contracts"),
+        .target(name: "Contracts", path: "Packages/MacAmpKit/Sources/Contracts"),
         .target(
             name: "Audio",
             dependencies: [
                 "Contracts",
             ],
-            path: "Packages/ChuckAmpKit/Sources/Audio"
+            path: "Packages/MacAmpKit/Sources/Audio"
         ),
         .target(
             name: "Library",
             dependencies: ["Contracts"],
-            path: "Packages/ChuckAmpKit/Sources/Library"
+            path: "Packages/MacAmpKit/Sources/Library"
         ),
         .target(
             name: "Skins",
@@ -38,27 +38,27 @@ let package = Package(
                 "Contracts",
                 .product(name: "ZIPFoundation", package: "ZIPFoundation"),
             ],
-            path: "Packages/ChuckAmpKit/Sources/Skins"
+            path: "Packages/MacAmpKit/Sources/Skins"
         ),
         .target(
             name: "PlayerUI",
             dependencies: ["Contracts", "Skins"],
-            path: "Packages/ChuckAmpKit/Sources/PlayerUI"
+            path: "Packages/MacAmpKit/Sources/PlayerUI"
         ),
         .target(
             name: "MacIntegration",
             dependencies: ["Contracts", "Audio", "Library"],
-            path: "Packages/ChuckAmpKit/Sources/MacIntegration"
+            path: "Packages/MacAmpKit/Sources/MacIntegration"
         ),
         .target(
             name: "TestSupport",
             dependencies: ["Contracts"],
-            path: "Packages/ChuckAmpKit/Sources/TestSupport"
+            path: "Packages/MacAmpKit/Sources/TestSupport"
         ),
         .executableTarget(
-            name: "ChuckAmpApp",
+            name: "MacAmpApp",
             dependencies: ["Contracts", "Audio", "Library", "Skins", "PlayerUI", "MacIntegration"],
-            path: "ChuckAmp/App"
+            path: "MacAmp/App"
         ),
         .executableTarget(
             name: "AudioProbe",
@@ -68,22 +68,22 @@ let package = Package(
         .testTarget(
             name: "ContractsTests",
             dependencies: ["Contracts", "TestSupport"],
-            path: "Packages/ChuckAmpKit/Tests/ContractsTests"
+            path: "Packages/MacAmpKit/Tests/ContractsTests"
         ),
         .testTarget(
             name: "AudioTests",
             dependencies: ["Contracts", "Audio"],
-            path: "Packages/ChuckAmpKit/Tests/AudioTests"
+            path: "Packages/MacAmpKit/Tests/AudioTests"
         ),
         .testTarget(
             name: "LibraryTests",
             dependencies: ["Contracts", "Library", "TestSupport"],
-            path: "Packages/ChuckAmpKit/Tests/LibraryTests"
+            path: "Packages/MacAmpKit/Tests/LibraryTests"
         ),
         .testTarget(
             name: "PlayerUITests",
             dependencies: ["Contracts", "PlayerUI", "Skins"],
-            path: "Packages/ChuckAmpKit/Tests/PlayerUITests"
+            path: "Packages/MacAmpKit/Tests/PlayerUITests"
         ),
         .testTarget(
             name: "SkinsTests",
@@ -92,12 +92,12 @@ let package = Package(
                 "Skins",
                 .product(name: "ZIPFoundation", package: "ZIPFoundation"),
             ],
-            path: "Packages/ChuckAmpKit/Tests/SkinsTests"
+            path: "Packages/MacAmpKit/Tests/SkinsTests"
         ),
         .testTarget(
             name: "MacIntegrationTests",
             dependencies: ["Contracts", "Audio", "Library", "MacIntegration", "TestSupport"],
-            path: "Packages/ChuckAmpKit/Tests/MacIntegrationTests"
+            path: "Packages/MacAmpKit/Tests/MacIntegrationTests"
         ),
     ]
 )

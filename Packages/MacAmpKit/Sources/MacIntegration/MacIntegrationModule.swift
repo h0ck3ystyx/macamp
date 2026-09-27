@@ -508,7 +508,7 @@ public actor ProductionPlaybackCoordinator: PlaybackCoordinator {
             sessionTemplate = state
             lastPersistedPosition = state.position
         } catch {
-            reportNotice("ChuckAmp couldn’t save the current session: \(error.localizedDescription)")
+            reportNotice("MacAmp couldn’t save the current session: \(error.localizedDescription)")
         }
     }
 

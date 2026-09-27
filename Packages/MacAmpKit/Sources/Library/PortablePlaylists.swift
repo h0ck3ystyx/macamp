@@ -92,7 +92,7 @@ public struct PortablePlaylistCodec: Sendable {
         }
         var lines = ["#EXTM3U"]
         lines.append(contentsOf: urls.map { portablePath(for: $0, relativeTo: baseURL) })
-        // ChuckAmp writes UTF-8 for both extensions. M3U8 requires it; UTF-8 M3U avoids
+        // MacAmp writes UTF-8 for both extensions. M3U8 requires it; UTF-8 M3U avoids
         // locale-dependent data loss while the importer retains an ISO-8859-1 fallback.
         return Data((lines.joined(separator: "\n") + "\n").utf8)
     }

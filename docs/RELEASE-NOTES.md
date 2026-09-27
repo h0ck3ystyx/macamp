@@ -1,8 +1,10 @@
-# ChuckAmp MVP candidate 0.1.0
+# MacAmp MVP candidate 0.1.0
+
+The project and application are now named MacAmp. The app bundle, executable, menus, windows, package products, bundle identifier, documentation, and skin-package extension use the new name. On first launch, MacAmp copies missing sessions, playlists, and installed skins from the former ChuckAmp Application Support directory. Existing `.chuckskin` packages remain importable; new exports use `.macampskin`.
 
 This build expands the accepted prototype into an MVP candidate with the full tested audio matrix, hardened skin packages, portable and named playlists, media-key/Now Playing integration, full session migration, interface scaling, and recovery actions.
 
-New user-facing features include the Terminal skin, saved accent variations, `.chuckskin` import/export/remove, creator-starter export, M3U/M3U8 import/export, PLS import, named playlists, playlist Undo/search/reveal, Locate/Reauthorize, EQ presets with limiter indication, Finder document handling, and 100/125/150 percent interface scales.
+New user-facing features include the Terminal skin, saved accent variations, `.macampskin` import/export/remove, creator-starter export, M3U/M3U8 import/export, PLS import, named playlists, playlist Undo/search/reveal, Locate/Reauthorize, EQ presets with limiter indication, Finder document handling, and 100/125/150 percent interface scales.
 
 The September 26 maintenance update fixes restored local files reporting that authorization was required after an ad-hoc development rebuild. It also adds Clear Playlist to the Edit menu and a `CLR` playlist control; clearing is persisted and can be undone.
 

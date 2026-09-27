@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "id": "terminal",
   "name": "Terminal",
-  "author": "ChuckAmp Project",
+  "author": "MacAmp Project",
   "version": "1.0.0",
-  "license": "Original artwork; distributed with ChuckAmp",
+  "license": "Original artwork; distributed with MacAmp",
   "colors": {
     "color.window.background": "#111612",
     "color.display.background": "#071008",

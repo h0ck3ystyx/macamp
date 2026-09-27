@@ -1,4 +1,4 @@
-# ChuckAmp — agent build plan
+# MacAmp — agent build plan
 
 September 25, 2026 · Implementation handoff · Prototype implemented; see `docs/PROTOTYPE-REPORT.md`
 
@@ -45,10 +45,10 @@ Start with the simplest working vertical slice: Open File → authorized URL →
 Proposed repository layout, created by T0:
 
 ```text
-ChuckAmp.xcodeproj/             # app target, shared scheme; coordinator owns
-ChuckAmp/App/                  # composition root, lifecycle, menus; coordinator
-ChuckAmp/Resources/            # asset registration; coordinator
-Packages/ChuckAmpKit/
+MacAmp.xcodeproj/             # app target, shared scheme; coordinator owns
+MacAmp/App/                  # composition root, lifecycle, menus; coordinator
+MacAmp/Resources/            # asset registration; coordinator
+Packages/MacAmpKit/
   Package.swift                # coordinator owns dependencies/target graph
   Sources/Contracts/           # coordinator owns shared types/protocols
   Sources/Audio/               # audio agent
@@ -199,7 +199,7 @@ Stop dependent work and report a concrete blocker when a necessary toolchain/API
 ### Coordinator prompt
 
 ```text
-Build ChuckAmp according to PRODUCT-DESIGN.md and BUILD-PLAN.md in this repository.
+Build MacAmp according to PRODUCT-DESIGN.md and BUILD-PLAN.md in this repository.
 Start with T0, then execute the waves through the prototype gate T7. You may delegate
 bounded tasks to up to three concurrent worker agents, retaining one coordinator.
 Enforce file ownership and shared contracts. Inspect repository instructions and the
@@ -229,7 +229,7 @@ Do not claim unrun tests passed. Do not publish or upload artifacts.
 ### MVP continuation prompt
 
 ```text
-Continue ChuckAmp from the accepted prototype to the full MVP using BUILD-PLAN.md
+Continue MacAmp from the accepted prototype to the full MVP using BUILD-PLAN.md
 waves 3–4 and every P0 requirement in PRODUCT-DESIGN.md. Inspect the current evidence
 and requirement ledger before assigning work. You may delegate up to three bounded
 worker tasks concurrently. Complete T8, T9, remaining T6 work, T10, and T11; preserve

@@ -1,4 +1,4 @@
-# ChuckAmp window feasibility decisions
+# MacAmp window feasibility decisions
 
 September 25, 2026 · T3 spike
 
@@ -15,7 +15,7 @@ The spike uses placeholder metadata only through `PlayerUIPreviewState`; it does
 - Beginning a drag on a secondary window removes it from the connected set. Returning it to a player edge reconnects it.
 - Closing EQ or Playlist hides that module. Closing Player hides all modules, leaving playback lifetime to the app coordinator. `show()` restores the player and visible secondary modules.
 - Native titled windows retain normal focus, keyboard traversal, Mission Control, and accessibility behavior. Window tabbing is disabled because each panel has a distinct product role.
-- Reset Layout is the offscreen recovery API. The app menu must expose it even when no ChuckAmp window is visible.
+- Reset Layout is the offscreen recovery API. The app menu must expose it even when no MacAmp window is visible.
 
 ## Visual directions
 
@@ -53,6 +53,6 @@ Missing assets should fall back to native AppKit rendering. T6 can map `Resolved
 
 ## Integration notes and limitations
 
-`ChuckAmp/App` must retain one `PlayerUIWindowController`, call `show()` during launch/Dock activation, and connect menu items to `setModule`, `setCompactMode`, and `resetLayout`. Restored `WindowLayout` application is intentionally deferred because the shared contract currently stores the state but does not define display recovery policy.
+`MacAmp/App` must retain one `PlayerUIWindowController`, call `show()` during launch/Dock activation, and connect menu items to `setModule`, `setCompactMode`, and `resetLayout`. Restored `WindowLayout` application is intentionally deferred because the shared contract currently stores the state but does not define display recovery policy.
 
 This spike does not yet provide drag/drop, a bound playlist, real snapshot updates, live EQ commands, scaling, always-on-top, or screenshot automation. Those belong to T5 after T2/T4/T6 interfaces are available. AppKit window behavior still needs manual validation on multiple displays and Spaces.

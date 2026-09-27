@@ -11,7 +11,7 @@ private func fixtureManifest(schemaVersion: Int = 1, assets: [String: String]? =
         schemaVersion: schemaVersion,
         id: "test-skin",
         name: "Test Skin",
-        author: "ChuckAmp Tests",
+        author: "MacAmp Tests",
         version: "1.0.0",
         colors: validColors,
         fonts: validFonts,

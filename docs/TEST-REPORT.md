@@ -1,17 +1,17 @@
-# ChuckAmp MVP candidate test report
+# MacAmp MVP candidate test report
 
 Date: September 26, 2026
 Host: Apple silicon Mac mini, 16 GB  
 OS/toolchain: macOS 26.5.2, Xcode 26.2, Swift 6.2.3  
-Artifact: `build/ChuckAmp.app`, ad-hoc signed local candidate
+Artifact: `build/MacAmp.app`, ad-hoc signed local candidate
 
 ## Automated results
 
-- `./scripts/test.sh`: 84 passed, 0 failed; 5 AudioComponent-host cases intentionally skipped in the parallel Swift Testing host and covered by the serial probes below.
+- `./scripts/test.sh`: 86 passed, 0 failed; 5 AudioComponent-host cases intentionally skipped in the parallel Swift Testing host and covered by the serial probes below.
 - 10,000-entry data measurement in the debug test: playlist parse and missing reporting 0.159 seconds; queue append plus search 0.037 seconds; combined under 0.25 seconds.
-- `./scripts/package-app.sh`: release build succeeded and produced `build/ChuckAmp.app`.
-- `codesign --verify --deep --strict --verbose=2 build/ChuckAmp.app`: valid on disk and satisfies its designated requirement.
-- `plutil -lint build/ChuckAmp.app/Contents/Info.plist`: OK.
+- `./scripts/package-app.sh`: release build succeeded and produced `build/MacAmp.app`.
+- `codesign --verify --deep --strict --verbose=2 build/MacAmp.app`: valid on disk and satisfies its designated requirement.
+- `plutil -lint build/MacAmp.app/Contents/Info.plist`: OK.
 - Packaged resources contain Studio Graphite, Paper, Terminal, and CreatorExample. `otool -L` shows system frameworks only; ZIPFoundation is statically linked.
 
 ## Serial Core Audio results
@@ -30,7 +30,7 @@ Expanded frame and boundary results are in `Tests/Fixtures/Audio/results-macos26
 ## Package and state coverage
 
 - Portable playlists cover M3U/M3U8 import/export, PLS import, relative paths, duplicate order, UTF-8/Latin-1 handling, missing files, and unsupported remote entries.
-- Session tests cover schema 1→2 migration, atomic backup recovery, queue policy restoration, and paused relaunch semantics.
+- Session tests cover schema 1→2 migration, atomic backup recovery, queue policy restoration, paused relaunch semantics, and non-destructive ChuckAmp-to-MacAmp Application Support migration.
 - Skin tests cover preview/install/export/remove, creator and accent round trips, traversal, symlink, duplicate, corrupt image, file-count, compressed/expanded-byte, image-dimension, and decoded-memory rejection.
 - Coordinator and UI tests cover Undo, clearing the queue, partial-import notices, presentation persistence, layout recovery, resized-frame preservation, scale/compact restoration, scaled typography, attached-window reflow, explicit skin control styling, accessibility labels, queue state distinctions, and command routing.
 - File-access tests cover strict sandbox authorization and the readable-path recovery used when an ad-hoc development rebuild invalidates an older scoped bookmark.

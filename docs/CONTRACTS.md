@@ -1,4 +1,4 @@
-# ChuckAmp shared contracts
+# MacAmp shared contracts
 
 Status: frozen for wave 1. Changes require coordinator review because audio, data, UI, and skin work all compile against these definitions.
 
@@ -6,7 +6,7 @@ Status: frozen for wave 1. Changes require coordinator review because audio, dat
 
 - Swift 6.2 language mode with strict concurrency checking supplied by the toolchain.
 - macOS 14 minimum and Apple silicon prototype target.
-- Swift Package Manager is the canonical build graph. Xcode opens `Package.swift` and generates the shared ChuckAmp scheme; `scripts/package-app.sh` creates the development app bundle. A generated `.xcodeproj` is deferred until distribution settings require one.
+- Swift Package Manager is the canonical build graph. Xcode opens `Package.swift` and generates the shared MacAmp scheme; `scripts/package-app.sh` creates the development app bundle. A generated `.xcodeproj` is deferred until distribution settings require one.
 - AppKit owns lifecycle and modular windows. SwiftUI may be used later for settings or isolated content where it does not weaken window control.
 - Foundation-only shared contracts prevent UI and audio frameworks from leaking across module boundaries.
 - No external runtime dependencies were selected in T0.

@@ -30,7 +30,7 @@ private func rawArchive(from directory: URL, to destination: URL) throws {
 }
 
 private func validPackage(in root: URL) throws -> URL {
-    let packageURL = root.appendingPathComponent("creator.chuckskin")
+    let packageURL = root.appendingPathComponent("creator.macampskin")
     let creator = try copyCreatorExample(into: root)
     try SkinPackageManager(installedSkinsURL: root.appendingPathComponent("Installed"))
         .export(directory: creator, to: packageURL)
@@ -59,7 +59,7 @@ private func validPackage(in root: URL) throws -> URL {
     let saved = try manager.save(variation: .graphiteElectricBlue, basedOn: graphite)
     #expect(saved.manifest.id == "studio-graphite.electric-blue")
     #expect(saved.color(.accent) == "#55B8FF")
-    let packageURL = root.appendingPathComponent("variation.chuckskin")
+    let packageURL = root.appendingPathComponent("variation.macampskin")
     try manager.export(id: saved.manifest.id, to: packageURL)
     #expect(try manager.preview(packageURL: packageURL).skin.manifest == saved.manifest)
 }
@@ -76,7 +76,7 @@ private func validPackage(in root: URL) throws -> URL {
     let installedSkin = try manager.install(packageURL: sourcePackage)
     #expect(installedSkin.manifest.id == preview.skin.manifest.id)
 
-    let exported = root.appendingPathComponent("exported.chuckskin")
+    let exported = root.appendingPathComponent("exported.macampskin")
     try manager.export(id: installedSkin.manifest.id, to: exported)
     let exportedPreview = try manager.preview(packageURL: exported)
     #expect(exportedPreview.skin.manifest == installedSkin.manifest)
@@ -86,6 +86,16 @@ private func validPackage(in root: URL) throws -> URL {
     #expect(throws: SkinPackageError.notInstalled(installedSkin.manifest.id)) {
         try manager.installedSkin(id: installedSkin.manifest.id)
     }
+}
+
+@Test func legacyChuckskinPackagesRemainImportableAfterRename() throws {
+    let root = try packageTemporaryDirectory()
+    defer { try? FileManager.default.removeItem(at: root) }
+    let canonical = try validPackage(in: root)
+    let legacy = root.appendingPathComponent("legacy.chuckskin")
+    try FileManager.default.copyItem(at: canonical, to: legacy)
+    let manager = SkinPackageManager(installedSkinsURL: root.appendingPathComponent("Installed"))
+    #expect(try manager.preview(packageURL: legacy).skin.manifest.id == "your-name.example")
 }
 
 @Test func rejectsTraversalEntryBeforeExtraction() throws {
@@ -189,7 +199,7 @@ private func validPackage(in root: URL) throws -> URL {
     defer { try? FileManager.default.removeItem(at: root) }
     let corrupt = try copyCreatorExample(into: root)
     try Data("not an image".utf8).write(to: corrupt.appendingPathComponent("art/play.svg"))
-    let corruptPackage = root.appendingPathComponent("corrupt.chuckskin")
+    let corruptPackage = root.appendingPathComponent("corrupt.macampskin")
     try rawArchive(from: corrupt, to: corruptPackage)
     let manager = SkinPackageManager(installedSkinsURL: root.appendingPathComponent("Installed"))
     #expect(throws: SkinPackageError.invalidImage(SkinAssetKey.play.rawValue)) {
@@ -201,7 +211,7 @@ private func validPackage(in root: URL) throws -> URL {
     let oversized = try copyCreatorExample(into: oversizedRoot)
     let hugeSVG = #"<svg xmlns="http://www.w3.org/2000/svg" width="4097" height="1"/>"#
     try Data(hugeSVG.utf8).write(to: oversized.appendingPathComponent("art/frame.svg"))
-    let oversizedPackage = oversizedRoot.appendingPathComponent("oversized.chuckskin")
+    let oversizedPackage = oversizedRoot.appendingPathComponent("oversized.macampskin")
     try rawArchive(from: oversized, to: oversizedPackage)
     #expect(throws: SkinPackageError.imageDimensionExceeded(
         path: SkinAssetKey.windowFrame.rawValue, width: 4097, height: 1, limit: 4096

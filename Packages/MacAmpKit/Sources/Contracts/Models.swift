@@ -128,7 +128,7 @@ public struct EQSettings: Codable, Equatable, Sendable {
     public var bandGains: [Double]
 
     public init(isBypassed: Bool = true, preampGain: Double = 0, bandGains: [Double] = Array(repeating: 0, count: 10)) {
-        precondition(bandGains.count == Self.frequencies.count, "ChuckAmp EQ requires ten bands")
+        precondition(bandGains.count == Self.frequencies.count, "MacAmp EQ requires ten bands")
         self.isBypassed = isBypassed
         self.preampGain = preampGain
         self.bandGains = bandGains

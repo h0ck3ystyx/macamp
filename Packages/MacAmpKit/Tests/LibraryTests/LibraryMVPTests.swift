@@ -240,7 +240,7 @@ import Testing
     #expect(await queue.snapshot().entries.count == 10_000)
     #expect(matches.count == 1)
     #expect(queueDuration < .seconds(5))
-    print("ChuckAmp 10k performance: playlist parse \(parseDuration), queue append+search \(queueDuration)")
+    print("MacAmp 10k performance: playlist parse \(parseDuration), queue append+search \(queueDuration)")
 }
 
 private func mvpTracks(_ count: Int) -> [TrackReference] {
@@ -248,7 +248,7 @@ private func mvpTracks(_ count: Int) -> [TrackReference] {
 }
 
 private func mvpTemporaryDirectory() throws -> URL {
-    let url = FileManager.default.temporaryDirectory.appendingPathComponent("ChuckAmpMVPTests-\(UUID().uuidString)", isDirectory: true)
+    let url = FileManager.default.temporaryDirectory.appendingPathComponent("MacAmpMVPTests-\(UUID().uuidString)", isDirectory: true)
     try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
     return url
 }

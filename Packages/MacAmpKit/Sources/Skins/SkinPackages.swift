@@ -45,7 +45,7 @@ public enum SkinPackageError: Error, Equatable, Sendable, CustomStringConvertibl
 
     public var description: String {
         switch self {
-        case .invalidPackageExtension: "A skin package must use the .chuckskin extension."
+        case .invalidPackageExtension: "A skin package must use the .macampskin extension (.chuckskin is also accepted for compatibility)."
         case .unreadableArchive: "The skin package is not a readable ZIP archive."
         case let .compressedSizeExceeded(actual, limit): "Compressed package size \(actual) exceeds \(limit) bytes."
         case let .expandedSizeExceeded(actual, limit): "Expanded package size \(actual) exceeds \(limit) bytes."
@@ -78,6 +78,8 @@ public final class SkinPackagePreview: @unchecked Sendable {
 /// Synchronous file operations intended to be called from a worker task, never
 /// from the audio render callback or the main actor.
 public struct SkinPackageManager: Sendable {
+    public static let packageExtension = "macampskin"
+    public static let legacyPackageExtension = "chuckskin"
     public let installedSkinsURL: URL
     public let limits: SkinPackageLimits
 
@@ -87,7 +89,7 @@ public struct SkinPackageManager: Sendable {
     }
 
     public func preview(packageURL: URL) throws -> SkinPackagePreview {
-        let staging = try makeTemporaryDirectory(prefix: "ChuckAmp-Skin-Preview")
+        let staging = try makeTemporaryDirectory(prefix: "MacAmp-Skin-Preview")
         do {
             let skin = try extractAndResolve(packageURL: packageURL, into: staging)
             return SkinPackagePreview(skin: skin, extractedDirectory: staging)
@@ -154,7 +156,7 @@ public struct SkinPackageManager: Sendable {
     /// Exports a validated creator directory. This is also the creator-starter
     /// path and deliberately uses the same schema as installed and bundled skins.
     public func export(directory: URL, to packageURL: URL) throws {
-        guard packageURL.pathExtension.lowercased() == "chuckskin" else {
+        guard Self.isSupportedPackage(packageURL) else {
             throw SkinPackageError.invalidPackageExtension
         }
         guard !FileManager.default.fileExists(atPath: packageURL.path) else {
@@ -165,7 +167,7 @@ public struct SkinPackageManager: Sendable {
         let entries = try exportEntries(in: resolved.rootURL)
 
         let temporaryArchive = packageURL.deletingLastPathComponent()
-            .appendingPathComponent(".\(UUID().uuidString).chuckskin")
+            .appendingPathComponent(".\(UUID().uuidString).\(Self.packageExtension)")
         defer { try? FileManager.default.removeItem(at: temporaryArchive) }
         let archive: Archive
         do { archive = try Archive(url: temporaryArchive, accessMode: .create) }
@@ -181,7 +183,7 @@ public struct SkinPackageManager: Sendable {
     }
 
     private func extractAndResolve(packageURL: URL, into staging: URL) throws -> ResolvedSkin {
-        guard packageURL.pathExtension.lowercased() == "chuckskin" else {
+        guard Self.isSupportedPackage(packageURL) else {
             throw SkinPackageError.invalidPackageExtension
         }
         let archiveBytes = try fileSize(at: packageURL)
@@ -222,6 +224,10 @@ public struct SkinPackageManager: Sendable {
         let skin = try SkinResolver().resolve(directory: staging)
         try validateImages(in: skin)
         return skin
+    }
+
+    public static func isSupportedPackage(_ url: URL) -> Bool {
+        [packageExtension, legacyPackageExtension].contains(url.pathExtension.lowercased())
     }
 
     private func exportEntries(in root: URL) throws -> [String] {

@@ -1,10 +1,10 @@
-# ChuckAmp requirement ledger
+# MacAmp requirement ledger
 
 Statuses: `planned`, `in progress`, `pass`, `fail`, `blocked`, `not run`. Evidence must name an automated result or a dated manual report. Prototype completion does not automatically pass MVP rows.
 
 | ID | Requirement | Owner | Prototype gate | MVP gate | Status | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| FOUND-01 | Reproducible unsigned build, tests, app bundle | T0/T10 | yes | yes | pass | 2026-09-26: debug/release builds, 84 tests, ad-hoc signed `build/ChuckAmp.app`; signature/plist verified |
+| FOUND-01 | Reproducible unsigned build, tests, app bundle | T0/T10 | yes | yes | pass | 2026-09-26: debug/release builds, 86 tests, ad-hoc signed `build/MacAmp.app`; signature/plist verified |
 | FOUND-02 | Shared contracts and concurrency/ownership rules | T0 | yes | yes | pass | 2026-09-25: Swift 6 contracts compiled; `docs/CONTRACTS.md` records ownership and invariants |
 | AUD-01 | Transport and required codec/container matrix | T1/T4/T8 | subset | full | pass | Serial bounded decode passed PCM/AIFF, FLAC, ALAC, AAC-LC, HE-AAC M4A/ADTS, MP3, Vorbis, and Opus on macOS 26 |
 | AUD-02 | Gapless supported album playback | T1/T4/T8 | lossless + MP3 proof | full fixtures | pass | Clean matched-rate FLAC/ALAC/AAC-LC/HE-AAC/MP3/Opus boundaries; ADTS/Vorbis/mixed-rate limits documented |
@@ -23,7 +23,7 @@ Statuses: `planned`, `in progress`, `pass`, `fail`, `blocked`, `not run`. Eviden
 | UI-02 | Snapping, grouping, detach, hide/close, reset layout | T3/T5 | yes | full displays/Spaces | pass | Geometry tests and live 3-skin × 3-scale matrix; 650 × 520 playlist survives selection/search/compact/relaunch and equalizer close reflows the stack; full display/Spaces matrix remains external |
 | UI-03 | Open/add/drop/folder ordering and feedback | T2/T5 | yes | yes | pass | NSOpenPanel WAV smoke plus importer/UI tests |
 | UI-04 | Shuffle/repeat/previous/removal/filter semantics | T2/T5/T9 | core except filter/Undo | full | pass | Deterministic queue, filter, Undo, and named-playlist tests pass |
-| SKIN-01 | Public schema; import/preview/apply/export/remove | T6 | bundled apply | full | pass | Bundled skins and external `.chuckskin` preview/install/export/remove workflow pass package tests |
+| SKIN-01 | Public schema; import/preview/apply/export/remove | T6 | bundled apply | full | pass | Bundled skins and external `.macampskin` preview/install/export/remove workflow pass package tests |
 | SKIN-02 | Live skin changes preserve playback | T6/T7 | yes | yes | pass | Live selection tests and packaged-app skin switching |
 | SKIN-03 | Documented creator starter workflow | T6 | no | yes | pass | CreatorExample, schema/package docs, export menu, and round-trip test |
 | SKIN-04 | Reject unsafe/invalid packages | T6 | no | yes | pass | Traversal, symlink, duplicate, corrupt image, canonical-name, and schema tests pass |

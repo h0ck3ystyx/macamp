@@ -18,7 +18,7 @@ final class ApplicationCommandRouter: PlayerUICommandRouting {
 }
 
 @MainActor
-final class ChuckAmpApplicationDelegate: NSObject, NSApplicationDelegate {
+final class MacAmpApplicationDelegate: NSObject, NSApplicationDelegate {
     private var playerWindows: PlayerUIWindowController?
     private let commandRouter = ApplicationCommandRouter()
     private var coordinator: ProductionPlaybackCoordinator?
@@ -91,13 +91,17 @@ final class ChuckAmpApplicationDelegate: NSObject, NSApplicationDelegate {
             guard let self else { return }
             do {
                 let fileManager = FileManager.default
-                let supportRoot = try fileManager.url(
+                let supportBase = try fileManager.url(
                     for: .applicationSupportDirectory,
                     in: .userDomainMask,
                     appropriateFor: nil,
                     create: true
-                ).appendingPathComponent("ChuckAmp", isDirectory: true)
-                try fileManager.createDirectory(at: supportRoot, withIntermediateDirectories: true)
+                )
+                let supportRoot = try ApplicationSupportMigration.prepare(
+                    preferredRoot: supportBase.appendingPathComponent("MacAmp", isDirectory: true),
+                    legacyRoot: supportBase.appendingPathComponent("ChuckAmp", isDirectory: true),
+                    fileManager: fileManager
+                )
                 self.supportRoot = supportRoot
                 let sessionStore = AtomicSessionStore(fileURL: supportRoot.appendingPathComponent("session.json"))
                 let restored = try await sessionStore.load()
@@ -180,15 +184,16 @@ final class ChuckAmpApplicationDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func handleOpenURLs(_ urls: [URL], coordinator: ProductionPlaybackCoordinator) {
-        let packages = urls.filter { $0.pathExtension.lowercased() == "chuckskin" }
-        let playable = urls.filter { $0.pathExtension.lowercased() != "chuckskin" }
+        let packages = urls.filter(SkinPackageManager.isSupportedPackage)
+        let playable = urls.filter { !SkinPackageManager.isSupportedPackage($0) }
         for package in packages { importSkinPackage(package) }
         if !playable.isEmpty { Task { await coordinator.send(.open(playable)) } }
     }
 
     @objc private func importSkin() {
         let panel = NSOpenPanel()
-        panel.allowedContentTypes = [UTType(filenameExtension: "chuckskin")!]
+        panel.allowedContentTypes = [SkinPackageManager.packageExtension, SkinPackageManager.legacyPackageExtension]
+            .compactMap { UTType(filenameExtension: $0) }
         panel.allowsMultipleSelection = false
         panel.begin { [weak self] response in
             guard response == .OK, let url = panel.url else { return }
@@ -216,8 +221,8 @@ final class ChuckAmpApplicationDelegate: NSObject, NSApplicationDelegate {
     @objc private func exportCurrentSkin() {
         guard let manager = skinPackages, let skin = activeSkin else { return }
         let panel = NSSavePanel()
-        panel.allowedContentTypes = [UTType(filenameExtension: "chuckskin")!]
-        panel.nameFieldStringValue = "\(skin.manifest.id).chuckskin"
+        panel.allowedContentTypes = [UTType(filenameExtension: SkinPackageManager.packageExtension)!]
+        panel.nameFieldStringValue = "\(skin.manifest.id).\(SkinPackageManager.packageExtension)"
         panel.begin { [weak self] response in
             guard response == .OK, let url = panel.url else { return }
             Task {
@@ -231,8 +236,8 @@ final class ChuckAmpApplicationDelegate: NSObject, NSApplicationDelegate {
         guard let manager = skinPackages,
               let directory = Bundle.main.resourceURL?.appendingPathComponent("Skins/CreatorExample", isDirectory: true) else { return }
         let panel = NSSavePanel()
-        panel.allowedContentTypes = [UTType(filenameExtension: "chuckskin")!]
-        panel.nameFieldStringValue = "ChuckAmp-Creator-Starter.chuckskin"
+        panel.allowedContentTypes = [UTType(filenameExtension: SkinPackageManager.packageExtension)!]
+        panel.nameFieldStringValue = "MacAmp-Creator-Starter.\(SkinPackageManager.packageExtension)"
         panel.begin { [weak self] response in
             guard response == .OK, let url = panel.url else { return }
             Task {
@@ -268,7 +273,7 @@ final class ChuckAmpApplicationDelegate: NSObject, NSApplicationDelegate {
         guard let coordinator else { return }
         let panel = NSSavePanel()
         panel.allowedContentTypes = ["m3u", "m3u8"].compactMap { UTType(filenameExtension: $0) }
-        panel.nameFieldStringValue = "ChuckAmp Playlist.m3u8"
+        panel.nameFieldStringValue = "MacAmp Playlist.m3u8"
         panel.begin { [weak self] response in
             guard response == .OK, let destination = panel.url else { return }
             Task {
@@ -368,7 +373,7 @@ final class ChuckAmpApplicationDelegate: NSObject, NSApplicationDelegate {
 
     private func showNotice(_ message: String) {
         let alert = NSAlert()
-        alert.messageText = "ChuckAmp Notice"
+        alert.messageText = "MacAmp Notice"
         alert.informativeText = message
         alert.runModal()
     }
@@ -377,11 +382,11 @@ final class ChuckAmpApplicationDelegate: NSObject, NSApplicationDelegate {
         let mainMenu = NSMenu()
 
         let appItem = NSMenuItem()
-        let appMenu = NSMenu(title: "ChuckAmp")
-        appMenu.addItem(withTitle: "About ChuckAmp", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        let appMenu = NSMenu(title: "MacAmp")
+        appMenu.addItem(withTitle: "About MacAmp", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
         appMenu.addItem(.separator())
-        appMenu.addItem(withTitle: "Hide ChuckAmp", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
-        appMenu.addItem(withTitle: "Quit ChuckAmp", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        appMenu.addItem(withTitle: "Hide MacAmp", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
+        appMenu.addItem(withTitle: "Quit MacAmp", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         appItem.submenu = appMenu
         mainMenu.addItem(appItem)
 
@@ -496,11 +501,11 @@ final class ChuckAmpApplicationDelegate: NSObject, NSApplicationDelegate {
 }
 
 @main
-enum ChuckAmpMain {
+enum MacAmpMain {
     @MainActor
     static func main() {
         let application = NSApplication.shared
-        let delegate = ChuckAmpApplicationDelegate()
+        let delegate = MacAmpApplicationDelegate()
         application.delegate = delegate
         application.setActivationPolicy(.regular)
         application.run()

@@ -5,13 +5,15 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>en</string>
     <key>CFBundleExecutable</key>
-    <string>ChuckAmp</string>
+    <string>MacAmp</string>
     <key>CFBundleIdentifier</key>
-    <string>com.chuckamp.app</string>
+    <string>com.macamp.app</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>ChuckAmp</string>
+    <string>MacAmp</string>
+    <key>CFBundleDisplayName</key>
+    <string>MacAmp</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
@@ -52,13 +54,13 @@
         </dict>
         <dict>
             <key>CFBundleTypeName</key>
-            <string>ChuckAmp Skin</string>
+            <string>MacAmp Skin</string>
             <key>CFBundleTypeRole</key>
             <string>Viewer</string>
             <key>LSHandlerRank</key>
             <string>Owner</string>
             <key>CFBundleTypeExtensions</key>
-            <array><string>chuckskin</string></array>
+            <array><string>macampskin</string><string>chuckskin</string></array>
         </dict>
     </array>
 </dict>

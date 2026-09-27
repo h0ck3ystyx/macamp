@@ -1,6 +1,6 @@
-# ChuckAmp UI regression checklist
+# MacAmp UI regression checklist
 
-Run this checklist against the packaged `build/ChuckAmp.app` with at least two playable local tracks. Preserve the user's session before testing and restore it afterward.
+Run this checklist against the packaged `build/MacAmp.app` with at least two playable local tracks. Preserve the user's session before testing and restore it afterward.
 
 ## Skin and scale matrix
 

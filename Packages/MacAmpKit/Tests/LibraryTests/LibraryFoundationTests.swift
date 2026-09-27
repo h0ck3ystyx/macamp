@@ -3,6 +3,26 @@ import Foundation
 import Library
 import Testing
 
+@Test func applicationSupportRenameCopiesLegacyDataWithoutOverwritingNewFiles() throws {
+    let root = try temporaryDirectory()
+    defer { try? FileManager.default.removeItem(at: root) }
+    let legacy = root.appendingPathComponent("ChuckAmp", isDirectory: true)
+    let preferred = root.appendingPathComponent("MacAmp", isDirectory: true)
+    try FileManager.default.createDirectory(at: legacy.appendingPathComponent("Skins", isDirectory: true), withIntermediateDirectories: true)
+    try FileManager.default.createDirectory(at: preferred, withIntermediateDirectories: true)
+    try Data("legacy session".utf8).write(to: legacy.appendingPathComponent("session.json"))
+    try Data("legacy skin".utf8).write(to: legacy.appendingPathComponent("Skins/custom.json"))
+    try Data("new playlists".utf8).write(to: preferred.appendingPathComponent("playlists.json"))
+    try Data("legacy playlists".utf8).write(to: legacy.appendingPathComponent("playlists.json"))
+
+    let result = try ApplicationSupportMigration.prepare(preferredRoot: preferred, legacyRoot: legacy)
+
+    #expect(result == preferred)
+    #expect(try String(contentsOf: preferred.appendingPathComponent("session.json"), encoding: .utf8) == "legacy session")
+    #expect(try String(contentsOf: preferred.appendingPathComponent("Skins/custom.json"), encoding: .utf8) == "legacy skin")
+    #expect(try String(contentsOf: preferred.appendingPathComponent("playlists.json"), encoding: .utf8) == "new playlists")
+}
+
 @Test func duplicateSourcesHaveDistinctEntriesAndMutationsUndo() async throws {
     let track = TrackReference(lastKnownURL: URL(fileURLWithPath: "/tmp/album.mp3"))
     let store = ProductionQueueStore()
@@ -106,7 +126,7 @@ import Testing
 }
 
 @Test func missingImportIsReportedWithoutInventingAQueueItem() async {
-    let missing = URL(fileURLWithPath: "/tmp/chuckamp-definitely-missing/file.mp3")
+    let missing = URL(fileURLWithPath: "/tmp/macamp-definitely-missing/file.mp3")
     let importer = FileImportService(access: TestFileAccess(), metadataLoader: TestMetadataLoader())
     let result = await importer.importURLs([missing])
     #expect(result.tracks.isEmpty)
@@ -225,7 +245,7 @@ private func makeTracks(_ count: Int) -> [TrackReference] {
 }
 
 private func temporaryDirectory() throws -> URL {
-    let url = FileManager.default.temporaryDirectory.appendingPathComponent("ChuckAmpTests-\(UUID().uuidString)", isDirectory: true)
+    let url = FileManager.default.temporaryDirectory.appendingPathComponent("MacAmpTests-\(UUID().uuidString)", isDirectory: true)
     try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
     return url
 }

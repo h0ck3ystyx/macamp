@@ -81,7 +81,7 @@ The two-hour VBR MP3 fixture is 16 kHz mono to keep the generated repository ass
 | Opus/Ogg | 96,000 | 0.003902 | Continuous with pre-skip/end trim |
 | Vorbis/Ogg | 88,320 | 0.087503 | Limited; independent files contain 60 extra decoded frames each |
 
-ADTS AAC contains no packet table in these fixtures, so it exposes encoder delay/padding and cannot receive a gapless guarantee. The independently encoded Vorbis pair also lacks a reliable application-level end-trim guarantee and shows a discontinuity. ChuckAmp preserves all source samples, including intentional silence, rather than applying silence removal to hide those limits.
+ADTS AAC contains no packet table in these fixtures, so it exposes encoder delay/padding and cannot receive a gapless guarantee. The independently encoded Vorbis pair also lacks a reliable application-level end-trim guarantee and shows a discontinuity. MacAmp preserves all source samples, including intentional silence, rather than applying silence removal to hide those limits.
 
 A 44.1 kHz WAV → 48 kHz Opus production-engine pair emitted the correct transition and end events. Sample-continuous mixed-rate output is not claimed because it passes through sample-rate conversion and was not compared against a single converted reference timeline.
 

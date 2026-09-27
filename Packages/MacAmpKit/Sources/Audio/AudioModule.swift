@@ -20,7 +20,7 @@ public enum NativeAudioError: Error, LocalizedError, Sendable {
         switch self {
         case .corruptFile(let reason): "Unreadable or corrupt audio: \(reason)"
         case .invalidFrameRequest(let count): "Invalid PCM frame request: \(count)"
-        case .unsupportedChannelCount(let count): "ChuckAmp supports mono and stereo; file has \(count) channels"
+        case .unsupportedChannelCount(let count): "MacAmp supports mono and stereo; file has \(count) channels"
         case .unsupportedChainedStream(let count): "Chained Ogg streams are not supported (found \(count) logical streams)"
         case .seekOutOfRange(let frame): "Seek frame is out of range: \(frame)"
         case .couldNotCreateBuffer: "Could not allocate a PCM buffer"
