@@ -44,7 +44,7 @@ The fixture generator split one continuous 44.1 kHz sine source at exactly frame
 | PCM WAV | 88,200 / 88,200 | 0.005554 | 0.074524 | Pass |
 | Tagged VBR MP3 | 88,200 / 88,200 | 0.005402 | 0.074585 | Pass |
 
-There were no inserted or dropped timeline frames and no silent hole at either boundary. The PCM delta is consistent with the next sample of the continuous sine. The MP3 result proves that this encoder/native-decoder pair honors its LAME/Xing trimming and can be scheduled without a gap; it does not claim decoded lossy samples equal the original PCM. Additional codec pairs are reported below.
+There were no inserted or dropped timeline frames and no silent hole at either boundary. The PCM delta is consistent with the next sample of the continuous sine. The MP3 result proves that this encoder/decoder pair honors its LAME/Xing trimming and can be scheduled without a gap; it does not claim decoded lossy samples equal the original PCM. A later full-volume scan found that many legacy MP3s have approximate frame counts that exceed decoded output by up to one MP3 frame, so this proof does not extend a gapless guarantee to files without precise timing metadata. Additional codec pairs are reported below.
 
 ## Full P0 matrix evidence
 

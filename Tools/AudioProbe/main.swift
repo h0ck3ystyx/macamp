@@ -24,6 +24,7 @@ struct AudioProbe {
         case "decode":
             guard paths.count == 1 else { return usage() }
             let decoder = try NativeAudioDecoder(url: fileURL(paths[0]))
+            let format = await decoder.format
             var frames = 0
             var peak: Float = 0
             while true {
@@ -32,7 +33,14 @@ struct AudioProbe {
                 for sample in chunk.interleavedSamples { peak = max(peak, abs(sample)) }
                 if chunk.isEndOfStream { break }
             }
-            try printJSONObject(["decodedFrames": frames, "peak": peak])
+            try printJSONObject([
+                "channelCount": format.channelCount,
+                "complete": format.frameCount == Int64(frames),
+                "decodedFrames": frames,
+                "expectedFrames": format.frameCount.map { $0 as Any } ?? NSNull(),
+                "peak": peak,
+                "sampleRate": format.sampleRate,
+            ])
         case "seek":
             guard paths.count == 2, let seconds = Double(paths[1]) else { return usage() }
             let decoder = try NativeAudioDecoder(url: fileURL(paths[0]))
