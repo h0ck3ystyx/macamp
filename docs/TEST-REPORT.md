@@ -7,7 +7,7 @@ Artifact: `build/ChuckAmp.app`, ad-hoc signed local candidate
 
 ## Automated results
 
-- `./scripts/test.sh`: 83 passed, 0 failed; 5 AudioComponent-host cases intentionally skipped in the parallel Swift Testing host and covered by the serial probes below.
+- `./scripts/test.sh`: 84 passed, 0 failed; 5 AudioComponent-host cases intentionally skipped in the parallel Swift Testing host and covered by the serial probes below.
 - 10,000-entry data measurement in the debug test: playlist parse and missing reporting 0.159 seconds; queue append plus search 0.037 seconds; combined under 0.25 seconds.
 - `./scripts/package-app.sh`: release build succeeded and produced `build/ChuckAmp.app`.
 - `codesign --verify --deep --strict --verbose=2 build/ChuckAmp.app`: valid on disk and satisfies its designated requirement.
@@ -42,6 +42,8 @@ With the Mac unlocked, the rebuilt app restored the existing nine-item queue. Pl
 The live UI matrix exercised Studio Graphite, Paper, and Terminal at 100%, 125%, and 150%. Each skin retained identical module geometry at a given scale; controls, typography, and hit targets enlarged with the interface, and the three attached windows remained flush. Focused captures confirmed usable contrast for every skin, including Studio Graphite’s transport, utility, and playlist controls.
 
 The playlist was enlarged to 650 × 520 points. Selection, a one-result search, clearing the search, compact/expanded player transitions, and a quit/relaunch cycle all retained that exact size. Closing the equalizer through its title-bar close control moved the attached playlist up by the equalizer height; reopening it restored the three-window stack.
+
+After follow-up testing, the default stack was rebalanced at every scale to give the equalizer 40 additional content points while keeping the total stack height unchanged. Restored frames are clamped to the current module minimums so legacy undersized equalizer layouts recover automatically.
 
 ## Not run
 

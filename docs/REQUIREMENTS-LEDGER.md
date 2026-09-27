@@ -4,7 +4,7 @@ Statuses: `planned`, `in progress`, `pass`, `fail`, `blocked`, `not run`. Eviden
 
 | ID | Requirement | Owner | Prototype gate | MVP gate | Status | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| FOUND-01 | Reproducible unsigned build, tests, app bundle | T0/T10 | yes | yes | pass | 2026-09-26: debug/release builds, 83 tests, ad-hoc signed `build/ChuckAmp.app`; signature/plist verified |
+| FOUND-01 | Reproducible unsigned build, tests, app bundle | T0/T10 | yes | yes | pass | 2026-09-26: debug/release builds, 84 tests, ad-hoc signed `build/ChuckAmp.app`; signature/plist verified |
 | FOUND-02 | Shared contracts and concurrency/ownership rules | T0 | yes | yes | pass | 2026-09-25: Swift 6 contracts compiled; `docs/CONTRACTS.md` records ownership and invariants |
 | AUD-01 | Transport and required codec/container matrix | T1/T4/T8 | subset | full | pass | Serial bounded decode passed PCM/AIFF, FLAC, ALAC, AAC-LC, HE-AAC M4A/ADTS, MP3, Vorbis, and Opus on macOS 26 |
 | AUD-02 | Gapless supported album playback | T1/T4/T8 | lossless + MP3 proof | full fixtures | pass | Clean matched-rate FLAC/ALAC/AAC-LC/HE-AAC/MP3/Opus boundaries; ADTS/Vorbis/mixed-rate limits documented |

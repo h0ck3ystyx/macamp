@@ -6,6 +6,8 @@ import Testing
 @MainActor @Test func playerUITargetLoads() {
     #expect(PlayerUIModule.isPrototypeImplemented)
     #expect(PlayerUIWindowController.defaultPlayerSize == NSSize(width: 360, height: 160))
+    #expect(PlayerUIWindowController.defaultEqualizerSize == NSSize(width: 360, height: 200))
+    #expect(PlayerUIWindowController.defaultPlaylistSize == NSSize(width: 360, height: 260))
     #expect(PlayerUIWindowController.compactPlayerSize == NSSize(width: 360, height: 40))
 }
 
@@ -71,6 +73,8 @@ import Testing
     #expect(restored.modules.first(where: { $0.module == .player })?.isVisible == true)
     #expect(restored.modules.first(where: { $0.module == .equalizer })?.isVisible == true)
     #expect(restored.modules.first(where: { $0.module == .playlist })?.isVisible == false)
+    #expect((restored.modules.first(where: { $0.module == .equalizer })?.frame.height ?? 0) > 250)
+    #expect((restored.modules.first(where: { $0.module == .playlist })?.frame.height ?? 0) > 225)
     controller.setCompactMode(false)
     let expandedPlayer = controller.currentLayout().modules.first(where: { $0.module == .player })?.frame
     #expect(expandedPlayer?.width == 450)
@@ -127,6 +131,26 @@ import Testing
     let hiddenPlaylist = try #require(hidden.modules.first(where: { $0.module == .playlist })?.frame)
     #expect(hiddenPlaylist.y + hiddenPlaylist.height == hiddenPlayer.y)
     #expect(hidden.modules.first(where: { $0.module == .equalizer })?.isVisible == false)
+}
+
+@Test func legacyEqualizerGrowthReflowsConnectedStackGeometry() throws {
+    let oldPlayer = NSRect(x: 100, y: 600, width: 360, height: 192)
+    let oldEqualizer = NSRect(x: 100, y: 408, width: 360, height: 192)
+    let oldPlaylist = NSRect(x: 100, y: 76, width: 360, height: 332)
+    let newEqualizer = try #require(WindowScaleGeometry.attachedFrame(
+        movingOld: oldEqualizer,
+        movingSize: NSSize(width: 360, height: 232),
+        anchorOld: oldPlayer,
+        anchorNew: oldPlayer
+    ))
+    let newPlaylist = try #require(WindowScaleGeometry.attachedFrame(
+        movingOld: oldPlaylist,
+        movingSize: oldPlaylist.size,
+        anchorOld: oldEqualizer,
+        anchorNew: newEqualizer
+    ))
+    #expect(newEqualizer.maxY == oldPlayer.minY)
+    #expect(newPlaylist.maxY == newEqualizer.minY)
 }
 
 @Test func presentationDistinguishesSelectedPlayingAndUnavailableRows() {

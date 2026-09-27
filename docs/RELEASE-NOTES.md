@@ -10,6 +10,8 @@ The same update preserves user-resized window frames when queue selection, searc
 
 The stabilization pass makes interface scaling apply to typography, layout spacing, and control hit targets as well as window dimensions. Attached modules remain flush at every supported scale, Reset Layout is stable with long metadata, playlist resize events persist across relaunch, and closing the equalizer now closes the gap above the playlist.
 
+The default modular stack now reserves a 200-point content height for the equalizer, giving its sliders a usable adjustment range at 100%. The default playlist height was reduced by the same 40 points so the complete stack keeps the same screen footprint, and undersized equalizer frames from earlier sessions are upgraded when restored.
+
 Known limits:
 
 - ADTS AAC and independently encoded Vorbis pairs do not receive a gapless guarantee because their fixtures do not expose reliable end trimming.

@@ -37,8 +37,8 @@ public protocol PlayerUICommandRouting: AnyObject { func send(_ command: PlayerC
 @MainActor
 public final class PlayerUIWindowController: NSObject {
     public static let defaultPlayerSize = NSSize(width: 360, height: 160)
-    public static let defaultEqualizerSize = NSSize(width: 360, height: 160)
-    public static let defaultPlaylistSize = NSSize(width: 360, height: 300)
+    public static let defaultEqualizerSize = NSSize(width: 360, height: 200)
+    public static let defaultPlaylistSize = NSSize(width: 360, height: 260)
     public static let compactPlayerSize = NSSize(width: 360, height: 40)
 
     public weak var commandRouter: PlayerUICommandRouting?
@@ -216,14 +216,23 @@ public final class PlayerUIWindowController: NSObject {
         if let player = windows[.player] { updateContentMinimum(for: .player, window: player) }
         let grouped = Dictionary(grouping: layout.modules.compactMap(\.groupID), by: { $0 })
         let connectedGroup = grouped.max(by: { $0.value.count < $1.value.count })?.key
+        var savedFrames: [PlayerModule: NSRect] = [:]
         for saved in layout.modules {
             guard let window = windows[saved.module], saved.frame.width.isFinite, saved.frame.height.isFinite,
                   saved.frame.x.isFinite, saved.frame.y.isFinite, saved.frame.width >= 100, saved.frame.height >= 36 else { continue }
-            let proposed = NSRect(x: saved.frame.x, y: saved.frame.y, width: saved.frame.width, height: saved.frame.height)
+            let minimum = frameSize(forContentSize: window.contentMinSize, in: window)
+            savedFrames[saved.module] = NSRect(x: saved.frame.x, y: saved.frame.y, width: saved.frame.width, height: saved.frame.height)
+            let proposed = NSRect(
+                x: saved.frame.x,
+                y: saved.frame.y,
+                width: max(saved.frame.width, minimum.width),
+                height: max(saved.frame.height, minimum.height)
+            )
             window.setFrame(recover(proposed), display: true)
             if saved.isVisible { visibleModules.insert(saved.module) }
             if saved.groupID == connectedGroup { connectedModules.insert(saved.module) }
         }
+        reattachConnectedFrames(from: savedFrames)
         refreshContent()
         visibleModules.insert(.player)
         connectedModules.insert(.player)
@@ -388,6 +397,36 @@ extension PlayerUIWindowController {
         case .playlist: base = NSSize(width: Self.defaultPlaylistSize.width, height: 180)
         }
         window.contentMinSize = NSSize(width: base.width * uiScale, height: base.height * uiScale)
+    }
+
+    /// A newer release may increase a module's minimum size. Rebuild the saved
+    /// attachment graph around the player so upgrading the frame cannot create
+    /// overlaps or gaps in a previously connected stack.
+    private func reattachConnectedFrames(from savedFrames: [PlayerModule: NSRect]) {
+        guard let player = windows[.player] else { return }
+        var restoredFrames: [PlayerModule: NSRect] = [.player: player.frame]
+        var pending = connectedModules.subtracting([.player])
+        while !pending.isEmpty {
+            var placedAny = false
+            for module in pending {
+                guard let movingOld = savedFrames[module], let movingWindow = windows[module] else { continue }
+                for anchor in connectedModules where anchor != module {
+                    guard let anchorOld = savedFrames[anchor], let anchorNew = restoredFrames[anchor],
+                          let attached = WindowScaleGeometry.attachedFrame(
+                            movingOld: movingOld,
+                            movingSize: movingWindow.frame.size,
+                            anchorOld: anchorOld,
+                            anchorNew: anchorNew
+                          ) else { continue }
+                    movingWindow.setFrame(attached, display: true)
+                    restoredFrames[module] = attached
+                    pending.remove(module)
+                    placedAny = true
+                    break
+                }
+            }
+            if !placedAny { break }
+        }
     }
 
     private func makeWindow(module: PlayerModule, size: NSSize, resizable: Bool) -> NSWindow {
