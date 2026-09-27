@@ -1,13 +1,13 @@
 # MacAmp MVP candidate test report
 
-Date: September 26, 2026
+Date: September 27, 2026
 Host: Apple silicon Mac mini, 16 GB  
 OS/toolchain: macOS 26.5.2, Xcode 26.2, Swift 6.2.3  
 Artifact: `build/MacAmp.app`, ad-hoc signed local candidate
 
 ## Automated results
 
-- `./scripts/test.sh`: 86 passed, 0 failed; 5 AudioComponent-host cases intentionally skipped in the parallel Swift Testing host and covered by the serial probes below.
+- `./scripts/test.sh`: 91 passed, 0 failed; 5 AudioComponent-host cases intentionally skipped in the parallel Swift Testing host and covered by the serial probes below.
 - 10,000-entry data measurement in the debug test: playlist parse and missing reporting 0.159 seconds; queue append plus search 0.037 seconds; combined under 0.25 seconds.
 - `./scripts/package-app.sh`: release build succeeded and produced `build/MacAmp.app`.
 - `codesign --verify --deep --strict --verbose=2 build/MacAmp.app`: valid on disk and satisfies its designated requirement.
@@ -32,7 +32,8 @@ Expanded frame and boundary results are in `Tests/Fixtures/Audio/results-macos26
 - Portable playlists cover M3U/M3U8 import/export, PLS import, relative paths, duplicate order, UTF-8/Latin-1 handling, missing files, and unsupported remote entries.
 - Session tests cover schema 1→2 migration, atomic backup recovery, queue policy restoration, paused relaunch semantics, and non-destructive ChuckAmp-to-MacAmp Application Support migration.
 - Skin tests cover preview/install/export/remove, creator and accent round trips, traversal, symlink, duplicate, corrupt image, file-count, compressed/expanded-byte, image-dimension, and decoded-memory rejection.
-- Coordinator and UI tests cover Undo, clearing the queue, partial-import notices, presentation persistence, layout recovery, resized-frame preservation, scale/compact restoration, scaled typography, attached-window reflow, explicit skin control styling, accessibility labels, queue state distinctions, and command routing.
+- Coordinator and UI tests cover Undo, clearing the queue, partial-import notices, presentation persistence, layout recovery, resized-frame preservation, scale/compact restoration, scaled typography, attached-window reflow, explicit skin control styling, accessibility labels and values, focus order, valid-action states, queue state distinctions, and command routing.
+- Bundled-skin tests enforce 4.5:1 contrast for primary text, secondary text, and accents on both app backgrounds. Increase Contrast replaces secondary and border colors with primary text color.
 - File-access tests cover strict sandbox authorization and the readable-path recovery used when an ad-hoc development rebuild invalidates an older scoped bookmark.
 
 ## Interactive smoke result
@@ -44,6 +45,8 @@ The live UI matrix exercised Studio Graphite, Paper, and Terminal at 100%, 125%,
 The playlist was enlarged to 650 × 520 points. Selection, a one-result search, clearing the search, compact/expanded player transitions, and a quit/relaunch cycle all retained that exact size. Closing the equalizer through its title-bar close control moved the attached playlist up by the equalizer height; reopening it restored the three-window stack.
 
 After follow-up testing, the default stack was rebalanced at every scale to give the equalizer 40 additional content points while keeping the total stack height unchanged. Restored frames are clamped to the current module minimums so legacy undersized equalizer layouts recover automatically.
+
+The September 27 accessibility pass inspected the packaged app through the macOS AX tree. The player exposed dynamic Play/Pause, elapsed/total seek time, volume percent, and state-aware transport controls; the equalizer exposed preamp plus all ten bands with signed decibel values; the playlist exposed its search, table, and valid mutation controls. Space toggled Play/Pause with the seek slider focused and returned to the original state on the second press. The detailed release checklist is in `docs/ACCESSIBILITY-CHECKLIST.md`.
 
 ## Not run
 

@@ -132,6 +132,35 @@ private var repositoryRoot: URL {
     #expect(graphite.color(.accent) != paper.color(.accent))
 }
 
+@Test func bundledSkinTextAndAccentMeetNormalTextContrast() throws {
+    let skinsRoot = repositoryRoot.appendingPathComponent("Skins", isDirectory: true)
+    for directory in ["StudioGraphite", "Paper", "Terminal"] {
+        let skin = try SkinResolver().resolve(directory: skinsRoot.appendingPathComponent(directory, isDirectory: true))
+        let backgrounds = [skin.color(.windowBackground), skin.color(.displayBackground)]
+        for foreground in [skin.color(.textPrimary), skin.color(.textSecondary), skin.color(.accent)] {
+            for background in backgrounds {
+                #expect(contrastRatio(foreground, background) >= 4.5, "\(skin.manifest.name) uses \(foreground) on \(background)")
+            }
+        }
+    }
+}
+
+private func contrastRatio(_ first: String, _ second: String) -> Double {
+    let lighter = max(relativeLuminance(first), relativeLuminance(second))
+    let darker = min(relativeLuminance(first), relativeLuminance(second))
+    return (lighter + 0.05) / (darker + 0.05)
+}
+
+private func relativeLuminance(_ hex: String) -> Double {
+    let value = hex.trimmingCharacters(in: CharacterSet(charactersIn: "#"))
+    let raw = UInt64(value, radix: 16) ?? 0
+    let channels = [Double((raw >> 16) & 0xff), Double((raw >> 8) & 0xff), Double(raw & 0xff)].map { channel in
+        let normalized = channel / 255
+        return normalized <= 0.04045 ? normalized / 12.92 : pow((normalized + 0.055) / 1.055, 2.4)
+    }
+    return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2]
+}
+
 @MainActor
 @Test func liveSelectionPublishesFullyResolvedSkins() throws {
     let resolver = SkinResolver()

@@ -36,6 +36,14 @@ import Testing
     #expect(enlarged.controlFont.pointSize == normal.controlFont.pointSize * 1.5)
 }
 
+@Test func increasedContrastOverridesDecorativeSkinColors() {
+    let normal = PlayerUITheme(.graphite, increaseContrast: false)
+    let increased = PlayerUITheme(.graphite, increaseContrast: true)
+    #expect(increased.secondaryText == increased.text)
+    #expect(increased.border == increased.text)
+    #expect(normal.secondaryText != normal.text)
+}
+
 @MainActor @Test func resetLayoutKeepsRequiredModulesRecoverable() {
     let track = TrackReference(
         lastKnownURL: URL(fileURLWithPath: "/music/long.mp3"),
@@ -211,10 +219,57 @@ import Testing
     _ = controller.view
     let labels = allSubviews(of: controller.view).compactMap { ($0 as? NSButton)?.accessibilityLabel() }
     #expect(labels.contains("Previous track"))
-    #expect(labels.contains("Play or pause"))
+    #expect(labels.contains("Play"))
     #expect(labels.contains("Stop"))
     #expect(labels.contains("Next track"))
     #expect(labels.contains("Open audio"))
+}
+
+@MainActor @Test func playerAccessibilityReflectsPlaybackStateAndReadableValues() throws {
+    let noOp = PlayerUIActions(send: { _ in }, compact: {}, showEqualizer: {}, showPlaylist: {}, importFiles: { _ in }, receiveFiles: { _, _ in }, search: { _ in })
+    let track = TrackReference(lastKnownURL: URL(fileURLWithPath: "/music/accessibility.mp3"))
+    let entry = QueueEntry(trackID: track.id)
+    let queue = QueueSnapshot(entries: [entry], tracks: [track.id: track], playingEntryID: entry.id)
+    let playback = PlaybackSnapshot(state: .playing, currentEntryID: entry.id, position: 30, duration: 120, volume: 0.42)
+    let controller = PlayerViewController(theme: PlayerUITheme(.graphite), model: PlayerUIStateModel(playback: playback, queue: queue), actions: noOp)
+    _ = controller.view
+    let controls = allSubviews(of: controller.view).compactMap { $0 as? NSControl }
+    let pause = try #require(controls.first(where: { $0.accessibilityLabel() == "Pause" }) as? NSButton)
+    let position = try #require(controls.first(where: { $0.accessibilityLabel() == "Playback position" }) as? NSSlider)
+    let volume = try #require(controls.first(where: { $0.accessibilityLabel() == "Volume" }) as? NSSlider)
+    #expect(pause.isEnabled)
+    #expect(position.accessibilityValue() as? String == "00:30 of 02:00")
+    #expect(volume.accessibilityValue() as? String == "42 percent")
+}
+
+@MainActor @Test func playlistMutationControlsMatchSelectionState() throws {
+    let noOp = PlayerUIActions(send: { _ in }, compact: {}, showEqualizer: {}, showPlaylist: {}, importFiles: { _ in }, receiveFiles: { _, _ in }, search: { _ in })
+    let firstTrack = TrackReference(lastKnownURL: URL(fileURLWithPath: "/music/first.mp3"))
+    let secondTrack = TrackReference(lastKnownURL: URL(fileURLWithPath: "/music/second.mp3"))
+    let first = QueueEntry(trackID: firstTrack.id); let second = QueueEntry(trackID: secondTrack.id)
+    let queue = QueueSnapshot(entries: [first, second], tracks: [firstTrack.id: firstTrack, secondTrack.id: secondTrack], selectedEntryID: first.id)
+    let controller = PlaylistViewController(theme: PlayerUITheme(.graphite), model: PlayerUIStateModel(queue: queue), actions: noOp)
+    _ = controller.view
+    let buttons = allSubviews(of: controller.view).compactMap { $0 as? NSButton }
+    #expect(try #require(buttons.first(where: { $0.accessibilityLabel() == "Remove selected tracks" })).isEnabled)
+    #expect(try #require(buttons.first(where: { $0.accessibilityLabel() == "Clear playlist" })).isEnabled)
+    #expect(!(try #require(buttons.first(where: { $0.accessibilityLabel() == "Move selected track up" }))).isEnabled)
+    #expect(try #require(buttons.first(where: { $0.accessibilityLabel() == "Move selected track down" })).isEnabled)
+}
+
+@MainActor @Test func playerDefinesExplicitKeyboardFocusOrder() throws {
+    let noOp = PlayerUIActions(send: { _ in }, compact: {}, showEqualizer: {}, showPlaylist: {}, importFiles: { _ in }, receiveFiles: { _, _ in }, search: { _ in })
+    let track = TrackReference(lastKnownURL: URL(fileURLWithPath: "/music/focus.mp3"))
+    let entry = QueueEntry(trackID: track.id)
+    let queue = QueueSnapshot(entries: [entry], tracks: [track.id: track])
+    let controller = PlayerViewController(theme: PlayerUITheme(.graphite), model: PlayerUIStateModel(queue: queue), actions: noOp)
+    _ = controller.view
+    let controls = allSubviews(of: controller.view).compactMap { $0 as? NSControl }
+    let position = try #require(controls.first(where: { $0.accessibilityLabel() == "Playback position" }))
+    let previous = try #require(controls.first(where: { $0.accessibilityLabel() == "Previous track" }))
+    let play = try #require(controls.first(where: { $0.accessibilityLabel() == "Play" }))
+    #expect(position.nextKeyView === previous)
+    #expect(previous.nextKeyView === play)
 }
 
 @MainActor @Test func graphiteButtonsHaveExplicitVisibleStyling() throws {

@@ -29,11 +29,11 @@ Statuses: `planned`, `in progress`, `pass`, `fail`, `blocked`, `not run`. Eviden
 | SKIN-04 | Reject unsafe/invalid packages | T6 | no | yes | pass | Traversal, symlink, duplicate, corrupt image, canonical-name, and schema tests pass |
 | SKIN-05 | Enforce resource and decoded-image budgets | T6 | no | yes | pass | 20 MiB archive, 80 MiB expanded, 256-file, 4096 px, 64 MiB decoded limits tested |
 | SKIN-06 | Skin failure recovery/default reset | T6 | basic | full | pass | Validate-before-apply retains active skin; native fallback present |
-| SKIN-07 | Skin-independent accessibility overrides | T5/T6/T11 | basic | full | pass | Semantic control tests; high-contrast override remains MVP |
+| SKIN-07 | Skin-independent accessibility overrides | T5/T6/T11 | basic | full | pass | Native semantics/focus remain app-owned; Increase Contrast override and bundled-skin contrast regression test pass |
 | MAC-01 | Native menus, panels, Finder, Dock, drag/drop | T5/T7/T9 | core | full | pass | Native menus/panel/Dock reopen/drop wiring and Finder document types are packaged |
 | MAC-02 | Media commands and Now Playing use shared state | T9 | no | yes | pass | One retained SystemMediaController routes MPRemoteCommandCenter to coordinator and updates Now Playing from shared snapshots |
-| A11Y-01 | Keyboard and VoiceOver operation | T3/T5/T11 | basic | full | pass | AX tree/control labels and focus visually inspected; full audit remains MVP |
-| A11Y-02 | Contrast, focus, non-color states, Reduce Motion | T5/T6/T11 | basic | full | pass | Default skins/non-color queue states verified; full audit remains MVP |
+| A11Y-01 | Keyboard and VoiceOver operation | T3/T5/T11 | basic | full | in progress | Explicit focus loops, state-aware labels/values/actions, Space playback, and AX inspection pass; spoken VoiceOver release audit remains |
+| A11Y-02 | Contrast, focus, non-color states, Reduce Motion | T5/T6/T11 | basic | full | pass | Bundled colors enforce 4.5:1; Increase Contrast override, focus rings, non-color queue states, and no-animation Reduce Motion behavior verified |
 | PERF-01 | Startup, latency, UI, CPU, memory budgets | T11 | smoke | measured | not run | 10k import measured; startup/CPU/memory/long-run measurements require an unlocked interactive host |
 | REL-01 | Long-run and recovery matrix | T11 | smoke | measured | not run | Automated corruption/output-loss paths pass; physical route/sleep and long-run matrix not run |
 | PRIV-01 | Offline local playback; no telemetry by default | T7/T11 | yes | yes | pass | No network/telemetry dependencies; local fixture app smoke |

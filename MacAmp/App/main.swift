@@ -31,9 +31,18 @@ final class MacAmpApplicationDelegate: NSObject, NSApplicationDelegate {
     private var skinPackages: SkinPackageManager?
     private var activeSkin: ResolvedSkin?
     private var savedPlaylistsMenu: NSMenu?
+    private var playPauseMenuItem: NSMenuItem?
+    private var latestPlayback = PlaybackSnapshot()
+    private var playbackKeyMonitor: Any?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         installMainMenu()
+        playbackKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+            guard event.keyCode == 49, modifiers.isEmpty, !(NSApp.keyWindow?.firstResponder is NSTextView) else { return event }
+            self?.playPause()
+            return nil
+        }
         let playerWindows = PlayerUIWindowController()
         self.playerWindows = playerWindows
         playerWindows.commandRouter = commandRouter
@@ -48,6 +57,10 @@ final class MacAmpApplicationDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        if let playbackKeyMonitor { NSEvent.removeMonitor(playbackKeyMonitor) }
+    }
 
     func application(_ application: NSApplication, open urls: [URL]) {
         guard !urls.isEmpty else { return }
@@ -80,6 +93,14 @@ final class MacAmpApplicationDelegate: NSObject, NSApplicationDelegate {
     @objc private func useJazzEQ() { applyEQPreset(.jazz) }
     @objc private func useClassicalEQ() { applyEQPreset(.classical) }
     @objc private func useBassBoostEQ() { applyEQPreset(.bassBoost) }
+    @objc private func playPause() {
+        let command: PlayerCommand
+        if case .playing = latestPlayback.state { command = .pause } else { command = .play }
+        commandRouter.send(command)
+    }
+    @objc private func stopPlayback() { commandRouter.send(.stop) }
+    @objc private func previousTrack() { commandRouter.send(.previous) }
+    @objc private func nextTrack() { commandRouter.send(.next) }
 
     private func applyEQPreset(_ preset: EqualizerPreset) {
         guard let coordinator else { return }
@@ -139,6 +160,9 @@ final class MacAmpApplicationDelegate: NSObject, NSApplicationDelegate {
                 for await snapshot in coordinator.snapshots {
                     guard !Task.isCancelled else { return }
                     let queue = await coordinator.queueSnapshot()
+                    self.latestPlayback = snapshot
+                    if case .playing = snapshot.state { self.playPauseMenuItem?.title = "Pause" }
+                    else { self.playPauseMenuItem?.title = "Play" }
                     self.playerWindows?.update(playback: snapshot, queue: queue)
                     self.systemMediaController?.update(playback: snapshot, queue: queue)
                 }
@@ -430,6 +454,22 @@ final class MacAmpApplicationDelegate: NSObject, NSApplicationDelegate {
         revealPlaying.target = self
         editItem.submenu = editMenu
         mainMenu.addItem(editItem)
+
+        let playbackItem = NSMenuItem()
+        let playbackMenu = NSMenu(title: "Playback")
+        let playPauseItem = playbackMenu.addItem(withTitle: "Play", action: #selector(playPause), keyEquivalent: " ")
+        playPauseItem.keyEquivalentModifierMask = []
+        playPauseItem.target = self
+        playPauseMenuItem = playPauseItem
+        let stopItem = playbackMenu.addItem(withTitle: "Stop", action: #selector(stopPlayback), keyEquivalent: ".")
+        stopItem.target = self
+        playbackMenu.addItem(.separator())
+        let previousItem = playbackMenu.addItem(withTitle: "Previous Track", action: #selector(previousTrack), keyEquivalent: "[")
+        previousItem.target = self
+        let nextItem = playbackMenu.addItem(withTitle: "Next Track", action: #selector(nextTrack), keyEquivalent: "]")
+        nextItem.target = self
+        playbackItem.submenu = playbackMenu
+        mainMenu.addItem(playbackItem)
 
         let eqItem = NSMenuItem()
         let eqMenu = NSMenu(title: "Equalizer")
