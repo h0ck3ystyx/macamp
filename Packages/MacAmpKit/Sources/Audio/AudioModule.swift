@@ -1,6 +1,6 @@
 @preconcurrency import AVFoundation
 import AudioToolbox
-import CFLACDecoder
+import CAudioDecoders
 import Contracts
 import Foundation
 
@@ -54,12 +54,19 @@ private final class FLACDecoderHandle: @unchecked Sendable {
     deinit { macamp_flac_close(raw) }
 }
 
-/// A bounded, seekable decoder backed by codecs exposed through AVFoundation.
+private final class MP3DecoderHandle: @unchecked Sendable {
+    let raw: OpaquePointer
+    init(_ raw: OpaquePointer) { self.raw = raw }
+    deinit { macamp_mp3_close(raw) }
+}
+
+/// A bounded, seekable decoder backed by pinned FLAC/MP3 adapters and Apple system codecs.
 /// Multichannel input is rejected until the product has an explicit downmix policy.
 public actor NativeAudioDecoder: Decoder {
     private enum Backend: @unchecked Sendable {
         case system(ExtAudioFileHandle)
         case flac(FLACDecoderHandle)
+        case mp3(MP3DecoderHandle)
     }
 
     private let backend: Backend
@@ -67,6 +74,28 @@ public actor NativeAudioDecoder: Decoder {
     private var currentFrame: Int64 = 0
 
     public init(url: URL) throws {
+        if url.pathExtension.caseInsensitiveCompare("mp3") == .orderedSame {
+            let opened = url.withUnsafeFileSystemRepresentation { path in
+                path.flatMap(macamp_mp3_open)
+            }
+            guard let opened else { throw NativeAudioError.corruptFile("software MP3 decoder could not open the stream") }
+            let handle = MP3DecoderHandle(opened)
+            let channels = Int(macamp_mp3_channels(handle.raw))
+            let sampleRate = Double(macamp_mp3_sample_rate(handle.raw))
+            let frameCount = macamp_mp3_total_frames(handle.raw)
+            guard (1...2).contains(channels) else { throw NativeAudioError.unsupportedChannelCount(channels) }
+            guard sampleRate > 0, frameCount <= UInt64(Int64.max) else {
+                throw NativeAudioError.corruptFile("MP3 stream has invalid format metadata")
+            }
+            self.backend = .mp3(handle)
+            self.description = AudioFormatDescription(
+                codec: "mp3",
+                sampleRate: sampleRate,
+                channelCount: channels,
+                frameCount: Int64(frameCount)
+            )
+            return
+        }
         if try Self.hasFLACSignature(url: url) {
             let opened = url.withUnsafeFileSystemRepresentation { path in
                 path.flatMap(macamp_flac_open)
@@ -136,6 +165,10 @@ public actor NativeAudioDecoder: Decoder {
             guard macamp_flac_seek(file.raw, UInt64(frame)) != 0 else {
                 throw NativeAudioError.renderFailed("FLAC seek failed")
             }
+        case .mp3(let file):
+            guard macamp_mp3_seek(file.raw, UInt64(frame)) != 0 else {
+                throw NativeAudioError.renderFailed("MP3 seek failed")
+            }
         }
         currentFrame = frame
     }
@@ -171,6 +204,11 @@ public actor NativeAudioDecoder: Decoder {
                 macamp_flac_read_f32(file.raw, UInt64(requested), buffer.baseAddress)
             }
             framesRead = UInt32(decoded)
+        case .mp3(let file):
+            let decoded = samples.withUnsafeMutableBufferPointer { buffer in
+                macamp_mp3_read_f32(file.raw, UInt64(requested), buffer.baseAddress)
+            }
+            framesRead = UInt32(decoded)
         }
         samples.removeLast(samples.count - Int(framesRead) * channels)
         currentFrame += Int64(framesRead)
@@ -178,6 +216,7 @@ public actor NativeAudioDecoder: Decoder {
     }
 
     private static func hasFLACSignature(url: URL) throws -> Bool {
+        if url.pathExtension.caseInsensitiveCompare("flac") == .orderedSame { return true }
         let handle = try FileHandle(forReadingFrom: url)
         defer { try? handle.close() }
         return try handle.read(upToCount: 4) == Data([0x66, 0x4c, 0x61, 0x43])

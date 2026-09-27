@@ -48,6 +48,36 @@ import Testing
     #expect(throws: NativeAudioError.self) { try NativeAudioDecoder(url: url) }
 }
 
+@Test func flacFallbackAcceptsLeadingID3Metadata() async throws {
+    let root = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+    let source = root.appendingPathComponent("Tests/Fixtures/Audio/tone-44k.flac")
+    let tagged = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathExtension("flac")
+    var data = Data([0x49, 0x44, 0x33, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
+    data.append(try Data(contentsOf: source))
+    try data.write(to: tagged)
+    defer { try? FileManager.default.removeItem(at: tagged) }
+    let decoder = try NativeAudioDecoder(url: tagged)
+    let first = try await decoder.read(maxFrames: 4_096)
+    #expect(first.frameCount == 4_096)
+}
+
+@Test func mp3FallbackDecodesAndSeeksID3TaggedAudio() async throws {
+    let url = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+        .appendingPathComponent("Tests/Fixtures/Audio/tone-vbr-id3v23.mp3")
+    let decoder = try NativeAudioDecoder(url: url)
+    let format = await decoder.format
+    #expect(format.codec == "mp3")
+    #expect(format.sampleRate == 44_100)
+    #expect(format.channelCount == 2)
+    #expect(format.frameCount == 88_200)
+    let first = try await decoder.read(maxFrames: 4_096)
+    #expect(first.frameCount == 4_096)
+    try await decoder.seek(toFrame: 87_500)
+    let last = try await decoder.read(maxFrames: 4_096)
+    #expect(last.frameCount == 700)
+    #expect(last.isEndOfStream)
+}
+
 @Test func rejectsOutOfRangeSeekAndUnboundedRead() async throws {
     let url = try makeWave(frameCount: 100, sampleRate: 44_100)
     defer { try? FileManager.default.removeItem(at: url) }

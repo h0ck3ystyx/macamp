@@ -50,6 +50,9 @@ struct AudioProbe {
         case "engine-play":
             guard paths.count == 1 else { return usage() }
             try await enginePlay(fileURL(paths[0]))
+        case "engine-soak":
+            guard paths.count == 1 || paths.count == 2 else { return usage() }
+            try await engineSoak(fileURL(paths[0]), seconds: paths.count == 2 ? Double(paths[1]) ?? 10 : 10)
         case "engine-pair":
             guard paths.count == 2 else { return usage() }
             try await enginePair(first: fileURL(paths[0]), second: fileURL(paths[1]))
@@ -105,6 +108,33 @@ struct AudioProbe {
             switch event {
             case .ended:
                 try printJSON(["result": "ended", "entryID": entryID.rawValue.uuidString])
+                return
+            case .failed(let failure, _): throw failure
+            case .outputUnavailable:
+                throw PlaybackFailure(code: .outputUnavailable, message: "Output became unavailable")
+            default: continue
+            }
+        }
+    }
+
+    private static func engineSoak(_ url: URL, seconds: TimeInterval) async throws {
+        guard seconds.isFinite, seconds > 0 else { return usage() }
+        let decoder = try NativeAudioDecoder(url: url)
+        let engine = NativeAudioEngineClient()
+        let generation = PlaybackGeneration(rawValue: 1)
+        let entryID = QueueEntryID()
+        var events = engine.events.makeAsyncIterator()
+        try await engine.prepare(current: AudioTrackPreparation(entryID: entryID, generation: generation, decoder: decoder), next: nil)
+        await engine.setVolume(0)
+        try await engine.play(generation: generation)
+        while let event = await events.next() {
+            switch event {
+            case .position(let position, _) where position >= seconds:
+                await engine.stop(generation: generation)
+                try printJSONObject(["result": "passed", "seconds": position, "entryID": entryID.rawValue.uuidString])
+                return
+            case .ended:
+                try printJSONObject(["result": "ended", "seconds": seconds, "entryID": entryID.rawValue.uuidString])
                 return
             case .failed(let failure, _): throw failure
             case .outputUnavailable:
@@ -219,7 +249,7 @@ struct AudioProbe {
         print(String(decoding: data, as: UTF8.self))
     }
     private static func usage() {
-        print("Usage:\n  AudioProbe inspect <file> [file ...]\n  AudioProbe decode <file>\n  AudioProbe seek <file> <seconds>\n  AudioProbe boundary <first-file> <second-file>\n  AudioProbe play <file>\n  AudioProbe engine-play <file>\n  AudioProbe engine-pair <first-file> <second-file>\n  AudioProbe engine-stress <file>\n  AudioProbe engine-failure\n  AudioProbe encode-he-aac <input> <output.m4a-or-aac>\n  AudioProbe eq\n  AudioProbe protection\n  AudioProbe output")
+        print("Usage:\n  AudioProbe inspect <file> [file ...]\n  AudioProbe decode <file>\n  AudioProbe seek <file> <seconds>\n  AudioProbe boundary <first-file> <second-file>\n  AudioProbe play <file>\n  AudioProbe engine-play <file>\n  AudioProbe engine-soak <file> [seconds]\n  AudioProbe engine-pair <first-file> <second-file>\n  AudioProbe engine-stress <file>\n  AudioProbe engine-failure\n  AudioProbe encode-he-aac <input> <output.m4a-or-aac>\n  AudioProbe eq\n  AudioProbe protection\n  AudioProbe output")
     }
 }
 

@@ -19,7 +19,7 @@ Schedule current and next tracks on one `AVAudioPlayerNode` timeline using expli
 
 Use `AVAudioUnitEQ` for the ten-band equalizer. A focused 1 kHz test requested +12 dB and measured +11.990 dB in offline rendering, so the component provides the required audible processing. T4 still needs parameter smoothing, preamp, bypass, reset, headroom/protection, and response tests for all ten proposed bands.
 
-Native `ExtAudioFile` decodes ALAC, AIFF, AAC-LC/HE-AAC in MPEG-4 and ADTS, float WAV, Ogg Vorbis, and Ogg Opus. A later macOS 26 update began rejecting FLAC-to-Float32 client conversion with Core Audio `fmt?` (`1718449215`), including files that passed the original feasibility run. MacAmp therefore uses a pinned, bounded `dr_flac` adapter for FLAC and retains the shared decoder contract for every format. Repeat the full matrix on macOS 14; add other software codec adapters only if that run reveals a concrete native gap.
+Native `ExtAudioFile` decodes ALAC, AIFF, AAC-LC/HE-AAC in MPEG-4 and ADTS, float WAV, Ogg Vorbis, and Ogg Opus. A later macOS 26 update began rejecting both FLAC and some real-library MP3 files during Float32 client conversion with Core Audio `fmt?` (`1718449215`). MacAmp therefore uses pinned, bounded `dr_flac` and `dr_mp3` adapters for FLAC and MP3 while retaining the shared decoder contract for every format. The adapters accept ordinary metadata layouts, including ID3-prefixed FLAC and ID3-tagged MP3, and preserve bounded reads and frame seeks. Repeat the full matrix on macOS 14.
 
 ## Prototype format results
 
@@ -111,6 +111,7 @@ swift build --product AudioProbe
 .build/debug/AudioProbe output
 .build/debug/AudioProbe play /path/to/file.mp3
 .build/debug/AudioProbe engine-play Tests/Fixtures/Audio/tone-aac.m4a
+.build/debug/AudioProbe engine-soak /path/to/network-file.flac 30
 .build/debug/AudioProbe engine-pair Tests/Fixtures/Audio/boundary-01.mp3 Tests/Fixtures/Audio/boundary-02.mp3
 .build/debug/AudioProbe engine-stress Tests/Fixtures/Audio/tone-aac.m4a
 .build/debug/AudioProbe engine-failure

@@ -7,8 +7,8 @@ Artifact: `build/MacAmp.app`, ad-hoc signed local candidate
 
 ## Automated results
 
-- `./scripts/test.sh`: 93 passed, 0 failed; 5 AudioComponent-host cases intentionally skipped in the parallel Swift Testing host and covered by the serial probes below.
-- 10,000-entry data measurement in the debug test: playlist parse and missing reporting 0.159 seconds; queue append plus search 0.037 seconds; combined under 0.25 seconds.
+- `./scripts/test.sh`: 96 passed, 0 failed; 5 AudioComponent-host cases intentionally skipped in the parallel Swift Testing host and covered by the serial probes below.
+- 10,000-entry data measurement in the debug test: playlist parse and missing reporting 0.171 seconds; queue append plus search 0.040 seconds; combined under 0.25 seconds.
 - `./scripts/package-app.sh`: release build succeeded and produced `build/MacAmp.app`.
 - `codesign --verify --deep --strict --verbose=2 build/MacAmp.app`: valid on disk and satisfies its designated requirement.
 - `plutil -lint build/MacAmp.app/Contents/Info.plist`: OK.
@@ -19,9 +19,10 @@ Artifact: `build/MacAmp.app`, ad-hoc signed local candidate
 The probes were run outside the command filesystem sandbox so macOS could load its codec and AudioComponent plug-ins.
 
 - Bounded decode passed for AAC-LC/M4A, 192 kHz 24-bit FLAC, 24-bit ALAC, HE-AAC/ADTS, Ogg Vorbis, and Ogg Opus.
-- September 27 regression: the current Core Audio build returned `fmt?` while configuring Float32 output for both bundled and user-library FLAC files. The pinned `dr_flac` path decoded the affected 25 MB, 8,773,160-frame library track completely in 2.88 seconds and restored bounded reads and seeks for 16/24-bit FLAC.
+- September 27 regression: the current Core Audio build returned `fmt?` while configuring Float32 output for both FLAC and all eight MP3 files in a bounded real-library sample. Pinned `dr_flac` and `dr_mp3` paths restore bounded reads and seeks, including ID3-prefixed FLAC and ID3-tagged MP3.
 - Sample-rate timing regression: the one-second 192 kHz FLAC took 4.65 seconds when its player lane inherited a 48 kHz graph format. With explicit source-rate lane formats it took 1.52 seconds including engine startup; the two-second 44.1 kHz fixture took 2.27 seconds. Mixed 44.1→192 kHz and 192→44.1 kHz pairs both transitioned and ended in 3.24 seconds.
-- High-rate buffering now scales blocks to 250 ms and keeps thirty-two scheduled buffers, providing eight seconds per current/prefetched track at both 44.1 and 192 kHz. A policy regression test enforces 11,025-frame blocks at 44.1 kHz and 48,000-frame blocks at 192 kHz; the small-buffer engine stress probe remains independently configurable. Unified logging emitted the expected 192 kHz plan (`48000 × 32`, `8.00s`) with no slow-read, low-water, or underrun entries during the probe.
+- High-rate buffering now scales blocks to 250 ms and keeps thirty-two scheduled buffers, providing eight seconds per current/prefetched track at both 44.1 and 192 kHz. A policy regression test enforces 11,025-frame blocks at 44.1 kHz and 48,000-frame blocks at 192 kHz; the small-buffer engine stress probe remains independently configurable.
+- Network-volume soaks reached 12 seconds for 44.1/96/192 kHz FLAC and 44.1 kHz MP3. Unified logging caught slow reads of 0.317 seconds at 96 kHz and 0.564 seconds at 192 kHz, while the eight-second queue recorded no low-water or underrun event. The inventory, decode timings, and limits are in `docs/NETWORK-AUDIO-REPORT.md`.
 - Refill accounting refreshes shared playback counters after every suspended decoder read. This prevents a slow network read from overwriting buffer-completion callbacks that arrived while the actor was suspended. The 192 kHz seek/pause/restart stress probe ended at generation 12 with zero failures after the change.
 - Production engine stress ended at generation 12 with zero failure events.
 - The tagged MP3 pair emitted a matching transition and end event.

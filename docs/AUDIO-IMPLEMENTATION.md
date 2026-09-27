@@ -17,7 +17,7 @@ The engine accepts decoder existentials and does not own security-scoped access 
 
 ## Scheduling and memory bounds
 
-The production buffering policy targets 250 ms per decoded block and retains at most thirty-two scheduled buffers per track, giving current and prefetched tracks eight seconds of coverage at their own sample rates. It keeps a 4,096-frame minimum and caps blocks at 65,536 frames. Stereo Float32 uses about 2.69 MiB per track at 44.1 kHz and 11.72 MiB per track at 192 kHz; current plus next remain below 24 MiB at 192 kHz. Decode resumes after a playback completion returns a buffer slot. Stress probes can explicitly disable duration scaling and use tiny queues to exercise refill and cancellation behavior.
+The production buffering policy targets 250 ms per decoded block and retains at most thirty-two scheduled buffers per track, giving current and prefetched tracks eight seconds of coverage at their own sample rates. It keeps a 4,096-frame minimum and caps blocks at 65,536 frames. Stereo Float32 uses about 2.69 MiB per track at 44.1 kHz and 11.72 MiB per track at 192 kHz; current plus next remain below 24 MiB at 192 kHz. Decode resumes after a playback completion returns a buffer slot. Stress probes can explicitly disable duration scaling and use tiny queues to exercise refill and cancellation behavior. FLAC and MP3 use the pinned software adapters because the current Core Audio build rejects some valid library files during Float32 setup; other supported formats continue through the system decoder.
 
 The `com.macamp.app` / `AudioBuffer` unified-log category records each track's buffer plan. Reads taking at least the target block duration emit a slow-read warning. An active track falling to two queued buffers emits a rate-limited low-water warning, and reaching zero before end-of-stream emits an underrun error. See `docs/AUDIO-TROUBLESHOOTING.md` for capture commands.
 
@@ -87,6 +87,7 @@ swift build --product AudioProbe
 Observed results:
 
 - AAC and FLAC production playback reached the expected `ended` event.
+- Real files from a network-mounted library completed muted engine soaks at 44.1, 96, and 192 kHz FLAC plus 44.1 kHz MP3. The slowest logged 250 ms block read was 0.564 seconds, and the eight-second queue produced no low-water or underrun event.
 - The bounded two-track MP3 run emitted `transitioned` for track two and then `ended`.
 - Rapid play → seek → pause → play → stop → play, with live volume, EQ, and EQ-reset changes, completed at generation 12 with zero failure events; old buffer callbacks did not terminate or mutate the new generation.
 - A synthetic decoder read failure produced a `failed` event with code `corrupt` and generation 21.

@@ -20,8 +20,8 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "CFLACDecoder",
-            path: "Packages/MacAmpKit/Sources/CFLACDecoder",
+            name: "CAudioDecoders",
+            path: "Packages/MacAmpKit/Sources/CAudioDecoders",
             publicHeadersPath: "include"
         ),
         .target(name: "Contracts", path: "Packages/MacAmpKit/Sources/Contracts"),
@@ -29,7 +29,7 @@ let package = Package(
             name: "Audio",
             dependencies: [
                 "Contracts",
-                "CFLACDecoder",
+                "CAudioDecoders",
             ],
             path: "Packages/MacAmpKit/Sources/Audio"
         ),
