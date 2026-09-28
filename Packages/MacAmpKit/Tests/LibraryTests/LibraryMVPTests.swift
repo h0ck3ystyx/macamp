@@ -174,7 +174,7 @@ import Testing
     }
 }
 
-@Test func schemaOneSessionMigratesQueuePolicyDefaultsAndSchemaTwoRestoresAllState() async throws {
+@Test func historicalSessionMigratesQueuePolicyAndVisualizationDefaults() async throws {
     let directory = try mvpTemporaryDirectory()
     defer { try? FileManager.default.removeItem(at: directory) }
     let fileURL = directory.appendingPathComponent("session.json")
@@ -194,14 +194,16 @@ import Testing
     object.removeValue(forKey: "selectedEntryID")
     object.removeValue(forKey: "isShuffled")
     object.removeValue(forKey: "repeatMode")
+    object.removeValue(forKey: "visualization")
     try JSONSerialization.data(withJSONObject: object).write(to: fileURL)
 
     let store = AtomicSessionStore(fileURL: fileURL)
     let migrated = try #require(try await store.load())
-    #expect(migrated.schemaVersion == 2)
+    #expect(migrated.schemaVersion == 3)
     #expect(migrated.selectedEntryID == nil)
     #expect(!migrated.isShuffled)
     #expect(migrated.repeatMode == .off)
+    #expect(migrated.visualization == VisualizationSettings())
 
     var current = migrated
     current.selectedEntryID = entry.id
@@ -217,6 +219,19 @@ import Testing
     #expect(queue.isShuffled)
     #expect(queue.repeatMode == .all)
     #expect(SessionRestoration.playbackSnapshot(from: restored).state == .paused)
+}
+
+@Test func schemaTwoSessionMigratesVisualizationDefaults() async throws {
+    let directory = try mvpTemporaryDirectory()
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let fileURL = directory.appendingPathComponent("session.json")
+    var object = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(SessionState())) as? [String: Any])
+    object["schemaVersion"] = 2
+    object.removeValue(forKey: "visualization")
+    try JSONSerialization.data(withJSONObject: object).write(to: fileURL)
+    let migrated = try #require(try await AtomicSessionStore(fileURL: fileURL).load())
+    #expect(migrated.schemaVersion == 3)
+    #expect(migrated.visualization == VisualizationSettings())
 }
 
 @Test func tenThousandEntryPlaylistAndQueueStayWithinInteractiveImportBudget() async throws {

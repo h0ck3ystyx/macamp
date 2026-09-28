@@ -395,6 +395,7 @@ extension PlayerUIWindowController {
         case .player: base = isCompact ? Self.compactPlayerSize : Self.defaultPlayerSize
         case .equalizer: base = Self.defaultEqualizerSize
         case .playlist: base = NSSize(width: Self.defaultPlaylistSize.width, height: 180)
+        case .visualization: base = NSSize(width: 360, height: 240)
         }
         window.contentMinSize = NSSize(width: base.width * uiScale, height: base.height * uiScale)
     }
@@ -442,7 +443,12 @@ extension PlayerUIWindowController {
     }
 
     private func title(for module: PlayerModule) -> String {
-        switch module { case .player: "MacAmp Player"; case .equalizer: "MacAmp Equalizer"; case .playlist: "MacAmp Playlist" }
+        switch module {
+        case .player: "MacAmp Player"
+        case .equalizer: "MacAmp Equalizer"
+        case .playlist: "MacAmp Playlist"
+        case .visualization: "MacAmp Visualization"
+        }
     }
 
     fileprivate func windowWillMove(_ window: NSWindow) {

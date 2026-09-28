@@ -7,7 +7,7 @@ Artifact: `build/MacAmp.app`, ad-hoc signed local candidate
 
 ## Automated results
 
-- `./scripts/test.sh`: 96 passed, 0 failed; 5 AudioComponent-host cases intentionally skipped in the parallel Swift Testing host and covered by the serial probes below.
+- `./scripts/test.sh`: 104 passed, 0 failed; 5 AudioComponent-host cases intentionally skipped in the parallel Swift Testing host and covered by the serial probes below.
 - 10,000-entry data measurement in the debug test: playlist parse and missing reporting 0.171 seconds; queue append plus search 0.040 seconds; combined under 0.25 seconds.
 - `./scripts/package-app.sh`: release build succeeded and produced `build/MacAmp.app`.
 - `codesign --verify --deep --strict --verbose=2 build/MacAmp.app`: valid on disk and satisfies its designated requirement.
@@ -35,6 +35,7 @@ Expanded frame and boundary results are in `Tests/Fixtures/Audio/results-macos26
 
 ## Package and state coverage
 
+- Visualization foundation tests cover schema-3 round trips, schema-1/schema-2 migration defaults, six distinct built-in preset identities, silence floor, 1 kHz band placement, antiphase stereo power, −6 dB level response, and sequence-gap history reset. The real audio tap, Metal rendering, and visible controls are not implemented at this checkpoint.
 - Portable playlists cover M3U/M3U8 import/export, PLS import, relative paths, duplicate order, UTF-8/Latin-1 handling, missing files, and unsupported remote entries.
 - Session tests cover schema 1→2 migration, atomic backup recovery, queue policy restoration, paused relaunch semantics, and non-destructive ChuckAmp-to-MacAmp Application Support migration.
 - Skin tests cover preview/install/export/remove, creator and accent round trips, traversal, symlink, duplicate, corrupt image, file-count, compressed/expanded-byte, image-dimension, and decoded-memory rejection.

@@ -38,3 +38,16 @@ Statuses: `planned`, `in progress`, `pass`, `fail`, `blocked`, `not run`. Eviden
 | REL-01 | Long-run and recovery matrix | T11 | smoke | measured | not run | Automated corruption/output-loss paths pass; physical route/sleep and long-run matrix not run |
 | PRIV-01 | Offline local playback; no telemetry by default | T7/T11 | yes | yes | pass | No network/telemetry dependencies; local fixture app smoke |
 | DIST-01 | Dependency provenance and clean install | T10/T11 | development app | release candidate | blocked | Reproducible ad-hoc signed candidate and ZIPFoundation notice complete; Developer ID signing/notarization credentials unavailable |
+| VIS-01 | Rendered-audio visualization independent of codec | VIZ-1 | real tap | full matrix | in progress | Shared PCM/feature contracts and AudioAnalysis target compile; post-limiter tap and bounded callback bridge remain |
+| VIS-02 | Spectrum/scope with measurable EQ response | VIZ-1/VIZ-3 | deterministic DSP | integrated UI | in progress | Accelerate 2,048-point analysis tests pass for silence, 1 kHz tone, antiphase stereo, and −6 dB level change; EQ/tap integration remains |
+| VIS-03 | Mini modes and skin colors | VIZ-3 | mini surface | all skins | planned | Mini mode contract exists; no visible surface yet |
+| VIS-04 | Detachable/fullscreen visualization module | VIZ-3 | windowed | full lifecycle | planned | `PlayerModule.visualization` is schema-backed; window/render lifecycle remains |
+| VIS-05 | Six distinct original presets | VIZ-2/VIZ-4 | bars/scope/phosphor | all six | in progress | Six stable built-in IDs/effect identities and catalog test exist; renderers remain |
+| VIS-06 | Browser, favorite, history, shuffle, lock, cycle | VIZ-4 | state model | UI + persistence | planned | Settings/command contracts cover favorites, filter, lock, and cycle |
+| VIS-07 | Bounded smooth transitions | VIZ-4 | two effects max | measured | planned | Renderer implementation not started |
+| VIS-08 | Playback-aware visualization lifecycle | VIZ-1/VIZ-3 | epoch reset | full lifecycle | in progress | Epoch/sequence discontinuity semantics are represented in contracts/analyzer; playback integration remains |
+| VIS-09 | Persist visualization customization | VIZ-0/VIZ-5 | schema migration | restart proof | in progress | Session schema 3 round-trip and schema-1 migration tests pass; UI mutation path remains |
+| VIS-10 | Safe preset customization | VIZ-4 | schema validator | import/export | planned | Bounded preset file implementation not started |
+| VIS-11 | Accessible controls and reduced motion | VIZ-3/VIZ-5 | keyboard/AX | manual audit | planned | Reduced-motion session preference is persisted; UI remains |
+| VIS-12 | Bounded cost and failure recovery | VIZ-1/VIZ-2/VIZ-5 | counters/fallback | measured gates | planned | Performance and renderer failure work not started |
+| VIS-13 | Preserve current app behavior | VIZ-5 | regression suite | release matrix | in progress | 102 package tests pass after VIZ-0; live audio/render integration has not begun |

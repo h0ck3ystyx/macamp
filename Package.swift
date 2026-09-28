@@ -10,6 +10,8 @@ let package = Package(
         .executable(name: "AudioProbe", targets: ["AudioProbe"]),
         .library(name: "MacAmpContracts", targets: ["Contracts"]),
         .library(name: "MacAmpAudio", targets: ["Audio"]),
+        .library(name: "MacAmpAudioAnalysis", targets: ["AudioAnalysis"]),
+        .library(name: "MacAmpVisualizations", targets: ["Visualizations"]),
         .library(name: "MacAmpLibrary", targets: ["Library"]),
         .library(name: "MacAmpSkins", targets: ["Skins"]),
         .library(name: "MacAmpPlayerUI", targets: ["PlayerUI"]),
@@ -25,6 +27,16 @@ let package = Package(
             publicHeadersPath: "include"
         ),
         .target(name: "Contracts", path: "Packages/MacAmpKit/Sources/Contracts"),
+        .target(
+            name: "AudioAnalysis",
+            dependencies: ["Contracts"],
+            path: "Packages/MacAmpKit/Sources/AudioAnalysis"
+        ),
+        .target(
+            name: "Visualizations",
+            dependencies: ["Contracts"],
+            path: "Packages/MacAmpKit/Sources/Visualizations"
+        ),
         .target(
             name: "Audio",
             dependencies: [
@@ -80,6 +92,16 @@ let package = Package(
             name: "AudioTests",
             dependencies: ["Contracts", "Audio"],
             path: "Packages/MacAmpKit/Tests/AudioTests"
+        ),
+        .testTarget(
+            name: "AudioAnalysisTests",
+            dependencies: ["Contracts", "AudioAnalysis"],
+            path: "Packages/MacAmpKit/Tests/AudioAnalysisTests"
+        ),
+        .testTarget(
+            name: "VisualizationsTests",
+            dependencies: ["Contracts", "Visualizations"],
+            path: "Packages/MacAmpKit/Tests/VisualizationsTests"
         ),
         .testTarget(
             name: "LibraryTests",

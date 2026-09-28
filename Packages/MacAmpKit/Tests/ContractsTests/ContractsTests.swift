@@ -27,9 +27,20 @@ import Testing
     #expect(decoded.tracks[0].metadata == .pending)
 }
 
+@Test func visualizationSettingsRoundTripWithSessionSchemaThree() throws {
+    var settings = VisualizationSettings()
+    settings.presetID = "builtin.phosphor"
+    settings.favoritePresetIDs = ["builtin.phosphor"]
+    settings.quality = .high
+    let state = SessionState(visualization: settings)
+    let decoded = try JSONDecoder().decode(SessionState.self, from: JSONEncoder().encode(state))
+    #expect(decoded.schemaVersion == 3)
+    #expect(decoded.visualization == settings)
+    #expect(PlayerModule.allCases.contains(.visualization))
+}
+
 @Test func equalizerRequiresAndProvidesTenBands() {
     let equalizer = EQSettings()
     #expect(equalizer.bandGains.count == 10)
     #expect(EQSettings.frequencies.count == 10)
 }
-

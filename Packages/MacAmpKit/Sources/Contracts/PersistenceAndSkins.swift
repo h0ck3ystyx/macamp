@@ -18,6 +18,7 @@ public enum PlayerModule: String, Codable, CaseIterable, Sendable {
     case player
     case equalizer
     case playlist
+    case visualization
 }
 
 public struct ModuleLayout: Codable, Equatable, Sendable {
@@ -47,7 +48,7 @@ public struct WindowLayout: Codable, Equatable, Sendable {
 }
 
 public struct SessionState: Codable, Equatable, Sendable {
-    public static let currentSchemaVersion = 2
+    public static let currentSchemaVersion = 3
 
     public var schemaVersion: Int
     public var queue: [QueueEntry]
@@ -61,6 +62,7 @@ public struct SessionState: Codable, Equatable, Sendable {
     public var equalizer: EQSettings
     public var skinID: String
     public var windowLayout: WindowLayout
+    public var visualization: VisualizationSettings
 
     public init(
         schemaVersion: Int = Self.currentSchemaVersion,
@@ -74,7 +76,8 @@ public struct SessionState: Codable, Equatable, Sendable {
         volume: Double = 1,
         equalizer: EQSettings = EQSettings(),
         skinID: String = "studio-graphite",
-        windowLayout: WindowLayout = WindowLayout()
+        windowLayout: WindowLayout = WindowLayout(),
+        visualization: VisualizationSettings = VisualizationSettings()
     ) {
         self.schemaVersion = schemaVersion
         self.queue = queue
@@ -88,11 +91,12 @@ public struct SessionState: Codable, Equatable, Sendable {
         self.equalizer = equalizer
         self.skinID = skinID
         self.windowLayout = windowLayout
+        self.visualization = visualization
     }
 
     private enum CodingKeys: String, CodingKey {
         case schemaVersion, queue, tracks, currentEntryID, selectedEntryID, isShuffled, repeatMode
-        case position, volume, equalizer, skinID, windowLayout
+        case position, volume, equalizer, skinID, windowLayout, visualization
     }
 
     public init(from decoder: any Swift.Decoder) throws {
@@ -109,6 +113,7 @@ public struct SessionState: Codable, Equatable, Sendable {
         equalizer = try values.decode(EQSettings.self, forKey: .equalizer)
         skinID = try values.decode(String.self, forKey: .skinID)
         windowLayout = try values.decode(WindowLayout.self, forKey: .windowLayout)
+        visualization = try values.decodeIfPresent(VisualizationSettings.self, forKey: .visualization) ?? VisualizationSettings()
     }
 }
 

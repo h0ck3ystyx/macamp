@@ -31,7 +31,9 @@ The same file may produce several `QueueEntry` values. A `TrackReference` carrie
 
 ## Persistence and skin rules
 
-`SessionState` is explicitly versioned. Schema 2 persists selection, shuffle, and repeat policy in addition to the queue, audio, skin, and window fields; schema-1 decoding supplies safe defaults before the Library store migrates it. Implementations write atomically and restore a previously playing session as paused. Migration failures preserve the old file for recovery.
+`SessionState` is explicitly versioned. Schema 3 adds visualization settings and the visualization window module; schema 2 added selection, shuffle, and repeat policy. Schema-1 and schema-2 decoding supplies safe defaults before the Library store migrates it. Implementations write atomically and restore a previously playing session as paused. Migration failures preserve the old file for recovery.
+
+Visualization PCM headers and feature snapshots are shared values, while capture storage remains owned by AudioAnalysis and render resources remain owned by Visualizations. `VisualizationFeatures` represents analyzed, currently rendered audio and may cross actors after publication. It must never be constructed directly from decoded-ahead playback buffers. Visualization commands remain separate from `PlayerCommand`, and renderers cannot mutate playback state.
 
 `SkinManifest` is declarative data. `ResolvedSkin` contains validated local asset URLs only. A skin cannot define actions, network access, scripts, or audio behavior. View code consumes canonical style keys and must not special-case a bundled skin.
 

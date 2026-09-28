@@ -48,8 +48,8 @@ public actor AtomicSessionStore: SessionStore {
         switch decoded.schemaVersion {
         case SessionState.currentSchemaVersion:
             break
-        case 1:
-            // Contracts supplies backward-compatible defaults for fields introduced in v2.
+        case 1, 2:
+            // Contracts supplies backward-compatible defaults for fields introduced in v2/v3.
             // The next ordinary save durably rewrites the migrated representation while load
             // leaves the source file untouched for recovery if startup is interrupted.
             decoded.schemaVersion = SessionState.currentSchemaVersion
@@ -100,6 +100,12 @@ public actor AtomicSessionStore: SessionStore {
         }
         guard state.windowLayout.scale.isFinite, state.windowLayout.scale > 0 else {
             throw SessionStoreError.invalidState("Window scale must be finite and positive")
+        }
+        guard state.visualization.dwellSeconds.isFinite, (10...120).contains(state.visualization.dwellSeconds),
+              state.visualization.transitionSeconds.isFinite, (0...5).contains(state.visualization.transitionSeconds),
+              state.visualization.sensitivity.isFinite, (0.25...4).contains(state.visualization.sensitivity),
+              !state.visualization.presetID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw SessionStoreError.invalidState("Visualization settings are outside supported bounds")
         }
     }
 }
