@@ -101,20 +101,29 @@ class ThemedViewController: NSViewController {
         button.focusRingType = .exterior
         button.wantsLayer = true
         button.contentTintColor = theme.accent
-        styleButtonTitle(button, title: title)
         if let image {
             // Transport artwork includes its own button face. Adding the shared
             // panel border here produces a smaller framed button inside another.
-            button.image = image
-            button.imagePosition = .imageOnly
-            button.imageScaling = .scaleProportionallyDown
+            styleButtonArtwork(button, image: image)
         } else {
+            styleButtonTitle(button, title: title)
             button.layer?.backgroundColor = theme.panel.cgColor
             button.layer?.borderColor = theme.border.cgColor
             button.layer?.borderWidth = scaled(1)
             button.layer?.cornerRadius = scaled(5)
         }
         button.font = theme.controlFont; button.setAccessibilityLabel(label); button.toolTip = label; return button
+    }
+    func styleButtonArtwork(_ button: NSButton?, image: NSImage) {
+        guard let button else { return }
+        // Keep no fallback glyph behind the artwork. During a play/pause state
+        // change AppKit can otherwise briefly composite both representations.
+        button.title = ""
+        button.attributedTitle = NSAttributedString(string: "")
+        image.size = NSSize(width: scaled(34), height: scaled(28))
+        button.image = image
+        button.imagePosition = .imageOnly
+        button.imageScaling = .scaleAxesIndependently
     }
     func styleButtonTitle(_ button: NSButton?, title: String) {
         button?.attributedTitle = NSAttributedString(
@@ -212,8 +221,12 @@ final class PlayerViewController: ThemedViewController {
         statusLabel?.textColor = model.playback.state.isFailure ? .systemRed : theme.secondaryText
         progressSlider?.maxValue = max(model.playback.duration ?? 1, 1); progressSlider?.doubleValue = model.playback.position; progressSlider?.isEnabled = model.playback.duration != nil; progressSlider?.setAccessibilityValue(Self.playbackPositionDescription(model.playback))
         volumeSlider?.doubleValue = model.playback.volume; volumeSlider?.setAccessibilityValue(Self.volumeDescription(model.playback.volume))
-        styleButtonTitle(playButton, title: model.playback.state.isPlaying ? "Ⅱ" : "▶︎")
-        playButton?.image = theme.images[model.playback.state.isPlaying ? .pause : .play]
+        if let artwork = theme.images[model.playback.state.isPlaying ? .pause : .play] {
+            styleButtonArtwork(playButton, image: artwork)
+        } else {
+            playButton?.image = nil
+            styleButtonTitle(playButton, title: model.playback.state.isPlaying ? "Ⅱ" : "▶︎")
+        }
         let playLabel = model.playback.state.isPlaying ? "Pause" : "Play"
         playButton?.setAccessibilityLabel(playLabel); playButton?.toolTip = playLabel
         let hasTracks = !model.rows.isEmpty

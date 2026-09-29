@@ -284,6 +284,17 @@ import Testing
     #expect(open.attributedTitle.attribute(.foregroundColor, at: 0, effectiveRange: nil) is NSColor)
 }
 
+@MainActor @Test func transportArtworkOwnsOneFullSizeButtonFace() {
+    let controller = ThemedViewController(theme: PlayerUITheme(.graphite))
+    let image = NSImage(size: NSSize(width: 28, height: 28))
+    let button = controller.button("▶︎", label: "Play", image: image, action: {})
+    #expect(button.title.isEmpty)
+    #expect(button.attributedTitle.length == 0)
+    #expect(button.imagePosition == .imageOnly)
+    #expect(button.image?.size == NSSize(width: 34, height: 28))
+    #expect(button.layer?.borderWidth == 0)
+}
+
 @MainActor private func allSubviews(of view: NSView) -> [NSView] {
     view.subviews + view.subviews.flatMap(allSubviews)
 }
