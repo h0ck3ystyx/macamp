@@ -362,6 +362,7 @@ final class EqualizerViewController: ThemedViewController {
 }
 
 final class PlaylistViewController: ThemedViewController, NSTableViewDataSource, NSTableViewDelegate {
+    private static let playlistEntryPasteboardType = NSPasteboard.PasteboardType("com.macamp.playlist-entry")
     private let model: PlayerUIStateModel; private let actions: PlayerUIActions
     private weak var tableView: NSTableView?
     private weak var searchField: NSSearchField?
@@ -375,6 +376,7 @@ final class PlaylistViewController: ThemedViewController, NSTableViewDataSource,
         let heading = label("PLAYLIST", size: 11, bold: true); let search = CommandSearchField(value: model.filterText, handler: actions.search); scaleControl(search); search.font = theme.controlFont; search.placeholderString = "Search"; search.setAccessibilityLabel("Search playlist"); search.isEnabled = !model.queue.entries.isEmpty; searchField = search
         let header = NSStackView(views: [heading, NSView(), search]); header.spacing = scaled(8)
         let table = PlaylistTableView(); table.headerView = nil; table.backgroundColor = theme.panel; table.rowHeight = scaled(28); table.delegate = self; table.dataSource = self; table.allowsMultipleSelection = false
+        table.registerForDraggedTypes([Self.playlistEntryPasteboardType]); table.setDraggingSourceOperationMask(.move, forLocal: true); table.draggingDestinationFeedbackStyle = .gap
         table.target = self; table.doubleAction = #selector(activateSelection); table.activateSelection = { [weak self] in self?.activateSelection() }; tableView = table
         let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("track")); column.resizingMask = .autoresizingMask; table.addTableColumn(column); table.setAccessibilityLabel("Playlist tracks")
         let scroll = NSScrollView(); scroll.documentView = table; scroll.hasVerticalScroller = true; scroll.drawsBackground = false
@@ -420,8 +422,54 @@ final class PlaylistViewController: ThemedViewController, NSTableViewDataSource,
         guard !isRestoringSelection, let table = notification.object as? NSTableView else { return }
         actions.send(.select(table.selectedRow >= 0 ? model.rows[table.selectedRow].id : nil))
     }
+    func tableView(_ tableView: NSTableView, pasteboardWriterForRow row: Int) -> NSPasteboardWriting? {
+        guard model.filterText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              model.rows.indices.contains(row) else { return nil }
+        let item = NSPasteboardItem()
+        item.setString(model.rows[row].id.rawValue.uuidString, forType: Self.playlistEntryPasteboardType)
+        return item
+    }
+    func tableView(
+        _ tableView: NSTableView,
+        validateDrop info: NSDraggingInfo,
+        proposedRow row: Int,
+        proposedDropOperation dropOperation: NSTableView.DropOperation
+    ) -> NSDragOperation {
+        guard info.draggingSource as? NSTableView === tableView,
+              let entryID = draggedEntryID(from: info.draggingPasteboard),
+              PlaylistReorder.command(entries: model.queue.entries, draggedEntryID: entryID, dropRow: row) != nil else { return [] }
+        tableView.setDropRow(row, dropOperation: .above)
+        return .move
+    }
+    func tableView(
+        _ tableView: NSTableView,
+        acceptDrop info: NSDraggingInfo,
+        row: Int,
+        dropOperation: NSTableView.DropOperation
+    ) -> Bool {
+        guard let entryID = draggedEntryID(from: info.draggingPasteboard),
+              let command = PlaylistReorder.command(entries: model.queue.entries, draggedEntryID: entryID, dropRow: row) else { return false }
+        actions.send(command)
+        return true
+    }
+    private func draggedEntryID(from pasteboard: NSPasteboard) -> QueueEntryID? {
+        guard let raw = pasteboard.string(forType: Self.playlistEntryPasteboardType),
+              let uuid = UUID(uuidString: raw) else { return nil }
+        return QueueEntryID(rawValue: uuid)
+    }
     @objc private func activateSelection() {
         guard let row = tableView?.selectedRow, row >= 0, model.rows.indices.contains(row) else { return }
         actions.send(.select(model.rows[row].id)); actions.send(.play)
+    }
+}
+
+enum PlaylistReorder {
+    static func command(entries: [QueueEntry], draggedEntryID: QueueEntryID, dropRow: Int) -> PlayerCommand? {
+        guard let sourceRow = entries.firstIndex(where: { $0.id == draggedEntryID }),
+              (0...entries.count).contains(dropRow),
+              dropRow != sourceRow,
+              dropRow != sourceRow + 1 else { return nil }
+        let before = dropRow < entries.count ? entries[dropRow].id : nil
+        return .move(entries: [draggedEntryID], before: before)
     }
 }

@@ -197,6 +197,17 @@ import Testing
     #expect(model.equalizerCommand(band: 0, gain: 20) == .setEqualizer(EQSettings(isBypassed: false, bandGains: [12, 0, 0, 0, 0, 0, 0, 0, 0, 0])))
 }
 
+@Test func playlistDragBuildsStableMoveCommands() throws {
+    let entries = (0..<4).map { _ in QueueEntry(trackID: TrackID()) }
+    #expect(PlaylistReorder.command(entries: entries, draggedEntryID: entries[2].id, dropRow: 1) == .move(entries: [entries[2].id], before: entries[1].id))
+    #expect(PlaylistReorder.command(entries: entries, draggedEntryID: entries[1].id, dropRow: 3) == .move(entries: [entries[1].id], before: entries[3].id))
+    #expect(PlaylistReorder.command(entries: entries, draggedEntryID: entries[1].id, dropRow: 4) == .move(entries: [entries[1].id], before: nil))
+    #expect(PlaylistReorder.command(entries: entries, draggedEntryID: entries[1].id, dropRow: 1) == nil)
+    #expect(PlaylistReorder.command(entries: entries, draggedEntryID: entries[1].id, dropRow: 2) == nil)
+    #expect(PlaylistReorder.command(entries: entries, draggedEntryID: QueueEntryID(), dropRow: 0) == nil)
+    #expect(PlaylistReorder.command(entries: entries, draggedEntryID: entries[0].id, dropRow: 5) == nil)
+}
+
 @MainActor @Test func playbackTicksDoNotOverwriteProgressDuringUserDrag() {
     let slider = CommandSlider(value: 10, minValue: 0, maxValue: 100) { _ in }
     slider.beginUserTracking()

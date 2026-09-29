@@ -41,6 +41,27 @@ import Testing
     #expect(snapshot.revision > removedRevision)
 }
 
+@Test func movingPlaylistEntryPreservesIdentityAndUndoRestoresOrder() async throws {
+    let tracks = makeTracks(3)
+    let store = ProductionQueueStore()
+    await store.append(tracks)
+    let original = await store.snapshot().entries
+    try await store.apply(.select(original[0].id))
+    await store.commitPlaying(original[1].id, generation: PlaybackGeneration(rawValue: 1))
+
+    try await store.apply(.move(entries: [original[2].id], before: original[0].id))
+    var moved = await store.snapshot()
+    #expect(moved.entries.map(\.id) == [original[2].id, original[0].id, original[1].id])
+    #expect(moved.selectedEntryID == original[0].id)
+    #expect(moved.playingEntryID == original[1].id)
+
+    #expect(await store.undo())
+    moved = await store.snapshot()
+    #expect(moved.entries == original)
+    #expect(moved.selectedEntryID == original[0].id)
+    #expect(moved.playingEntryID == original[1].id)
+}
+
 @Test func removingPlayingEntryDoesNotStopPlaybackIdentity() async throws {
     let tracks = makeTracks(2)
     let store = ProductionQueueStore()

@@ -7,7 +7,7 @@ Artifact: `build/MacAmp.app`, ad-hoc signed local candidate
 
 ## Automated results
 
-- `./scripts/test.sh`: 109 passed, 0 failed; 5 AudioComponent-host cases intentionally skipped in the parallel Swift Testing host and covered by the serial probes below.
+- `./scripts/test.sh`: 111 passed, 0 failed; 5 AudioComponent-host cases intentionally skipped in the parallel Swift Testing host and covered by the serial probes below.
 - 10,000-entry data measurement in the debug test: playlist parse and missing reporting 0.171 seconds; queue append plus search 0.040 seconds; combined under 0.25 seconds.
 - `./scripts/package-app.sh`: release build succeeded and produced `build/MacAmp.app`.
 - `codesign --verify --deep --strict --verbose=2 build/MacAmp.app`: valid on disk and satisfies its designated requirement.
@@ -43,6 +43,7 @@ Expanded frame and boundary results are in `Tests/Fixtures/Audio/results-macos26
 - Session tests cover schema 1→2 migration, atomic backup recovery, queue policy restoration, paused relaunch semantics, and non-destructive ChuckAmp-to-MacAmp Application Support migration.
 - Skin tests cover preview/install/export/remove, creator and accent round trips, traversal, symlink, duplicate, corrupt image, file-count, compressed/expanded-byte, image-dimension, and decoded-memory rejection.
 - Coordinator and UI tests cover Undo, clearing the queue, partial-import notices, presentation persistence, layout recovery, resized-frame preservation, scale/compact restoration, scaled typography, attached-window reflow, explicit skin control styling, accessibility labels and values, focus order, valid-action states, queue state distinctions, and command routing.
+- Playlist rows support native local drag-and-drop reordering through the same persisted, Undo-aware move command as the arrow controls; invalid and no-op destinations are rejected, and reordering is disabled while search filtering makes the full order ambiguous.
 - Playback commands remain ordered across actor suspension: a held seek must finish before following Pause and Play commands reach the engine. The progress slider commits one seek at drag completion to avoid redundant decoder churn.
 - Playback ticks do not overwrite the progress thumb while the user is dragging it; normal playback-driven slider updates resume when tracking ends.
 - Bundled-skin tests enforce 4.5:1 contrast for primary text, secondary text, and accents on both app backgrounds. Increase Contrast replaces secondary and border colors with primary text color.
