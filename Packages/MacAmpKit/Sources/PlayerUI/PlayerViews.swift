@@ -100,13 +100,20 @@ class ThemedViewController: NSViewController {
         button.isBordered = false
         button.focusRingType = .exterior
         button.wantsLayer = true
-        button.layer?.backgroundColor = theme.panel.cgColor
-        button.layer?.borderColor = theme.border.cgColor
-        button.layer?.borderWidth = scaled(1)
-        button.layer?.cornerRadius = scaled(5)
         button.contentTintColor = theme.accent
         styleButtonTitle(button, title: title)
-        if let image { button.image = image; button.imagePosition = .imageOnly; button.imageScaling = .scaleProportionallyDown }
+        if let image {
+            // Transport artwork includes its own button face. Adding the shared
+            // panel border here produces a smaller framed button inside another.
+            button.image = image
+            button.imagePosition = .imageOnly
+            button.imageScaling = .scaleProportionallyDown
+        } else {
+            button.layer?.backgroundColor = theme.panel.cgColor
+            button.layer?.borderColor = theme.border.cgColor
+            button.layer?.borderWidth = scaled(1)
+            button.layer?.cornerRadius = scaled(5)
+        }
         button.font = theme.controlFont; button.setAccessibilityLabel(label); button.toolTip = label; return button
     }
     func styleButtonTitle(_ button: NSButton?, title: String) {
