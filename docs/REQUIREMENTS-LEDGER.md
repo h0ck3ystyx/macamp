@@ -6,7 +6,7 @@ Statuses: `planned`, `in progress`, `pass`, `fail`, `blocked`, `not run`. Eviden
 | --- | --- | --- | --- | --- | --- | --- |
 | FOUND-01 | Reproducible unsigned build, tests, app bundle | T0/T10 | yes | yes | pass | 2026-09-26: debug/release builds, 86 tests, ad-hoc signed `build/MacAmp.app`; signature/plist verified |
 | FOUND-02 | Shared contracts and concurrency/ownership rules | T0 | yes | yes | pass | 2026-09-25: Swift 6 contracts compiled; `docs/CONTRACTS.md` records ownership and invariants |
-| AUD-01 | Transport and required codec/container matrix | T1/T4/T8 | subset | full | pass | Serial bounded decode passed PCM/AIFF, software FLAC/MP3, ALAC, AAC-LC, HE-AAC M4A/ADTS, Vorbis, and Opus on macOS 26; a 300-file network sample included 44.1/96/192 kHz FLAC and ID3-tagged MP3 |
+| AUD-01 | Transport and required codec/container matrix | T1/T4/T8 | subset | full | pass | Serial bounded decode passed PCM/AIFF, software FLAC/MP3, ALAC, AAC-LC, HE-AAC M4A/ADTS, Vorbis, and Opus on macOS 26; a 300-file network sample included 44.1/96/192 kHz FLAC and ID3-tagged MP3. 2026-09-29 packaged-app seek/Pause/Play regression passed without stale-generation failure |
 | AUD-02 | Gapless supported album playback | T1/T4/T8 | lossless + MP3 proof | full fixtures | pass | Clean matched-rate FLAC/ALAC/AAC-LC/HE-AAC/MP3/Opus fixture boundaries; ADTS/Vorbis/mixed-rate and approximate legacy-MP3 timing limits documented |
 | AUD-03 | Bounded decoding and responsive long-file seek | T4/T8 | yes | yes | pass | Six 4,096-frame buffers/track; two-hour VBR seek to 7,199.25 seconds passed |
 | AUD-04 | Audible 10-band EQ, preamp, bypass, reset, presets | T4/T8 | except presets | full | pass | Ten-band graph, smoothing, and six preset tests pass; preset menu exposed |

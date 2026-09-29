@@ -176,7 +176,7 @@ final class PlayerViewController: ThemedViewController {
         let format = label(detail, size: 10, color: model.playback.state.isFailure ? .systemRed : theme.secondaryText)
         let progress = CommandSlider(value: model.playback.position, minValue: 0, maxValue: max(model.playback.duration ?? 1, 1)) { [weak self, actions] slider in
             guard let duration = self?.model.playback.duration, duration > 0 else { return }; actions.send(.seek(to: slider.doubleValue / slider.maxValue * duration))
-        }; scaleControl(progress); progress.isEnabled = model.playback.duration != nil; progress.setAccessibilityLabel("Playback position"); progress.setAccessibilityValue(Self.playbackPositionDescription(model.playback))
+        }; scaleControl(progress); progress.isContinuous = false; progress.isEnabled = model.playback.duration != nil; progress.setAccessibilityLabel("Playback position"); progress.setAccessibilityValue(Self.playbackPositionDescription(model.playback))
         let playImage = theme.images[model.playback.state.isPlaying ? .pause : .play]
         let previous = button("◀◀", label: "Previous track", image: theme.images[.previous], action: { actions.send(.previous) })
         let play = button(model.playback.state.isPlaying ? "Ⅱ" : "▶︎", label: model.playback.state.isPlaying ? "Pause" : "Play", image: playImage, action: { [weak self, actions] in if let command = self?.model.playPauseCommand { actions.send(command) } })

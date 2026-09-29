@@ -44,6 +44,8 @@ public actor ProductionPlaybackCoordinator: PlaybackCoordinator {
     private var stagedNext: PreparedTrack?
     private var automaticFailureAttempts = Set<QueueEntryID>()
     private var lastNotice: String?
+    private var commandIsRunning = false
+    private var commandWaiters: [CheckedContinuation<Void, Never>] = []
 
     public init(
         queue: any QueueStore,
@@ -103,6 +105,31 @@ public actor ProductionPlaybackCoordinator: PlaybackCoordinator {
     }
 
     public func send(_ command: PlayerCommand) async {
+        await beginCommand()
+        defer { finishCommand() }
+        await execute(command)
+    }
+
+    /// Actor methods may interleave whenever they await decoder or engine work. Keep
+    /// user and media-key commands in arrival order so a seek cannot be overtaken by
+    /// Pause/Play or by a later seek using a newer playback generation.
+    private func beginCommand() async {
+        guard commandIsRunning else {
+            commandIsRunning = true
+            return
+        }
+        await withCheckedContinuation { commandWaiters.append($0) }
+    }
+
+    private func finishCommand() {
+        guard !commandWaiters.isEmpty else {
+            commandIsRunning = false
+            return
+        }
+        commandWaiters.removeFirst().resume()
+    }
+
+    private func execute(_ command: PlayerCommand) async {
         switch command {
         case .open(let urls): await open(urls)
         case .append(let urls): await append(urls)

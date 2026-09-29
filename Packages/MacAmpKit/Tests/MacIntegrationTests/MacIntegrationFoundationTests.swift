@@ -27,6 +27,39 @@ import Testing
     #expect(await sessions.saved?.currentEntryID == entries[1].id)
 }
 
+@Test func seekFinishesBeforeFollowingPauseAndPlayCommands() async throws {
+    let track = makeTracks(1)[0]
+    let entry = QueueEntry(trackID: track.id)
+    let queue = ProductionQueueStore(snapshot: QueueSnapshot(
+        entries: [entry],
+        tracks: [track.id: track],
+        selectedEntryID: entry.id
+    ))
+    let engine = BlockingSeekEngine()
+    let coordinator = ProductionPlaybackCoordinator(
+        queue: queue,
+        importer: EmptyImporter(),
+        access: GrantedAccess(),
+        engine: engine,
+        sessions: MemorySessions(),
+        decoderFactory: { _ in SilenceDecoder() }
+    )
+
+    await coordinator.send(.play)
+    let seek = Task { await coordinator.send(.seek(to: 1)) }
+    while !(await engine.didStartSeek) { await Task.yield() }
+    let pause = Task { await coordinator.send(.pause) }
+    let play = Task { await coordinator.send(.play) }
+    try await Task.sleep(for: .milliseconds(20))
+    #expect(await engine.operations.suffix(1) == ["seek-start"])
+
+    await engine.finishSeek()
+    await seek.value
+    await pause.value
+    await play.value
+    #expect(await engine.operations.suffix(3) == ["seek-end", "pause", "play"])
+}
+
 @Test func staleEventsCannotMutatePlaybackAndMatchingTransitionCommits() async throws {
     let tracks = makeTracks(2)
     let entries = tracks.map { QueueEntry(trackID: $0.id) }
@@ -236,4 +269,39 @@ private actor CoordinatorEngine: AudioEngineClient {
     func setVolume(_ volume: Double) async {}
     func setEqualizer(_ settings: EQSettings) async {}
     func emit(_ event: AudioEngineEvent) { continuation.yield(event) }
+}
+
+private actor BlockingSeekEngine: AudioEngineClient {
+    nonisolated let events: AsyncStream<AudioEngineEvent>
+    nonisolated let visualizationFeatures = AsyncStream<VisualizationFeatures> { $0.finish() }
+    private var seekContinuation: CheckedContinuation<Void, Never>?
+    private(set) var operations: [String] = []
+    private(set) var didStartSeek = false
+
+    init() {
+        events = AsyncStream { _ in }
+    }
+
+    func prepare(current: AudioTrackPreparation, next: AudioTrackPreparation?) async throws {
+        _ = current; _ = next
+        operations.append("prepare")
+    }
+    func updateNext(_ next: AudioTrackPreparation?) async throws { _ = next }
+    func play(generation: PlaybackGeneration) async throws { _ = generation; operations.append("play") }
+    func pause(generation: PlaybackGeneration) async { _ = generation; operations.append("pause") }
+    func stop(generation: PlaybackGeneration) async { _ = generation; operations.append("stop") }
+    func seek(to time: TimeInterval, generation: PlaybackGeneration) async throws {
+        _ = time; _ = generation
+        didStartSeek = true
+        operations.append("seek-start")
+        await withCheckedContinuation { seekContinuation = $0 }
+        operations.append("seek-end")
+    }
+    func finishSeek() {
+        seekContinuation?.resume()
+        seekContinuation = nil
+    }
+    func setVolume(_ volume: Double) async { _ = volume }
+    func setEqualizer(_ settings: EQSettings) async { _ = settings }
+    func setVisualizationActive(_ active: Bool) async { _ = active }
 }
