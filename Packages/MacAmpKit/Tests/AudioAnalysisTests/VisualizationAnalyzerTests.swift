@@ -53,6 +53,23 @@ import Testing
     #expect(afterGap.smoothedBassEnergy == 0)
 }
 
+@Test(.timeLimit(.minutes(1))) func boundedPipelineMovesPCMOffTheProducer() async throws {
+    let pipeline = VisualizationAnalysisPipeline()
+    pipeline.setActive(true)
+    let result = Task { () -> VisualizationFeatures? in
+        for await features in pipeline.features { return features }
+        return nil
+    }
+    let left = (0..<2_048).map { Float(sin(2 * Double.pi * 1_000 * Double($0) / 48_000)) * 0.5 }
+    left.withUnsafeBufferPointer { samples in
+        pipeline.push(left: samples.baseAddress!, right: samples.baseAddress!, channels: 2, frames: samples.count, sampleRate: 48_000, sampleTime: 0, hostTime: 0)
+    }
+    let features = try #require(await result.value)
+    pipeline.setActive(false)
+    #expect(features.spectrum.max() ?? 0 > 0.5)
+    #expect(features.sampleRate == 48_000)
+}
+
 private func header(sequence: UInt64 = 1) -> VisualizationPCMHeader {
     VisualizationPCMHeader(sequence: sequence, epoch: 1, sampleTime: 0, sampleRate: 48_000, channelCount: 2, frameCount: 2_048)
 }

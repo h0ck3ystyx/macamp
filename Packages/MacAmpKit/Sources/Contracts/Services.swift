@@ -115,6 +115,7 @@ public enum AudioEngineEvent: Sendable, Equatable {
 
 public protocol AudioEngineClient: Sendable {
     var events: AsyncStream<AudioEngineEvent> { get }
+    var visualizationFeatures: AsyncStream<VisualizationFeatures> { get }
     func prepare(current: AudioTrackPreparation, next: AudioTrackPreparation?) async throws
     func updateNext(_ next: AudioTrackPreparation?) async throws
     func play(generation: PlaybackGeneration) async throws
@@ -123,6 +124,12 @@ public protocol AudioEngineClient: Sendable {
     func seek(to time: TimeInterval, generation: PlaybackGeneration) async throws
     func setVolume(_ volume: Double) async
     func setEqualizer(_ settings: EQSettings) async
+    func setVisualizationActive(_ active: Bool) async
+}
+
+public extension AudioEngineClient {
+    var visualizationFeatures: AsyncStream<VisualizationFeatures> { AsyncStream { $0.finish() } }
+    func setVisualizationActive(_ active: Bool) async {}
 }
 
 public protocol FileAccessLease: Sendable {

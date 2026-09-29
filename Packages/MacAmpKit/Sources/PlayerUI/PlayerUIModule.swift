@@ -1,6 +1,7 @@
 import AppKit
 import Contracts
 import Skins
+import Visualizations
 
 public enum PlayerUIModule {
     public static let isPrototypeImplemented = true
@@ -39,11 +40,14 @@ public final class PlayerUIWindowController: NSObject {
     public static let defaultPlayerSize = NSSize(width: 360, height: 160)
     public static let defaultEqualizerSize = NSSize(width: 360, height: 200)
     public static let defaultPlaylistSize = NSSize(width: 360, height: 260)
+    public static let defaultVisualizationSize = NSSize(width: 640, height: 400)
     public static let compactPlayerSize = NSSize(width: 360, height: 40)
 
     public weak var commandRouter: PlayerUICommandRouting?
     public var importFeedback: (([URL], Bool) -> Void)?
     public var layoutDidChange: ((WindowLayout) -> Void)?
+    public var visualizationSettingsDidChange: ((VisualizationSettings) -> Void)?
+    public var visualizationActivityDidChange: ((Bool) -> Void)?
     public private(set) var previewSkin: PlayerUISkinPreview
     public private(set) var isCompact = false
 
@@ -56,6 +60,8 @@ public final class PlayerUIWindowController: NSObject {
     private var connectedModules: Set<PlayerModule> = [.player, .playlist]
     private var visibleModules: Set<PlayerModule> = [.player, .playlist]
     private var uiScale: Double = 1
+    private var visualizationSettings = VisualizationSettings()
+    private var latestVisualization: VisualizationFeatures?
 
     public init(previewSkin: PlayerUISkinPreview = .graphite, playback: PlaybackSnapshot = PlaybackSnapshot(), queue: QueueSnapshot = QueueSnapshot(), snapDistance: CGFloat = 10) {
         self.previewSkin = previewSkin; self.model = PlayerUIStateModel(playback: playback, queue: queue); self.snapDistance = snapDistance
@@ -80,6 +86,21 @@ public final class PlayerUIWindowController: NSObject {
         if oldModel.queue != queue {
             replaceContentController(PlaylistViewController(theme: theme, model: model, actions: actions), for: .playlist)
         }
+        if playback.state.isVisualizationStopped {
+            latestVisualization = nil
+            (windows[.player]?.contentViewController as? PlayerViewController)?.updateVisualization(nil, settings: visualizationSettings)
+            (windows[.visualization]?.contentViewController as? VisualizationViewController)?.update(nil)
+        }
+    }
+
+    public func configureVisualization(_ settings: VisualizationSettings) {
+        visualizationSettings = settings; refreshContent(); notifyVisualizationActivity()
+    }
+
+    public func updateVisualization(_ features: VisualizationFeatures) {
+        latestVisualization = features
+        (windows[.player]?.contentViewController as? PlayerViewController)?.updateVisualization(features, settings: visualizationSettings)
+        (windows[.visualization]?.contentViewController as? VisualizationViewController)?.update(features)
     }
 
     public func setPlaylistFilter(_ text: String) {
@@ -122,12 +143,13 @@ public final class PlayerUIWindowController: NSObject {
     }
 
     public func show() {
-        for module in [PlayerModule.player, .equalizer, .playlist] where shouldShow(module) { windows[module]?.orderFront(nil) }
+        for module in PlayerModule.allCases where shouldShow(module) { windows[module]?.orderFront(nil) }
         windows[.player]?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+        notifyVisualizationActivity()
     }
 
-    public func hideAll() { windows.values.forEach { $0.orderOut(nil) } }
+    public func hideAll() { windows.values.forEach { $0.orderOut(nil) }; notifyVisualizationActivity() }
 
     public func setModule(_ module: PlayerModule, visible: Bool) {
         guard module != .player, let window = windows[module] else { return }
@@ -141,6 +163,7 @@ public final class PlayerUIWindowController: NSObject {
         }
         if visible { visibleModules.insert(module); window.makeKeyAndOrderFront(nil) }
         else { visibleModules.remove(module); window.orderOut(nil) }
+        if module == .visualization { notifyVisualizationActivity() }
         notifyLayoutChanged()
     }
 
@@ -164,6 +187,7 @@ public final class PlayerUIWindowController: NSObject {
         }
         isApplyingLayout = false
         notifyLayoutChanged()
+        notifyVisualizationActivity()
     }
 
     public func applyPreviewSkin(_ skin: PlayerUISkinPreview) {
@@ -173,7 +197,7 @@ public final class PlayerUIWindowController: NSObject {
     public func resetLayout(on screen: NSScreen? = nil) {
         guard let visible = (screen ?? NSScreen.main ?? NSScreen.screens.first)?.visibleFrame else { return }
         isCompact = false
-        guard let player = windows[.player], let equalizer = windows[.equalizer], let playlist = windows[.playlist] else { return }
+        guard let player = windows[.player], let equalizer = windows[.equalizer], let playlist = windows[.playlist], let visualization = windows[.visualization] else { return }
         let playlistContentHeight = min(Self.defaultPlaylistSize.height, max(180, visible.height - Self.defaultPlayerSize.height - 72))
         let playerSize = frameSize(forContentSize: Self.defaultPlayerSize, in: player)
         let equalizerSize = frameSize(forContentSize: Self.defaultEqualizerSize, in: equalizer)
@@ -183,6 +207,8 @@ public final class PlayerUIWindowController: NSObject {
         let playerFrame = NSRect(x: x, y: top - playerSize.height, width: playerSize.width, height: playerSize.height)
         let eqFrame = NSRect(x: x, y: playerFrame.minY - equalizerSize.height, width: equalizerSize.width, height: equalizerSize.height)
         let playlistFrame = NSRect(x: x, y: playerFrame.minY - playlistSize.height, width: playlistSize.width, height: playlistSize.height)
+        let visualizationSize = frameSize(forContentSize: Self.defaultVisualizationSize, in: visualization)
+        let visualizationFrame = recover(NSRect(x: playerFrame.maxX + 12, y: playerFrame.maxY - visualizationSize.height, width: visualizationSize.width, height: visualizationSize.height))
         isApplyingLayout = true
         uiScale = 1
         windows[.player]?.contentViewController = PlayerViewController(theme: theme, model: model, actions: actions)
@@ -190,11 +216,13 @@ public final class PlayerUIWindowController: NSObject {
         windows[.player]?.setFrame(playerFrame, display: true)
         windows[.equalizer]?.setFrame(eqFrame, display: true)
         windows[.playlist]?.setFrame(playlistFrame, display: true)
+        windows[.visualization]?.setFrame(visualizationFrame, display: true)
         refreshContent()
-        windows[.equalizer]?.orderOut(nil); visibleModules = [.player, .playlist]
+        windows[.equalizer]?.orderOut(nil); windows[.visualization]?.orderOut(nil); visibleModules = [.player, .playlist]
         connectedModules = [.player, .equalizer, .playlist]; lastPlayerOrigin = playerFrame.origin
         isApplyingLayout = false
         notifyLayoutChanged()
+        notifyVisualizationActivity()
     }
 
     /// Restores only frames that can be recovered onto an attached display. Invalid
@@ -242,6 +270,7 @@ public final class PlayerUIWindowController: NSObject {
         lastPlayerOrigin = windows[.player]?.frame.origin
         isApplyingLayout = false
         notifyLayoutChanged()
+        notifyVisualizationActivity()
     }
 
     public func setScale(_ scale: Double) {
@@ -310,7 +339,7 @@ public final class PlayerUIWindowController: NSObject {
         return PlayerUITheme(previewSkin, scale: uiScale)
     }
     private var actions: PlayerUIActions {
-        PlayerUIActions(send: { [weak self] in self?.dispatch($0) }, compact: { [weak self] in self?.toggleCompactMode() }, showEqualizer: { [weak self] in self?.setModule(.equalizer, visible: true) }, showPlaylist: { [weak self] in self?.setModule(.playlist, visible: true) }, importFiles: { [weak self] replace in self?.openFiles(replacingQueue: replace) }, receiveFiles: { [weak self] urls, replace in self?.receiveFiles(urls, replacingQueue: replace) }, search: { [weak self] in self?.setPlaylistFilter($0) })
+        PlayerUIActions(send: { [weak self] in self?.dispatch($0) }, compact: { [weak self] in self?.toggleCompactMode() }, showEqualizer: { [weak self] in self?.setModule(.equalizer, visible: true) }, showPlaylist: { [weak self] in self?.setModule(.playlist, visible: true) }, showVisualization: { [weak self] in self?.setModule(.visualization, visible: true) }, importFiles: { [weak self] replace in self?.openFiles(replacingQueue: replace) }, receiveFiles: { [weak self] urls, replace in self?.receiveFiles(urls, replacingQueue: replace) }, search: { [weak self] in self?.setPlaylistFilter($0) })
     }
     private func shouldShow(_ module: PlayerModule) -> Bool { visibleModules.contains(module) }
 
@@ -367,6 +396,7 @@ extension PlayerUIWindowController {
         windows[.player] = makeWindow(module: .player, size: Self.defaultPlayerSize, resizable: false)
         windows[.equalizer] = makeWindow(module: .equalizer, size: Self.defaultEqualizerSize, resizable: false)
         windows[.playlist] = makeWindow(module: .playlist, size: Self.defaultPlaylistSize, resizable: true)
+        windows[.visualization] = makeWindow(module: .visualization, size: Self.defaultVisualizationSize, resizable: true)
         applyPreviewSkin(previewSkin)
     }
 
@@ -374,6 +404,12 @@ extension PlayerUIWindowController {
         replaceContentController(isCompact ? CompactPlayerViewController(theme: theme, model: model, actions: actions) : PlayerViewController(theme: theme, model: model, actions: actions), for: .player)
         replaceContentController(EqualizerViewController(theme: theme, model: model, actions: actions), for: .equalizer)
         replaceContentController(PlaylistViewController(theme: theme, model: model, actions: actions), for: .playlist)
+        replaceContentController(VisualizationViewController(theme: theme, settings: visualizationSettings, settingsChanged: { [weak self] settings in
+            guard let self else { return }; self.visualizationSettings = settings; self.visualizationSettingsDidChange?(settings); self.notifyVisualizationActivity()
+            (self.windows[.player]?.contentViewController as? PlayerViewController)?.updateVisualization(self.latestVisualization, settings: settings)
+        }), for: .visualization)
+        (windows[.player]?.contentViewController as? PlayerViewController)?.updateVisualization(latestVisualization, settings: visualizationSettings)
+        (windows[.visualization]?.contentViewController as? VisualizationViewController)?.update(latestVisualization)
     }
 
     /// AppKit may resize a window to a replacement controller's fitting size. Queue,
@@ -398,6 +434,11 @@ extension PlayerUIWindowController {
         case .visualization: base = NSSize(width: 360, height: 240)
         }
         window.contentMinSize = NSSize(width: base.width * uiScale, height: base.height * uiScale)
+    }
+
+    private func notifyVisualizationActivity() {
+        let miniVisible = visualizationSettings.miniMode != .off && !isCompact && windows[.player]?.isVisible == true
+        visualizationActivityDidChange?(miniVisible || windows[.visualization]?.isVisible == true)
     }
 
     /// A newer release may increase a module's minimum size. Rebuild the saved
@@ -436,7 +477,7 @@ extension PlayerUIWindowController {
         let window = NSWindow(contentRect: NSRect(origin: .zero, size: size), styleMask: mask, backing: .buffered, defer: false)
         window.title = title(for: module); window.identifier = NSUserInterfaceItemIdentifier("MacAmp.\(module.rawValue)")
         window.titleVisibility = .visible; window.isMovableByWindowBackground = true
-        window.tabbingMode = .disallowed; window.collectionBehavior = [.fullScreenAuxiliary]
+        window.tabbingMode = .disallowed; window.collectionBehavior = module == .visualization ? [.fullScreenPrimary] : [.fullScreenAuxiliary]
         window.contentMinSize = module == .playlist ? NSSize(width: 360, height: 180) : size
         window.delegate = windowDelegateProxy; window.setAccessibilityLabel(title(for: module))
         return window

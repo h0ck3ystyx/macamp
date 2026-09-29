@@ -20,6 +20,7 @@ public typealias PlaybackDecoderFactory = @Sendable (URL) async throws -> any De
 public actor ProductionPlaybackCoordinator: PlaybackCoordinator {
     public nonisolated let snapshots: AsyncStream<PlaybackSnapshot>
     public nonisolated let notices: AsyncStream<String>
+    public nonisolated let visualizationFeatures: AsyncStream<VisualizationFeatures>
 
     private struct PreparedTrack: Sendable {
         let entryID: QueueEntryID
@@ -57,6 +58,7 @@ public actor ProductionPlaybackCoordinator: PlaybackCoordinator {
         let noticeStream = AsyncStream.makeStream(of: String.self, bufferingPolicy: .bufferingNewest(16))
         snapshots = stream.stream
         notices = noticeStream.stream
+        visualizationFeatures = engine.visualizationFeatures
         continuation = stream.continuation
         noticeContinuation = noticeStream.continuation
         self.queue = queue
@@ -136,6 +138,17 @@ public actor ProductionPlaybackCoordinator: PlaybackCoordinator {
         let entryIDs = await queue.snapshot().entries.map(\.id)
         guard !entryIDs.isEmpty else { return }
         await mutateQueue(.remove(entryIDs))
+    }
+
+    public func setVisualizationActive(_ active: Bool) async {
+        await engine.setVisualizationActive(active)
+    }
+
+    public func visualizationSettings() -> VisualizationSettings { sessionTemplate.visualization }
+
+    public func updateVisualizationSettings(_ settings: VisualizationSettings) async {
+        sessionTemplate.visualization = settings
+        await persist()
     }
 
     @discardableResult

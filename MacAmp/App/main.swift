@@ -25,6 +25,7 @@ final class MacAmpApplicationDelegate: NSObject, NSApplicationDelegate {
     private var systemMediaController: SystemMediaController?
     private var observationTask: Task<Void, Never>?
     private var noticeTask: Task<Void, Never>?
+    private var visualizationTask: Task<Void, Never>?
     private var pendingOpenURLs: [URL] = []
     private var supportRoot: URL?
     private var savedPlaylists: SavedPlaylistStore?
@@ -75,6 +76,7 @@ final class MacAmpApplicationDelegate: NSObject, NSApplicationDelegate {
     @objc private func addFiles() { playerWindows?.openFiles(replacingQueue: false) }
     @objc private func showEqualizer() { playerWindows?.setModule(.equalizer, visible: true) }
     @objc private func showPlaylist() { playerWindows?.setModule(.playlist, visible: true) }
+    @objc private func showVisualization() { playerWindows?.setModule(.visualization, visible: true) }
     @objc private func toggleCompactMode() { playerWindows?.toggleCompactMode() }
     @objc private func resetLayout() { playerWindows?.resetLayout() }
     @objc private func useGraphiteSkin() { loadBundledSkin(.studioGraphite) }
@@ -126,15 +128,32 @@ final class MacAmpApplicationDelegate: NSObject, NSApplicationDelegate {
                 self.supportRoot = supportRoot
                 let sessionStore = AtomicSessionStore(fileURL: supportRoot.appendingPathComponent("session.json"))
                 let restored = try await sessionStore.load()
+                var visualizationSettings = restored?.visualization ?? VisualizationSettings()
+                visualizationSettings.reduceMotionSessionOverride = false
                 self.savedPlaylists = SavedPlaylistStore(fileURL: supportRoot.appendingPathComponent("playlists.json"))
                 self.skinPackages = SkinPackageManager(installedSkinsURL: supportRoot.appendingPathComponent("Skins", isDirectory: true))
                 if let layout = restored?.windowLayout, !layout.modules.isEmpty {
                     self.playerWindows?.applyLayout(layout)
                 }
+                self.playerWindows?.configureVisualization(visualizationSettings)
                 self.loadSkin(id: restored?.skinID ?? PrototypeSkin.studioGraphite.skinID)
                 let coordinator = try await ProductionPlaybackCoordinator.makeProduction(sessionStore: sessionStore)
                 self.coordinator = coordinator
                 self.commandRouter.coordinator = coordinator
+                await coordinator.updateVisualizationSettings(visualizationSettings)
+                self.playerWindows?.visualizationSettingsDidChange = { settings in
+                    Task { await coordinator.updateVisualizationSettings(settings) }
+                }
+                self.playerWindows?.visualizationActivityDidChange = { active in
+                    Task { await coordinator.setVisualizationActive(active) }
+                }
+                await coordinator.setVisualizationActive(visualizationSettings.miniMode != .off || restored?.windowLayout.modules.contains(where: { $0.module == .visualization && $0.isVisible }) == true)
+                self.visualizationTask = Task { [weak self] in
+                    for await features in coordinator.visualizationFeatures {
+                        guard !Task.isCancelled else { return }
+                        self?.playerWindows?.updateVisualization(features)
+                    }
+                }
                 if let activeSkin = self.activeSkin {
                     await coordinator.updatePresentationState(skinID: activeSkin.manifest.id)
                 }
@@ -490,6 +509,8 @@ final class MacAmpApplicationDelegate: NSObject, NSApplicationDelegate {
         equalizerItem.target = self
         let playlistItem = windowMenu.addItem(withTitle: "Show Playlist", action: #selector(showPlaylist), keyEquivalent: "p")
         playlistItem.target = self
+        let visualizationItem = windowMenu.addItem(withTitle: "Show Visualization", action: #selector(showVisualization), keyEquivalent: "v")
+        visualizationItem.target = self
         let compactItem = windowMenu.addItem(withTitle: "Compact Player", action: #selector(toggleCompactMode), keyEquivalent: "w")
         compactItem.target = self
         windowMenu.addItem(.separator())

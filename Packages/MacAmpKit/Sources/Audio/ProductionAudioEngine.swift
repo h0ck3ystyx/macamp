@@ -1,6 +1,7 @@
 @preconcurrency import AppKit
 @preconcurrency import AVFoundation
 import AudioToolbox
+import AudioAnalysis
 import Contracts
 import Foundation
 import OSLog
@@ -50,6 +51,7 @@ struct PlaybackBufferingPolicy: Equatable, Sendable {
 /// actor work and never decode, allocate UI objects, or persist state.
 public actor NativeAudioEngineClient: AudioEngineClient {
     public nonisolated let events: AsyncStream<AudioEngineEvent>
+    public nonisolated let visualizationFeatures: AsyncStream<VisualizationFeatures>
 
     private enum Lane: Sendable { case a, b }
     private enum Location: Sendable { case current, next }
@@ -92,6 +94,7 @@ public actor NativeAudioEngineClient: AudioEngineClient {
     ))
     private let observerBag = ObserverBag()
     private let bufferingPolicy: PlaybackBufferingPolicy
+    private nonisolated let visualizationPipeline = VisualizationAnalysisPipeline()
 
     private var current: TrackState?
     private var next: TrackState?
@@ -111,6 +114,7 @@ public actor NativeAudioEngineClient: AudioEngineClient {
         precondition(targetBufferDuration.isFinite && (0...1).contains(targetBufferDuration))
         let stream = AsyncStream.makeStream(of: AudioEngineEvent.self, bufferingPolicy: .bufferingNewest(256))
         self.events = stream.stream
+        self.visualizationFeatures = visualizationPipeline.features
         self.continuation = stream.continuation
         self.bufferingPolicy = PlaybackBufferingPolicy(
             minimumFramesPerBuffer: framesPerBuffer,
@@ -135,6 +139,7 @@ public actor NativeAudioEngineClient: AudioEngineClient {
     public func prepare(current preparation: AudioTrackPreparation, next nextPreparation: AudioTrackPreparation?) async throws {
         try ensureGraph()
         invalidateAllPlayback()
+        visualizationPipeline.reset()
 
         let format = await preparation.decoder.format
         try validate(format)
@@ -194,6 +199,7 @@ public actor NativeAudioEngineClient: AudioEngineClient {
         positionTask?.cancel()
         positionTask = nil
         node(for: state.lane).stop()
+        visualizationPipeline.reset()
         state.token = UUID()
         state.scheduledBuffers = 0
         state.reachedEnd = false
@@ -225,6 +231,7 @@ public actor NativeAudioEngineClient: AudioEngineClient {
         isPlaying = false
         positionTask?.cancel()
         node(for: state.lane).stop()
+        visualizationPipeline.reset()
         state.token = UUID()
         state.scheduledBuffers = 0
         state.reachedEnd = false
@@ -260,6 +267,10 @@ public actor NativeAudioEngineClient: AudioEngineClient {
             if step < steps { try? await Task.sleep(for: .milliseconds(3)) }
         }
         equalizer.bypass = settings.isBypassed
+    }
+
+    public func setVisualizationActive(_ active: Bool) async {
+        visualizationPipeline.setActive(active)
     }
 
     /// Describes when the post-EQ peak limiter may be active. The system peak
@@ -299,6 +310,19 @@ public actor NativeAudioEngineClient: AudioEngineClient {
         engine.connect(trackMixer, to: equalizer, format: nil)
         engine.connect(equalizer, to: peakLimiter, format: nil)
         engine.connect(peakLimiter, to: engine.mainMixerNode, format: nil)
+        peakLimiter.installTap(onBus: 0, bufferSize: 2_048, format: nil) { [visualizationPipeline] buffer, time in
+            guard let channels = buffer.floatChannelData, buffer.frameLength > 0 else { return }
+            let channelCount = Int(buffer.format.channelCount)
+            visualizationPipeline.push(
+                left: UnsafePointer(channels[0]),
+                right: channelCount > 1 ? UnsafePointer(channels[1]) : nil,
+                channels: channelCount,
+                frames: Int(buffer.frameLength),
+                sampleRate: buffer.format.sampleRate,
+                sampleTime: time.isSampleTimeValid ? time.sampleTime : 0,
+                hostTime: time.isHostTimeValid ? time.hostTime : 0
+            )
+        }
         engine.prepare()
         graphReady = true
     }
@@ -570,6 +594,7 @@ public actor NativeAudioEngineClient: AudioEngineClient {
         positionTask?.cancel()
         node(for: state.lane).stop()
         node(for: state.lane == .a ? .b : .a).stop()
+        visualizationPipeline.reset()
         var reset = state
         reset.token = UUID()
         reset.scheduledBuffers = 0

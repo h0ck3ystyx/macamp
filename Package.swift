@@ -26,10 +26,15 @@ let package = Package(
             path: "Packages/MacAmpKit/Sources/CAudioDecoders",
             publicHeadersPath: "include"
         ),
+        .target(
+            name: "CVisualizationBridge",
+            path: "Packages/MacAmpKit/Sources/CVisualizationBridge",
+            publicHeadersPath: "include"
+        ),
         .target(name: "Contracts", path: "Packages/MacAmpKit/Sources/Contracts"),
         .target(
             name: "AudioAnalysis",
-            dependencies: ["Contracts"],
+            dependencies: ["Contracts", "CVisualizationBridge"],
             path: "Packages/MacAmpKit/Sources/AudioAnalysis"
         ),
         .target(
@@ -42,6 +47,7 @@ let package = Package(
             dependencies: [
                 "Contracts",
                 "CAudioDecoders",
+                "AudioAnalysis",
             ],
             path: "Packages/MacAmpKit/Sources/Audio"
         ),
@@ -60,7 +66,7 @@ let package = Package(
         ),
         .target(
             name: "PlayerUI",
-            dependencies: ["Contracts", "Skins"],
+            dependencies: ["Contracts", "Skins", "Visualizations"],
             path: "Packages/MacAmpKit/Sources/PlayerUI"
         ),
         .target(

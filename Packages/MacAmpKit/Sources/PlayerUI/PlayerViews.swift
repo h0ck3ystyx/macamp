@@ -1,10 +1,12 @@
 import AppKit
 import Contracts
 import Skins
+import Visualizations
 
 struct PlayerUIActions {
     var send: (PlayerCommand) -> Void
     var compact: () -> Void; var showEqualizer: () -> Void; var showPlaylist: () -> Void
+    var showVisualization: () -> Void = {}
     var importFiles: (Bool) -> Void
     var receiveFiles: ([URL], Bool) -> Void
     var search: (String) -> Void
@@ -16,6 +18,10 @@ struct PlayerUITheme {
     let trackFont: NSFont; let technicalFont: NSFont; let controlFont: NSFont
     let images: [SkinAssetKey: NSImage]
     let scale: CGFloat
+    var isDark: Bool {
+        guard let color = background.usingColorSpace(.deviceRGB) else { return false }
+        return 0.2126 * color.redComponent + 0.7152 * color.greenComponent + 0.0722 * color.blueComponent < 0.5
+    }
     init(_ preview: PlayerUISkinPreview, scale: CGFloat = 1, increaseContrast: Bool = NSWorkspace.shared.accessibilityDisplayShouldIncreaseContrast) {
         self.scale = scale
         switch preview {
@@ -109,6 +115,10 @@ class ThemedViewController: NSViewController {
             attributes: [.foregroundColor: theme.text, .font: theme.controlFont]
         )
     }
+    func stylePopUp(_ popup: NSPopUpButton) {
+        popup.appearance = NSAppearance(named: theme.isDark ? .darkAqua : .aqua)
+        popup.font = theme.controlFont
+    }
 }
 
 final class ActionButton: NSButton {
@@ -132,6 +142,7 @@ final class PlayerViewController: ThemedViewController {
     private weak var elapsedLabel: NSTextField?; private weak var titleLabel: NSTextField?; private weak var statusLabel: NSTextField?
     private weak var progressSlider: NSSlider?; private weak var volumeSlider: NSSlider?
     private weak var previousButton: NSButton?; private weak var playButton: NSButton?; private weak var stopButton: NSButton?; private weak var nextButton: NSButton?
+    private weak var visualizationView: MetalVisualizationView?
     init(theme: PlayerUITheme, model: PlayerUIStateModel, actions: PlayerUIActions) { self.model = model; self.actions = actions; super.init(theme: theme) }
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
     override func loadView() {
@@ -139,6 +150,9 @@ final class PlayerViewController: ThemedViewController {
         let model = self.model; let actions = self.actions
         (view as? AudioDropView)?.onDrop = { actions.receiveFiles($0, model.rows.isEmpty) }
         let display = NSView(); display.wantsLayer = true; display.layer?.backgroundColor = theme.panel.cgColor; display.layer?.cornerRadius = 4
+        let visualization = MetalVisualizationView(); visualization.translatesAutoresizingMaskIntoConstraints = false
+        visualization.alphaValue = 0.42; visualization.openHandler = actions.showVisualization
+        display.addSubview(visualization); visualizationView = visualization
         let time = label(Self.clock(model.playback.position), size: 24, bold: true); time.font = .monospacedDigitSystemFont(ofSize: scaled(24), weight: .bold)
         time.setAccessibilityLabel("Elapsed time"); time.setAccessibilityValue(Self.clock(model.playback.position))
         let title = label("\(model.artist) — \(model.title)", size: 12, bold: true); title.font = theme.trackFont; title.setAccessibilityLabel("Now playing, \(model.title) by \(model.artist)")
@@ -171,6 +185,7 @@ final class PlayerViewController: ThemedViewController {
         [display, time, title, format, progress, controls, volumeRow, utilities].forEach { $0.translatesAutoresizingMaskIntoConstraints = false }
         view.addSubview(display); [time, title, format].forEach(display.addSubview); [progress, controls, volumeRow, utilities].forEach(view.addSubview)
         NSLayoutConstraint.activate([
+            visualization.leadingAnchor.constraint(equalTo: display.leadingAnchor), visualization.trailingAnchor.constraint(equalTo: display.trailingAnchor), visualization.topAnchor.constraint(equalTo: display.topAnchor), visualization.bottomAnchor.constraint(equalTo: display.bottomAnchor),
             display.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: scaled(10)), display.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -scaled(10)), display.topAnchor.constraint(equalTo: view.topAnchor, constant: scaled(7)), display.heightAnchor.constraint(equalToConstant: scaled(48)),
             time.leadingAnchor.constraint(equalTo: display.leadingAnchor, constant: scaled(8)), time.centerYAnchor.constraint(equalTo: display.centerYAnchor), time.widthAnchor.constraint(equalToConstant: scaled(76)),
             title.leadingAnchor.constraint(equalTo: time.trailingAnchor, constant: scaled(8)), title.trailingAnchor.constraint(equalTo: display.trailingAnchor, constant: -scaled(8)), title.topAnchor.constraint(equalTo: display.topAnchor, constant: scaled(8)),
@@ -198,6 +213,13 @@ final class PlayerViewController: ThemedViewController {
         [previousButton, playButton, nextButton].forEach { $0?.isEnabled = hasTracks }
         stopButton?.isEnabled = model.playback.currentEntryID != nil
     }
+    func updateVisualization(_ features: VisualizationFeatures?, settings: VisualizationSettings) {
+        visualizationView?.isHidden = settings.miniMode == .off
+        visualizationView?.presetID = settings.miniMode == .oscilloscope ? "builtin.stereo-scope" : "builtin.classic-bars"
+        visualizationView?.sensitivity = Float(settings.sensitivity)
+        visualizationView?.isAnimationSuppressed = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion && !settings.reduceMotionSessionOverride
+        if let features { visualizationView?.update(features: features) } else { visualizationView?.clearVisualization() }
+    }
     private static func clock(_ seconds: TimeInterval) -> String { String(format: "%02d:%02d", Int(seconds) / 60, Int(seconds) % 60) }
     private static func playbackPositionDescription(_ playback: PlaybackSnapshot) -> String {
         guard let duration = playback.duration else { return clock(playback.position) }
@@ -206,9 +228,12 @@ final class PlayerViewController: ThemedViewController {
     private static func volumeDescription(_ volume: Double) -> String { "\(Int((volume * 100).rounded())) percent" }
 }
 
-private extension PlaybackState {
+extension PlaybackState {
     var isPlaying: Bool { if case .playing = self { true } else { false } }
     var isFailure: Bool { if case .failed = self { true } else { false } }
+    var isVisualizationStopped: Bool {
+        switch self { case .idle, .stopped: true; default: false }
+    }
 }
 
 final class CommandSlider: NSSlider {
