@@ -7,7 +7,7 @@ Artifact: `build/MacAmp.app`, ad-hoc signed local candidate
 
 ## Automated results
 
-- `./scripts/test.sh`: 108 passed, 0 failed; 5 AudioComponent-host cases intentionally skipped in the parallel Swift Testing host and covered by the serial probes below.
+- `./scripts/test.sh`: 109 passed, 0 failed; 5 AudioComponent-host cases intentionally skipped in the parallel Swift Testing host and covered by the serial probes below.
 - 10,000-entry data measurement in the debug test: playlist parse and missing reporting 0.171 seconds; queue append plus search 0.040 seconds; combined under 0.25 seconds.
 - `./scripts/package-app.sh`: release build succeeded and produced `build/MacAmp.app`.
 - `codesign --verify --deep --strict --verbose=2 build/MacAmp.app`: valid on disk and satisfies its designated requirement.
@@ -44,6 +44,7 @@ Expanded frame and boundary results are in `Tests/Fixtures/Audio/results-macos26
 - Skin tests cover preview/install/export/remove, creator and accent round trips, traversal, symlink, duplicate, corrupt image, file-count, compressed/expanded-byte, image-dimension, and decoded-memory rejection.
 - Coordinator and UI tests cover Undo, clearing the queue, partial-import notices, presentation persistence, layout recovery, resized-frame preservation, scale/compact restoration, scaled typography, attached-window reflow, explicit skin control styling, accessibility labels and values, focus order, valid-action states, queue state distinctions, and command routing.
 - Playback commands remain ordered across actor suspension: a held seek must finish before following Pause and Play commands reach the engine. The progress slider commits one seek at drag completion to avoid redundant decoder churn.
+- Playback ticks do not overwrite the progress thumb while the user is dragging it; normal playback-driven slider updates resume when tracking ends.
 - Bundled-skin tests enforce 4.5:1 contrast for primary text, secondary text, and accents on both app backgrounds. Increase Contrast replaces secondary and border colors with primary text color.
 - File-access tests cover strict sandbox authorization, readable-path recovery used when an ad-hoc development rebuild invalidates an older scoped bookmark, denied scope acquisition, and exactly-once release of acquired security scope across repeated cleanup.
 
@@ -64,6 +65,8 @@ The September 27 accessibility pass inspected the packaged app through the macOS
 The packaged FLAC-fallback build restored the saved external-volume queue and played `08 - Socialite` as `FLAC · 44.1 kHz · Stereo`. Its live position advanced from 00:09 to 00:12 during a three-second AX observation, after which playback stopped normally.
 
 The September 29 seek regression check used the freshly packaged sandbox build and the ten-minute VBR MP3 fixture. Clicking the progress slider moved active playback to 05:00 while remaining `PLAYING`; Pause changed it to `PAUSED`, and Play returned it to `PLAYING` without a stale-generation failure. The test instance was stopped normally afterward.
+
+A follow-up drag regression used the rebuilt app with the same ten-minute fixture. Dragging the progress thumb from the start to 07:20 and then back to 02:51 placed it at both requested positions while playback remained `PLAYING`. Playback ticks continued updating the elapsed display without pulling the thumb away during either gesture.
 
 ## Not run
 

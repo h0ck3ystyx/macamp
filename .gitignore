@@ -5,3 +5,6 @@ build/
 DerivedData/
 *.xcuserstate
 xcuserdata/
+
+# Local commercial tracks used for manual playback checks; never commit them.
+Tests/Fixtures/Audio/*-taylor_swift-*

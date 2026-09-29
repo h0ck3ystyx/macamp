@@ -197,6 +197,18 @@ import Testing
     #expect(model.equalizerCommand(band: 0, gain: 20) == .setEqualizer(EQSettings(isBypassed: false, bandGains: [12, 0, 0, 0, 0, 0, 0, 0, 0, 0])))
 }
 
+@MainActor @Test func playbackTicksDoNotOverwriteProgressDuringUserDrag() {
+    let slider = CommandSlider(value: 10, minValue: 0, maxValue: 100) { _ in }
+    slider.beginUserTracking()
+    slider.doubleValue = 75
+    slider.updateFromPlayback(value: 11, maxValue: 100)
+    #expect(slider.doubleValue == 75)
+
+    slider.endUserTracking()
+    slider.updateFromPlayback(value: 12, maxValue: 100)
+    #expect(slider.doubleValue == 12)
+}
+
 @MainActor private final class RecordingRouter: PlayerUICommandRouting {
     var commands: [PlayerCommand] = []
     func send(_ command: PlayerCommand) { commands.append(command) }

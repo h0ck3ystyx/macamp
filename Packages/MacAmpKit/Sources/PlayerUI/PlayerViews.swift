@@ -156,7 +156,7 @@ final class AudioDropView: NSView {
 final class PlayerViewController: ThemedViewController {
     private var model: PlayerUIStateModel; private let actions: PlayerUIActions
     private weak var elapsedLabel: NSTextField?; private weak var titleLabel: NSTextField?; private weak var statusLabel: NSTextField?
-    private weak var progressSlider: NSSlider?; private weak var volumeSlider: NSSlider?
+    private weak var progressSlider: CommandSlider?; private weak var volumeSlider: NSSlider?
     private weak var previousButton: NSButton?; private weak var playButton: NSButton?; private weak var stopButton: NSButton?; private weak var nextButton: NSButton?
     private weak var visualizationView: MetalVisualizationView?
     init(theme: PlayerUITheme, model: PlayerUIStateModel, actions: PlayerUIActions) { self.model = model; self.actions = actions; super.init(theme: theme) }
@@ -219,7 +219,7 @@ final class PlayerViewController: ThemedViewController {
         titleLabel?.stringValue = "\(model.artist) — \(model.title)"; titleLabel?.setAccessibilityLabel("Now playing, \(model.title) by \(model.artist)")
         statusLabel?.stringValue = [model.statusText, model.technicalText].compactMap { $0 }.joined(separator: " · ")
         statusLabel?.textColor = model.playback.state.isFailure ? .systemRed : theme.secondaryText
-        progressSlider?.maxValue = max(model.playback.duration ?? 1, 1); progressSlider?.doubleValue = model.playback.position; progressSlider?.isEnabled = model.playback.duration != nil; progressSlider?.setAccessibilityValue(Self.playbackPositionDescription(model.playback))
+        progressSlider?.updateFromPlayback(value: model.playback.position, maxValue: max(model.playback.duration ?? 1, 1)); progressSlider?.isEnabled = model.playback.duration != nil; progressSlider?.setAccessibilityValue(Self.playbackPositionDescription(model.playback))
         volumeSlider?.doubleValue = model.playback.volume; volumeSlider?.setAccessibilityValue(Self.volumeDescription(model.playback.volume))
         if let artwork = theme.images[model.playback.state.isPlaying ? .pause : .play] {
             styleButtonArtwork(playButton, image: artwork)
@@ -258,11 +258,24 @@ extension PlaybackState {
 
 final class CommandSlider: NSSlider {
     private let handler: (NSSlider) -> Void
+    private(set) var isUserTracking = false
     init(value: Double, minValue: Double, maxValue: Double, handler: @escaping (NSSlider) -> Void) {
         self.handler = handler; super.init(frame: .zero); self.minValue = minValue; self.maxValue = maxValue; self.doubleValue = value
         target = self; action = #selector(change)
     }
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+    override func mouseDown(with event: NSEvent) {
+        beginUserTracking()
+        defer { endUserTracking() }
+        super.mouseDown(with: event)
+    }
+    func beginUserTracking() { isUserTracking = true }
+    func endUserTracking() { isUserTracking = false }
+    func updateFromPlayback(value: Double, maxValue: Double) {
+        guard !isUserTracking else { return }
+        self.maxValue = maxValue
+        doubleValue = value
+    }
     @objc private func change() { handler(self) }
 }
 
