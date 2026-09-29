@@ -153,9 +153,14 @@ import Testing
     let file = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     try Data([1, 2, 3]).write(to: file)
     defer { try? FileManager.default.removeItem(at: file) }
+    let acquisitions = LockedCounter()
+    let releases = LockedCounter()
     let service = SecurityScopedFileAccessService(
         bookmarkCreator: { _ in Data([1, 2, 3]) },
-        bookmarkResolver: { _ in BookmarkResolution(url: file, isStale: false) }
+        bookmarkResolver: { _ in BookmarkResolution(url: file, isStale: false) },
+        requiresAcquiredSecurityScope: true,
+        scopeAcquirer: { _ in acquisitions.increment(); return true },
+        scopeReleaser: { _ in releases.increment() }
     )
     let bookmark = try await service.bookmark(for: file)
     let track = TrackReference(lastKnownURL: file, securityScopedBookmark: bookmark)
@@ -166,7 +171,30 @@ import Testing
         #expect(lease.url.resolvingSymlinksInPath() == file.resolvingSymlinksInPath())
         await lease.release()
         await lease.release()
+        #expect(acquisitions.value == 1)
+        #expect(releases.value == 1)
     }
+}
+
+@Test func deniedRequiredSecurityScopeNeedsReauthorizationWithoutRelease() async throws {
+    let file = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    try Data([1]).write(to: file)
+    defer { try? FileManager.default.removeItem(at: file) }
+    let releases = LockedCounter()
+    let service = SecurityScopedFileAccessService(
+        bookmarkCreator: { _ in Data([1]) },
+        bookmarkResolver: { _ in BookmarkResolution(url: file, isStale: false) },
+        requiresAcquiredSecurityScope: true,
+        scopeAcquirer: { _ in false },
+        scopeReleaser: { _ in releases.increment() }
+    )
+
+    let track = TrackReference(lastKnownURL: file, securityScopedBookmark: Data([1]))
+    switch try await service.resolve(track) {
+    case .needsReauthorization(let url): #expect(url == file)
+    case .granted: Issue.record("Denied sandbox scope must not grant a lease")
+    }
+    #expect(releases.value == 0)
 }
 
 @Test func invalidScopedBookmarkFallsBackToReadablePathForLocalBuild() async throws {
@@ -187,6 +215,17 @@ import Testing
     case .granted(let lease):
         #expect(lease.url == file)
         await lease.release()
+    }
+}
+
+private final class LockedCounter: @unchecked Sendable {
+    private let lock = NSLock()
+    private var storage = 0
+
+    var value: Int { lock.withLock { storage } }
+
+    func increment() {
+        lock.withLock { storage += 1 }
     }
 }
 

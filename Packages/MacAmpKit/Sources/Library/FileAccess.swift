@@ -19,9 +19,13 @@ public struct BookmarkResolution: Sendable {
 public actor SecurityScopedFileAccessService: FileAccessService {
     public typealias BookmarkCreator = @Sendable (URL) throws -> Data
     public typealias BookmarkResolver = @Sendable (Data) throws -> BookmarkResolution
+    public typealias ScopeAcquirer = @Sendable (URL) -> Bool
+    public typealias ScopeReleaser = @Sendable (URL) -> Void
 
     private let bookmarkCreator: BookmarkCreator
     private let bookmarkResolver: BookmarkResolver
+    private let scopeAcquirer: ScopeAcquirer
+    private let scopeReleaser: ScopeReleaser
     private let allowsDirectFileAccessFallback: Bool
     private let requiresAcquiredSecurityScope: Bool
 
@@ -29,6 +33,8 @@ public actor SecurityScopedFileAccessService: FileAccessService {
         let isSandboxed = ProcessInfo.processInfo.environment["APP_SANDBOX_CONTAINER_ID"] != nil
         allowsDirectFileAccessFallback = !isSandboxed
         requiresAcquiredSecurityScope = isSandboxed
+        scopeAcquirer = { $0.startAccessingSecurityScopedResource() }
+        scopeReleaser = { $0.stopAccessingSecurityScopedResource() }
         if isSandboxed {
             bookmarkCreator = { url in
                 try url.bookmarkData(options: [.withSecurityScope, .securityScopeAllowOnlyReadAccess], includingResourceValuesForKeys: nil, relativeTo: nil)
@@ -64,12 +70,16 @@ public actor SecurityScopedFileAccessService: FileAccessService {
         bookmarkCreator: @escaping BookmarkCreator,
         bookmarkResolver: @escaping BookmarkResolver,
         allowsDirectFileAccessFallback: Bool = false,
-        requiresAcquiredSecurityScope: Bool = false
+        requiresAcquiredSecurityScope: Bool = false,
+        scopeAcquirer: @escaping ScopeAcquirer = { $0.startAccessingSecurityScopedResource() },
+        scopeReleaser: @escaping ScopeReleaser = { $0.stopAccessingSecurityScopedResource() }
     ) {
         self.bookmarkCreator = bookmarkCreator
         self.bookmarkResolver = bookmarkResolver
         self.allowsDirectFileAccessFallback = allowsDirectFileAccessFallback
         self.requiresAcquiredSecurityScope = requiresAcquiredSecurityScope
+        self.scopeAcquirer = scopeAcquirer
+        self.scopeReleaser = scopeReleaser
     }
 
     public func bookmark(for url: URL) throws -> Data {
@@ -93,11 +103,15 @@ public actor SecurityScopedFileAccessService: FileAccessService {
             guard !resolution.isStale else {
                 return directResolution(for: resolution.url)
             }
-            let acquired = resolution.url.startAccessingSecurityScopedResource()
+            let acquired = scopeAcquirer(resolution.url)
             guard acquired || !requiresAcquiredSecurityScope || allowsDirectAccess(to: resolution.url) else {
                 return .needsReauthorization(lastKnownURL: resolution.url)
             }
-            return .granted(SecurityScopedFileLease(url: resolution.url, didAcquireScope: acquired))
+            return .granted(SecurityScopedFileLease(
+                url: resolution.url,
+                didAcquireScope: acquired,
+                scopeReleaser: scopeReleaser
+            ))
         } catch {
             return directResolution(for: track.lastKnownURL)
         }
@@ -107,7 +121,7 @@ public actor SecurityScopedFileAccessService: FileAccessService {
         guard allowsDirectAccess(to: url) else {
             return .needsReauthorization(lastKnownURL: url)
         }
-        return .granted(SecurityScopedFileLease(url: url, didAcquireScope: false))
+        return .granted(SecurityScopedFileLease(url: url, didAcquireScope: false, scopeReleaser: scopeReleaser))
     }
 
     private func allowsDirectAccess(to url: URL) -> Bool {
@@ -130,16 +144,22 @@ public actor SecurityScopedFileAccessService: FileAccessService {
 public actor SecurityScopedFileLease: FileAccessLease {
     public nonisolated let url: URL
     private let didAcquireScope: Bool
+    private let scopeReleaser: SecurityScopedFileAccessService.ScopeReleaser
     private var isReleased = false
 
-    init(url: URL, didAcquireScope: Bool) {
+    init(
+        url: URL,
+        didAcquireScope: Bool,
+        scopeReleaser: @escaping SecurityScopedFileAccessService.ScopeReleaser
+    ) {
         self.url = url
         self.didAcquireScope = didAcquireScope
+        self.scopeReleaser = scopeReleaser
     }
 
     public func release() {
         guard !isReleased else { return }
         isReleased = true
-        if didAcquireScope { url.stopAccessingSecurityScopedResource() }
+        if didAcquireScope { scopeReleaser(url) }
     }
 }
