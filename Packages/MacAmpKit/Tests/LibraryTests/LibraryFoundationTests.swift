@@ -1,6 +1,6 @@
 import Contracts
 import Foundation
-import Library
+@testable import Library
 import Testing
 
 @Test func applicationSupportRenameCopiesLegacyDataWithoutOverwritingNewFiles() throws {
@@ -146,6 +146,38 @@ import Testing
     })
 }
 
+@Test func flacVorbisCommentsProvidePlaylistMetadata() throws {
+    let file = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID()).flac")
+    defer { try? FileManager.default.removeItem(at: file) }
+    let comments = [
+        "TITLE=Patient Zero",
+        "ARTIST=Taylor Swift",
+        "ALBUM=The Life of a Showgirl: The Encore",
+        "TRACKNUMBER=1",
+    ]
+    var payload = Data()
+    appendUInt32LE(0, to: &payload)
+    appendUInt32LE(comments.count, to: &payload)
+    for comment in comments {
+        let bytes = Data(comment.utf8)
+        appendUInt32LE(bytes.count, to: &payload)
+        payload.append(bytes)
+    }
+    var fileData = Data("fLaC".utf8)
+    fileData.append(0x84)
+    fileData.append(UInt8((payload.count >> 16) & 0xff))
+    fileData.append(UInt8((payload.count >> 8) & 0xff))
+    fileData.append(UInt8(payload.count & 0xff))
+    fileData.append(payload)
+    try fileData.write(to: file)
+
+    #expect(try FLACVorbisCommentReader.read(from: file) == FLACVorbisComments(
+        title: "Patient Zero",
+        artist: "Taylor Swift",
+        album: "The Life of a Showgirl: The Encore"
+    ))
+}
+
 @Test func missingImportIsReportedWithoutInventingAQueueItem() async {
     let missing = URL(fileURLWithPath: "/tmp/macamp-definitely-missing/file.mp3")
     let importer = FileImportService(access: TestFileAccess(), metadataLoader: TestMetadataLoader())
@@ -248,6 +280,13 @@ private final class LockedCounter: @unchecked Sendable {
     func increment() {
         lock.withLock { storage += 1 }
     }
+}
+
+private func appendUInt32LE(_ value: Int, to data: inout Data) {
+    data.append(UInt8(value & 0xff))
+    data.append(UInt8((value >> 8) & 0xff))
+    data.append(UInt8((value >> 16) & 0xff))
+    data.append(UInt8((value >> 24) & 0xff))
 }
 
 @Test func sessionStoreFallsBackAfterInterruptedOrCorruptPrimaryWrite() async throws {
