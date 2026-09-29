@@ -1,18 +1,21 @@
 # MacAmp MVP candidate test report
 
-Date: September 27, 2026
+Date: September 29, 2026
 Host: Apple silicon Mac mini, 16 GB  
 OS/toolchain: macOS 26.5.2, Xcode 26.2, Swift 6.2.3  
 Artifact: `build/MacAmp.app`, ad-hoc signed local candidate
 
 ## Automated results
 
-- `./scripts/test.sh`: 104 passed, 0 failed; 5 AudioComponent-host cases intentionally skipped in the parallel Swift Testing host and covered by the serial probes below.
+- `./scripts/test.sh`: 106 passed, 0 failed; 5 AudioComponent-host cases intentionally skipped in the parallel Swift Testing host and covered by the serial probes below.
 - 10,000-entry data measurement in the debug test: playlist parse and missing reporting 0.171 seconds; queue append plus search 0.040 seconds; combined under 0.25 seconds.
 - `./scripts/package-app.sh`: release build succeeded and produced `build/MacAmp.app`.
 - `codesign --verify --deep --strict --verbose=2 build/MacAmp.app`: valid on disk and satisfies its designated requirement.
 - `plutil -lint build/MacAmp.app/Contents/Info.plist`: OK.
 - Packaged resources contain Studio Graphite, Paper, Terminal, and CreatorExample. `otool -L` shows system frameworks only; ZIPFoundation is statically linked.
+- `./scripts/validate-app-bundle.sh`: the ad-hoc development bundle contains valid App Sandbox, user-selected read/write, and app-scoped bookmark entitlements plus its privacy manifest and release resources.
+- `./scripts/archive-app-store.sh`: Xcode 26.2 produced `build/MacAmp.xcarchive`; its unsigned application passed structural validation and contains a universal `arm64`/`x86_64` executable. App Store distribution signing and delivery validation remain pending the final App ID and authorized profile.
+- A first parallel run exposed a fatal Metal-unavailable initializer. The renderer now presents an accessible nonfatal fallback when device, command queue, shader compilation, or pipeline setup is unavailable; the complete 106-test rerun passed.
 
 ## Serial Core Audio results
 
@@ -45,6 +48,8 @@ Expanded frame and boundary results are in `Tests/Fixtures/Audio/results-macos26
 
 ## Interactive smoke result
 
+The September 29 sandbox checkpoint launched the entitlement-signed development bundle. It restored a saved FLAC at 02:21, changed from Paused to Playing, advanced normally to 02:36, and returned to Paused without asking the user to select the file again. This proves the basic persisted-bookmark path under App Sandbox; the complete export, stale bookmark, and network-volume disconnect matrix is still required.
+
 With the Mac unlocked, the rebuilt app restored the existing nine-item queue. Playing the selected fixture advanced into a previously saved MP3 from Downloads, confirming that the old invalidated bookmark recovered through readable local access. The playlist displayed its new accessible `CLR` control, and playback was stopped normally afterward.
 
 The live UI matrix exercised Studio Graphite, Paper, and Terminal at 100%, 125%, and 150%. Each skin retained identical module geometry at a given scale; controls, typography, and hit targets enlarged with the interface, and the three attached windows remained flush. Focused captures confirmed usable contrast for every skin, including Studio Graphite’s transport, utility, and playlist controls.
@@ -59,4 +64,4 @@ The packaged FLAC-fallback build restored the saved external-volume queue and pl
 
 ## Not run
 
-macOS 14 codec behavior, a complete VoiceOver audit, multi-display/Spaces behavior, removable-volume reauthorization, physical device disconnect/sleep-wake, long-run CPU/memory, five-participant usability, Developer ID signing, and notarization require environments, hardware, participants, or credentials not available in this run.
+macOS 14 codec behavior, a complete VoiceOver audit, multi-display/Spaces behavior, removable-volume reauthorization, physical device disconnect/sleep-wake, long-run CPU/memory, five-participant usability, final App Store identity/signing/provisioning/upload, and optional direct-download Developer ID signing/notarization require environments, hardware, participants, credentials, or product decisions not available in this run.

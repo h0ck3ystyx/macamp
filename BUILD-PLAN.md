@@ -20,7 +20,7 @@ Product authority: [PRODUCT-DESIGN.md](PRODUCT-DESIGN.md). Read that document be
 | Skins | Graphite and Paper through the same schema; live switching | Three skins; customization; safe external packages; creator starter |
 | Mac | Native menus, file access, keyboard controls, basic VoiceOver | Media commands, Now Playing, full accessibility/recovery matrix |
 | Persistence | Queue, position, skin; relaunch paused | All product state; atomic writes; stale access and migration handling |
-| Delivery | Runnable development `.app`, build instructions, demo evidence | Release build, quality evidence, signed/notarized artifact when credentials available |
+| Delivery | Runnable development `.app`, build instructions, demo evidence | Release build and quality evidence; use `docs/APP-STORE-RELEASE-PLAN.md` for TestFlight and App Review distribution |
 
 No fake spectrum, cosmetic EQ, timer-based pretend playback, or hardcoded demo queue qualifies. Hide unfinished optional controls rather than present them as working. Keep the original retro-inspired appearance central to the prototype.
 
@@ -172,11 +172,11 @@ Each task ends with changed files, exact validation commands/results, known limi
 
 **Gate:** LIST-01 through LIST-06 and Mac interaction rules pass; 10,000-row import remains responsive; no duplicate remote-command handlers; metadata/state remains accurate in the background. Validate sandboxed playlist permissions, removable volumes, and relaunch on actual macOS.
 
-### T10 — Build and distribution · Coordinator · preparation after T0, final after feature completion
+### T10 — Build and development distribution · Coordinator · preparation after T0, final after feature completion
 
-**Assignment:** maintain reproducible build/test/package scripts and dependency provenance. Configure bundle identity/document types/entitlements; include all native decoder libraries and skin resources in the app. Produce a release-mode build, release notes, support limitations, licenses, and clean-install instructions. Configure signing/notarization only using available authorized credentials; never print secrets.
+**Assignment:** maintain reproducible build/test/package scripts and dependency provenance. Configure bundle identity/document types; include all native decoder libraries and skin resources in the app. Produce a release-mode development build, release notes, support limitations, licenses, and clean-install instructions. The Mac App Store target, sandbox entitlements, distribution signing, TestFlight, metadata, and App Review gates are owned by `docs/APP-STORE-RELEASE-PLAN.md`. Configure any future direct-download Developer ID signing/notarization only using available authorized credentials; never print secrets.
 
-**Gate:** clean installation opens audio and skins correctly and passes an offline smoke test. Without signing credentials, deliver the locally runnable artifact and exact signing steps; mark public distribution blocked. Never call an unsigned local build release-ready. Publishing or uploading is a separate action, not part of this plan’s default execution.
+**Gate:** clean installation opens audio and skins correctly and passes an offline smoke test. Deliver the locally runnable artifact and mark public distribution separately against the App Store release plan. Never call an unsigned or ad-hoc-signed local build release-ready. Publishing or uploading is a separate action, not part of this plan’s default execution.
 
 ### T11 — Independent validation and regression fixes · QA assignments by feature
 

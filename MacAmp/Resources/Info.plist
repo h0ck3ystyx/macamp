@@ -20,6 +20,10 @@
     <string>0.1.0</string>
     <key>CFBundleVersion</key>
     <string>1</string>
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.music</string>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
     <key>NSHighResolutionCapable</key>
@@ -59,8 +63,26 @@
             <string>Viewer</string>
             <key>LSHandlerRank</key>
             <string>Owner</string>
-            <key>CFBundleTypeExtensions</key>
-            <array><string>macampskin</string><string>chuckskin</string></array>
+            <key>LSItemContentTypes</key>
+            <array><string>com.macamp.skin</string></array>
+        </dict>
+    </array>
+    <key>UTExportedTypeDeclarations</key>
+    <array>
+        <dict>
+            <key>UTTypeConformsTo</key>
+            <array><string>public.archive</string></array>
+            <key>UTTypeDescription</key>
+            <string>MacAmp Skin</string>
+            <key>UTTypeIdentifier</key>
+            <string>com.macamp.skin</string>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array><string>macampskin</string><string>chuckskin</string></array>
+                <key>public.mime-type</key>
+                <string>application/x-macamp-skin</string>
+            </dict>
         </dict>
     </array>
 </dict>

@@ -1,0 +1,312 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		100000000000000000000001 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000001 /* main.swift */; };
+		100000000000000000000002 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000004 /* PrivacyInfo.xcprivacy */; };
+		100000000000000000000003 /* Skins in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000005 /* Skins */; };
+		100000000000000000000004 /* THIRD-PARTY-NOTICES.md in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000006 /* THIRD-PARTY-NOTICES.md */; };
+		100000000000000000000010 /* MacAmpContracts in Frameworks */ = {isa = PBXBuildFile; productRef = 900000000000000000000001 /* MacAmpContracts */; };
+		100000000000000000000011 /* MacAmpAudio in Frameworks */ = {isa = PBXBuildFile; productRef = 900000000000000000000002 /* MacAmpAudio */; };
+		100000000000000000000012 /* MacAmpLibrary in Frameworks */ = {isa = PBXBuildFile; productRef = 900000000000000000000003 /* MacAmpLibrary */; };
+		100000000000000000000013 /* MacAmpSkins in Frameworks */ = {isa = PBXBuildFile; productRef = 900000000000000000000004 /* MacAmpSkins */; };
+		100000000000000000000014 /* MacAmpPlayerUI in Frameworks */ = {isa = PBXBuildFile; productRef = 900000000000000000000005 /* MacAmpPlayerUI */; };
+		100000000000000000000015 /* MacAmpMacIntegration in Frameworks */ = {isa = PBXBuildFile; productRef = 900000000000000000000006 /* MacAmpMacIntegration */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		200000000000000000000001 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		200000000000000000000002 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		200000000000000000000003 /* MacAmp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MacAmp.entitlements; sourceTree = "<group>"; };
+		200000000000000000000004 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		200000000000000000000005 /* Skins */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Skins; sourceTree = SOURCE_ROOT; };
+		200000000000000000000006 /* THIRD-PARTY-NOTICES.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "THIRD-PARTY-NOTICES.md"; sourceTree = SOURCE_ROOT; };
+		200000000000000000000007 /* MacAmp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacAmp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		300000000000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				100000000000000000000010 /* MacAmpContracts in Frameworks */,
+				100000000000000000000011 /* MacAmpAudio in Frameworks */,
+				100000000000000000000012 /* MacAmpLibrary in Frameworks */,
+				100000000000000000000013 /* MacAmpSkins in Frameworks */,
+				100000000000000000000014 /* MacAmpPlayerUI in Frameworks */,
+				100000000000000000000015 /* MacAmpMacIntegration in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		400000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				400000000000000000000002 /* MacAmp */,
+				200000000000000000000005 /* Skins */,
+				200000000000000000000006 /* THIRD-PARTY-NOTICES.md */,
+				400000000000000000000005 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		400000000000000000000002 /* MacAmp */ = {
+			isa = PBXGroup;
+			children = (
+				400000000000000000000003 /* App */,
+				400000000000000000000004 /* Resources */,
+			);
+			path = MacAmp;
+			sourceTree = "<group>";
+		};
+		400000000000000000000003 /* App */ = {
+			isa = PBXGroup;
+			children = (200000000000000000000001 /* main.swift */,);
+			path = App;
+			sourceTree = "<group>";
+		};
+		400000000000000000000004 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				200000000000000000000002 /* Info.plist */,
+				200000000000000000000003 /* MacAmp.entitlements */,
+				200000000000000000000004 /* PrivacyInfo.xcprivacy */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		400000000000000000000005 /* Products */ = {
+			isa = PBXGroup;
+			children = (200000000000000000000007 /* MacAmp.app */,);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		500000000000000000000001 /* MacAmp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 700000000000000000000002 /* Build configuration list for PBXNativeTarget "MacAmp" */;
+			buildPhases = (
+				300000000000000000000002 /* Sources */,
+				300000000000000000000001 /* Frameworks */,
+				300000000000000000000003 /* Resources */,
+			);
+			buildRules = ();
+			dependencies = ();
+			name = MacAmp;
+			packageProductDependencies = (
+				900000000000000000000001 /* MacAmpContracts */,
+				900000000000000000000002 /* MacAmpAudio */,
+				900000000000000000000003 /* MacAmpLibrary */,
+				900000000000000000000004 /* MacAmpSkins */,
+				900000000000000000000005 /* MacAmpPlayerUI */,
+				900000000000000000000006 /* MacAmpMacIntegration */,
+			);
+			productName = MacAmp;
+			productReference = 200000000000000000000007 /* MacAmp.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		600000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2620;
+				LastUpgradeCheck = 2620;
+				TargetAttributes = {500000000000000000000001 = {CreatedOnToolsVersion = 26.2;};};
+			};
+			buildConfigurationList = 700000000000000000000001 /* Build configuration list for PBXProject "MacAmp" */;
+			compatibilityVersion = "Xcode 16.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (en, Base,);
+			mainGroup = 400000000000000000000001;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (800000000000000000000001 /* XCLocalSwiftPackageReference "." */,);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 400000000000000000000005 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (500000000000000000000001 /* MacAmp */,);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		300000000000000000000003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				100000000000000000000002 /* PrivacyInfo.xcprivacy in Resources */,
+				100000000000000000000003 /* Skins in Resources */,
+				100000000000000000000004 /* THIRD-PARTY-NOTICES.md in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		300000000000000000000002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (100000000000000000000001 /* main.swift in Sources */,);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		710000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		710000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		710000000000000000000003 /* AppStore */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				SDKROOT = macosx;
+			};
+			name = AppStore;
+		};
+		720000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = MacAmp/Resources/MacAmp.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_USER_SELECTED_FILES = readwrite;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MacAmp/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.1.0;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -parse-as-library";
+				PRODUCT_BUNDLE_IDENTIFIER = com.macamp.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		720000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = MacAmp/Resources/MacAmp.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_USER_SELECTED_FILES = readwrite;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MacAmp/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.1.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -parse-as-library";
+				PRODUCT_BUNDLE_IDENTIFIER = com.macamp.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		720000000000000000000003 /* AppStore */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = MacAmp/Resources/MacAmp.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_USER_SELECTED_FILES = readwrite;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MacAmp/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.1.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -parse-as-library";
+				PRODUCT_BUNDLE_IDENTIFIER = com.macamp.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = AppStore;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		700000000000000000000001 /* Build configuration list for PBXProject "MacAmp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				710000000000000000000001 /* Debug */,
+				710000000000000000000002 /* Release */,
+				710000000000000000000003 /* AppStore */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		700000000000000000000002 /* Build configuration list for PBXNativeTarget "MacAmp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				720000000000000000000001 /* Debug */,
+				720000000000000000000002 /* Release */,
+				720000000000000000000003 /* AppStore */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		800000000000000000000001 /* XCLocalSwiftPackageReference "." */ = {isa = XCLocalSwiftPackageReference; relativePath = .; };
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		900000000000000000000001 /* MacAmpContracts */ = {isa = XCSwiftPackageProductDependency; package = 800000000000000000000001 /* XCLocalSwiftPackageReference "." */; productName = MacAmpContracts; };
+		900000000000000000000002 /* MacAmpAudio */ = {isa = XCSwiftPackageProductDependency; package = 800000000000000000000001 /* XCLocalSwiftPackageReference "." */; productName = MacAmpAudio; };
+		900000000000000000000003 /* MacAmpLibrary */ = {isa = XCSwiftPackageProductDependency; package = 800000000000000000000001 /* XCLocalSwiftPackageReference "." */; productName = MacAmpLibrary; };
+		900000000000000000000004 /* MacAmpSkins */ = {isa = XCSwiftPackageProductDependency; package = 800000000000000000000001 /* XCLocalSwiftPackageReference "." */; productName = MacAmpSkins; };
+		900000000000000000000005 /* MacAmpPlayerUI */ = {isa = XCSwiftPackageProductDependency; package = 800000000000000000000001 /* XCLocalSwiftPackageReference "." */; productName = MacAmpPlayerUI; };
+		900000000000000000000006 /* MacAmpMacIntegration */ = {isa = XCSwiftPackageProductDependency; package = 800000000000000000000001 /* XCLocalSwiftPackageReference "." */; productName = MacAmpMacIntegration; };
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 600000000000000000000001 /* Project object */;
+}

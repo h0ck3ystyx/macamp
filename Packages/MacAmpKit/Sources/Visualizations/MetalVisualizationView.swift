@@ -5,8 +5,8 @@ import simd
 
 public final class MetalVisualizationView: MTKView, MTKViewDelegate {
     private struct Vertex { var position: SIMD2<Float>; var color: SIMD4<Float> }
-    private let queue: MTLCommandQueue
-    private let pipeline: MTLRenderPipelineState
+    private let queue: MTLCommandQueue?
+    private let pipeline: MTLRenderPipelineState?
     private var latest: VisualizationFeatures?
     private var traces: [[Float]] = []
     private var previousPresetID: String?
@@ -24,8 +24,9 @@ public final class MetalVisualizationView: MTKView, MTKViewDelegate {
     public var openHandler: (() -> Void)?
 
     public init(frame: NSRect = .zero) {
-        guard let device = MTLCreateSystemDefaultDevice(), let queue = device.makeCommandQueue() else { fatalError("Metal is unavailable") }
-        self.queue = queue
+        let metalDevice = MTLCreateSystemDefaultDevice()
+        var commandQueue: MTLCommandQueue?
+        var pipelineState: MTLRenderPipelineState?
         let source = """
         #include <metal_stdlib>
         using namespace metal;
@@ -34,20 +35,44 @@ public final class MetalVisualizationView: MTKView, MTKViewDelegate {
         vertex O vertexMain(const device V *v [[buffer(0)]], uint i [[vertex_id]]) { O o; o.position=float4(v[i].position,0,1); o.color=v[i].color; return o; }
         fragment float4 fragmentMain(O in [[stage_in]]) { return in.color; }
         """
-        let library = try! device.makeLibrary(source: source, options: nil)
-        let descriptor = MTLRenderPipelineDescriptor()
-        descriptor.vertexFunction = library.makeFunction(name: "vertexMain")
-        descriptor.fragmentFunction = library.makeFunction(name: "fragmentMain")
-        descriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
-        descriptor.colorAttachments[0].isBlendingEnabled = true
-        descriptor.colorAttachments[0].sourceRGBBlendFactor = .sourceAlpha
-        descriptor.colorAttachments[0].destinationRGBBlendFactor = .oneMinusSourceAlpha
-        pipeline = try! device.makeRenderPipelineState(descriptor: descriptor)
-        super.init(frame: frame, device: device)
+        if let metalDevice,
+           let candidateQueue = metalDevice.makeCommandQueue(),
+           let library = try? metalDevice.makeLibrary(source: source, options: nil),
+           let vertex = library.makeFunction(name: "vertexMain"),
+           let fragment = library.makeFunction(name: "fragmentMain") {
+            let descriptor = MTLRenderPipelineDescriptor()
+            descriptor.vertexFunction = vertex
+            descriptor.fragmentFunction = fragment
+            descriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
+            descriptor.colorAttachments[0].isBlendingEnabled = true
+            descriptor.colorAttachments[0].sourceRGBBlendFactor = .sourceAlpha
+            descriptor.colorAttachments[0].destinationRGBBlendFactor = .oneMinusSourceAlpha
+            if let candidatePipeline = try? metalDevice.makeRenderPipelineState(descriptor: descriptor) {
+                commandQueue = candidateQueue
+                pipelineState = candidatePipeline
+            }
+        }
+        queue = commandQueue
+        pipeline = pipelineState
+        super.init(frame: frame, device: pipelineState == nil ? nil : metalDevice)
         colorPixelFormat = .bgra8Unorm; framebufferOnly = true; enableSetNeedsDisplay = true; isPaused = true
         clearColor = MTLClearColor(red: 0.015, green: 0.02, blue: 0.025, alpha: 1)
-        delegate = self
-        setAccessibilityRole(.image); setAccessibilityLabel("Audio visualization")
+        setAccessibilityRole(.image)
+        if pipelineState == nil {
+            setAccessibilityLabel("Audio visualization unavailable")
+            let fallback = NSTextField(labelWithString: "VISUALIZATION UNAVAILABLE")
+            fallback.translatesAutoresizingMaskIntoConstraints = false
+            fallback.textColor = .secondaryLabelColor
+            fallback.font = .monospacedSystemFont(ofSize: 11, weight: .medium)
+            addSubview(fallback)
+            NSLayoutConstraint.activate([
+                fallback.centerXAnchor.constraint(equalTo: centerXAnchor),
+                fallback.centerYAnchor.constraint(equalTo: centerYAnchor),
+            ])
+        } else {
+            delegate = self
+            setAccessibilityLabel("Audio visualization")
+        }
     }
 
     required init(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
@@ -69,7 +94,8 @@ public final class MetalVisualizationView: MTKView, MTKViewDelegate {
     public func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
 
     public func draw(in view: MTKView) {
-        guard let pass = currentRenderPassDescriptor, let drawable = currentDrawable,
+        guard let queue, let pipeline,
+              let pass = currentRenderPassDescriptor, let drawable = currentDrawable,
               let buffer = queue.makeCommandBuffer(), let encoder = buffer.makeRenderCommandEncoder(descriptor: pass) else { return }
         encoder.setRenderPipelineState(pipeline)
         if let features = latest {
