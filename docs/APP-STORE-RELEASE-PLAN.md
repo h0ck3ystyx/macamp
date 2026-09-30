@@ -1,8 +1,8 @@
-# MacAmp App Store release plan
+# MioAmp App Store release plan
 
 September 29, 2026 · Working plan for the first Mac App Store release
 
-This plan starts from the current MacAmp MVP candidate. It covers the work required to produce a sandboxed TestFlight build, validate that build, prepare the product page, and submit a release candidate to App Review. `PRODUCT-DESIGN.md` remains the authority for product behavior; `docs/REQUIREMENTS-LEDGER.md` remains the evidence ledger.
+This plan starts from the current MioAmp MVP candidate. It covers the work required to produce a sandboxed TestFlight build, validate that build, prepare the product page, and submit a release candidate to App Review. `PRODUCT-DESIGN.md` remains the authority for product behavior; `docs/REQUIREMENTS-LEDGER.md` remains the evidence ledger.
 
 Uploading a build to App Store Connect or submitting it to App Review is an external release action. Prepare and validate the exact artifact first, then obtain the product owner's approval for the upload or submission.
 
@@ -11,12 +11,12 @@ Uploading a build to App Store Connect or submitting it to App Review is an exte
 The application, audio pipeline, playlist, EQ, skin system, media commands, persistence, and visualization MVP exist and the automated suite passes. The release foundation now includes:
 
 - `scripts/package-app.sh` builds with SwiftPM, assembles the bundle manually, and ad-hoc signs it.
-- The bundle identifier remains provisional `com.macamp.app`; version is `1.0.0`, build `1`.
+- The selected bundle identifier is `io.github.h0ck3ystyx.mioamp`; version is `1.0.0`, build `1`. The matching App ID still needs registration.
 - The Xcode archive is universal `arm64` and `x86_64`; the ad-hoc SwiftPM package remains native-host architecture for local development.
 - App Sandbox entitlements, a privacy manifest, an original asset-catalog icon, the native Xcode target/scheme, archive/export scripts, and strict bundle validation are implemented.
 - An unsigned universal archive passes local validation. Distribution signing/profile, final App ID, upload, and App Store Connect processing require publisher credentials.
 - The English metadata, privacy/compliance answers, review notes, support/privacy copy, screenshot plan, and final external-action checklist are prepared in `docs/app-store/`.
-- Public use of the `MacAmp` name is blocked pending a naming/rights decision because it conflicts with a historical commercial audio player name.
+- The public product name is `MioAmp`. Preliminary exact-name research found no relevant software or audio-player namesake; formal trademark clearance remains the publisher's decision.
 - Manual release gates remain for VoiceOver, performance, long-run playback, sleep/wake, physical audio routes, network-volume recovery, and supported macOS versions.
 
 Developer ID signing and notarization are a separate lane for distribution outside the Mac App Store. They are not acceptance criteria for this plan.
@@ -28,7 +28,7 @@ Use these gates in order. A later gate cannot waive an earlier failure.
 | Gate | Outcome | Acceptance condition |
 | --- | --- | --- |
 | AS-0 Decisions | Stable release identity and scope | Name, bundle ID, price, architectures, minimum macOS, territories, and support owner are recorded |
-| AS-1 Sandboxed app | MacAmp works with App Sandbox enabled | Local development-signed build passes file access, relaunch, network-volume, playlist, and skin workflows |
+| AS-1 Sandboxed app | MioAmp works with App Sandbox enabled | Local development-signed build passes file access, relaunch, network-volume, playlist, and skin workflows |
 | AS-2 Distribution archive | Uploadable release artifact | Xcode archive/export validates with the intended App ID, distribution signing, profile, entitlements, resources, version, and build number |
 | AS-3 Release candidate | Product quality evidence is complete | Automated suite and manual matrix pass on the exact archived commit; no open release-blocking defects |
 | AS-4 TestFlight | Store-delivered build works | App Store Connect processes the upload and internal TestFlight smoke/soak checks pass |
@@ -41,8 +41,8 @@ Record decisions in `docs/APP-STORE-DECISIONS.md`. None should block the sandbox
 
 | Decision | Default recommendation | Why it matters |
 | --- | --- | --- |
-| Product name | Clear `MacAmp` for App Store name availability and trademark risk; keep a backup name | Name and artwork must not imply affiliation with Winamp or another product |
-| Bundle ID | Use a reverse-DNS identifier under a domain controlled by the publisher | The App ID, provisioning profile, App Store record, and persisted container depend on it |
+| Product name | Use the selected `MioAmp` identity and confirm its availability when creating the App Store Connect record | Name and artwork must not imply affiliation with Winamp or another product |
+| Bundle ID | Register `io.github.h0ck3ystyx.mioamp` | The App ID, provisioning profile, App Store record, and persisted container depend on it |
 | Version | Ship the first public release as `1.0.0` with monotonically increasing build numbers | App Store Connect associates uploads by bundle ID, version, and build |
 | Architecture | Prefer universal `arm64` + `x86_64` if the audio dependencies build and Intel testing is available; otherwise explicitly ship Apple silicon only | The current artifact is `arm64` only |
 | Minimum OS | Keep macOS 14 only if it can be tested; otherwise raise the minimum to the oldest tested release | The store listing must match actual compatibility |
@@ -63,9 +63,9 @@ Record decisions in `docs/APP-STORE-DECISIONS.md`. None should block the sandbox
    - version/build settings;
    - Music application category;
    - copyright;
-   - supported document types and exported UTIs for `.macampskin` and the legacy `.chuckskin` association;
+   - supported document types and exported UTIs for `.mioampskin` and the legacy `.macampskin` and `.chuckskin` associations;
    - encryption/export-compliance declaration after dependency review.
-5. Create `MacAmp.entitlements` with the minimum capabilities required by AS-B.
+5. Create `MioAmp.entitlements` with the minimum capabilities required by AS-B.
 6. Add reproducible scripts for clean archive, export, and local validation. Secrets, team IDs, certificate names, and profiles must be supplied through Xcode or untracked local configuration.
 7. Add artifact checks for bundle structure, architecture, Info.plist, icon, embedded provisioning profile, entitlements, signature, resources, and third-party notices.
 
@@ -80,7 +80,7 @@ Record decisions in `docs/APP-STORE-DECISIONS.md`. None should block the sandbox
 
 - A clean unsigned or development-signed archive can be reproduced without personal secrets.
 - With authorized credentials present, Xcode creates a Mac App Store distribution archive with a Team ID and matching profile.
-- `MacAmp.app` launches from the archive and contains the same skin, codec, playlist, and visualization resources as the tested development build.
+- `MioAmp.app` launches from the archive and contains the same skin, codec, playlist, and visualization resources as the tested development build.
 
 ## 5. Workstream AS-B — Sandbox and persistent file access
 
@@ -101,7 +101,7 @@ Validate every path by user action and by restoration:
 2. Drag files and folders from Finder.
 3. Import M3U/M3U8/PLS playlists with relative, missing, unauthorized, and network-volume entries.
 4. Export playlists and skin packages through a save panel.
-5. Import, preview, apply, export, and remove `.macampskin` packages.
+5. Import, preview, apply, export, and remove `.mioampskin` packages.
 6. Quit and relaunch with a populated queue; restored items must play without selecting them again when their bookmarks remain valid.
 7. Handle stale or denied bookmarks with locate/reauthorize UI; clearing the playlist must always work.
 8. Test `/Volumes/Music/lidarr`, then disconnect and reconnect the volume. Playback must fail clearly, remain responsive, and recover after reauthorization or reconnection.
@@ -125,7 +125,7 @@ Validate every path by user action and by restoration:
 4. Complete an export-compliance review. If the final app does not use non-exempt encryption, set the corresponding Info.plist declaration and retain the decision evidence.
 5. Run static checks on the release bundle for unexpected network endpoints, private frameworks, debug paths, test resources, executable downloads, and unsigned nested code.
 6. Verify all bundled assets, fonts, skins, source fixtures, and screenshots are original or licensed for distribution. Keep ZIPFoundation's license and third-party notices in the app bundle.
-7. Perform App Store name availability and trademark clearance for `MacAmp`. Keep Winamp and other third-party names, logos, product art, and implied affiliation out of the icon, bundled skins, screenshots, description, subtitle, and keywords.
+7. Perform App Store name availability and trademark clearance for `MioAmp`. Keep Winamp and other third-party names, logos, product art, and implied affiliation out of the icon, bundled skins, screenshots, description, subtitle, and keywords.
 8. Publish a plain-language privacy policy and support page. The policy must match the binary and App Store privacy answers.
 
 **Acceptance**
@@ -249,7 +249,7 @@ Fix defects in existing features before adding these. Store copy must describe o
 
 ## 12. Definition of done
 
-MacAmp is ready to submit when all of the following are true:
+MioAmp is ready to submit when all of the following are true:
 
 - The release archive is App Store signed, provisioned, sandboxed, self-contained, and accepted by App Store Connect processing.
 - Restored local and network-volume tracks remain authorized or provide a working reauthorization path.

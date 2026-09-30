@@ -1,6 +1,6 @@
-# MacAmp UI regression checklist
+# MioAmp UI regression checklist
 
-Run this checklist against the packaged `build/MacAmp.app` with at least two playable local tracks. Preserve the user's session before testing and restore it afterward.
+Run this checklist against the packaged `build/MioAmp.app` with at least two playable local tracks. Preserve the user's session before testing and restore it afterward.
 
 ## Skin and scale matrix
 

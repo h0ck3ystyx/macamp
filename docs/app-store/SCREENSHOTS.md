@@ -1,4 +1,4 @@
-# Screenshot plan — MacAmp 1.0
+# Screenshot plan — MioAmp 1.0
 
 Apple currently accepts one to ten Mac screenshots at a consistent 16:10 size: 1280×800, 1440×900, 2560×1600, or 2880×1800. Use PNG without transparency. The release set will use 2560×1600.
 

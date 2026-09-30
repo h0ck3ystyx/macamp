@@ -2,11 +2,11 @@
 set -euo pipefail
 
 repo_root="${0:A:h:h}"
-app_bundle="${1:-$repo_root/build/MacAmp.app}"
+app_bundle="${1:-$repo_root/build/MioAmp.app}"
 validation_mode="${2:-development}"
-expected_bundle_identifier="${MACAMP_BUNDLE_IDENTIFIER:-com.macamp.app}"
-expected_version="${MACAMP_VERSION:-1.0.0}"
-expected_build_number="${MACAMP_BUILD_NUMBER:-1}"
+expected_bundle_identifier="${MIOAMP_BUNDLE_IDENTIFIER:-io.github.h0ck3ystyx.mioamp}"
+expected_version="${MIOAMP_VERSION:-1.0.0}"
+expected_build_number="${MIOAMP_BUILD_NUMBER:-1}"
 
 fail() {
   echo "error: $*" >&2
@@ -15,7 +15,7 @@ fail() {
 
 [[ -d "$app_bundle" ]] || fail "app bundle not found: $app_bundle"
 info_plist="$app_bundle/Contents/Info.plist"
-executable="$app_bundle/Contents/MacOS/MacAmp"
+executable="$app_bundle/Contents/MacOS/MioAmp"
 privacy_manifest="$app_bundle/Contents/Resources/PrivacyInfo.xcprivacy"
 notices="$app_bundle/Contents/Resources/THIRD-PARTY-NOTICES.md"
 skins="$app_bundle/Contents/Resources/Skins"
@@ -44,10 +44,10 @@ plist_value() {
 [[ "$(plist_value ITSAppUsesNonExemptEncryption)" == "false" ]] || fail "export-compliance declaration is missing"
 
 if [[ "$validation_mode" == "unsigned" ]]; then
-  plutil -lint "$repo_root/MacAmp/Resources/MacAmp.entitlements" >/dev/null
+  plutil -lint "$repo_root/MioAmp/Resources/MioAmp.entitlements" >/dev/null
 elif [[ "$validation_mode" == "development" || "$validation_mode" == "app-store" ]]; then
   codesign --verify --deep --strict "$app_bundle"
-  entitlements_file="$(mktemp -t macamp-entitlements).plist"
+  entitlements_file="$(mktemp -t mioamp-entitlements).plist"
   trap 'rm -f "$entitlements_file"' EXIT
   codesign -d --entitlements :- "$app_bundle" 2>&1 | sed -n '/<?xml/,$p' > "$entitlements_file"
   plutil -lint "$entitlements_file" >/dev/null
@@ -74,8 +74,8 @@ fi
 architecture="$(file "$executable")"
 echo "$architecture" | grep -q 'Mach-O 64-bit executable' || fail "unexpected executable format"
 architectures="$(lipo -archs "$executable")"
-if [[ -n "${MACAMP_EXPECTED_ARCHS:-}" ]]; then
-  for expected_arch in ${(z)MACAMP_EXPECTED_ARCHS}; do
+if [[ -n "${MIOAMP_EXPECTED_ARCHS:-}" ]]; then
+  for expected_arch in ${(z)MIOAMP_EXPECTED_ARCHS}; do
     [[ " $architectures " == *" $expected_arch "* ]] || fail "missing expected architecture: $expected_arch"
   done
 fi

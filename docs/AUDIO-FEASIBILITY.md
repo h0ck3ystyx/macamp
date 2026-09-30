@@ -19,7 +19,7 @@ Schedule current and next tracks on one `AVAudioPlayerNode` timeline using expli
 
 Use `AVAudioUnitEQ` for the ten-band equalizer. A focused 1 kHz test requested +12 dB and measured +11.990 dB in offline rendering, so the component provides the required audible processing. T4 still needs parameter smoothing, preamp, bypass, reset, headroom/protection, and response tests for all ten proposed bands.
 
-Native `ExtAudioFile` decodes ALAC, AIFF, AAC-LC/HE-AAC in MPEG-4 and ADTS, float WAV, Ogg Vorbis, and Ogg Opus. A later macOS 26 update began rejecting both FLAC and some real-library MP3 files during Float32 client conversion with Core Audio `fmt?` (`1718449215`). MacAmp therefore uses pinned, bounded `dr_flac` and `dr_mp3` adapters for FLAC and MP3 while retaining the shared decoder contract for every format. The adapters accept ordinary metadata layouts, including ID3-prefixed FLAC and ID3-tagged MP3, and preserve bounded reads and frame seeks. Repeat the full matrix on macOS 14.
+Native `ExtAudioFile` decodes ALAC, AIFF, AAC-LC/HE-AAC in MPEG-4 and ADTS, float WAV, Ogg Vorbis, and Ogg Opus. A later macOS 26 update began rejecting both FLAC and some real-library MP3 files during Float32 client conversion with Core Audio `fmt?` (`1718449215`). MioAmp therefore uses pinned, bounded `dr_flac` and `dr_mp3` adapters for FLAC and MP3 while retaining the shared decoder contract for every format. The adapters accept ordinary metadata layouts, including ID3-prefixed FLAC and ID3-tagged MP3, and preserve bounded reads and frame seeks. Repeat the full matrix on macOS 14.
 
 ## Prototype format results
 
@@ -81,7 +81,7 @@ The two-hour VBR MP3 fixture is 16 kHz mono to keep the generated repository ass
 | Opus/Ogg | 96,000 | 0.003902 | Continuous with pre-skip/end trim |
 | Vorbis/Ogg | 88,320 | 0.087503 | Limited; independent files contain 60 extra decoded frames each |
 
-ADTS AAC contains no packet table in these fixtures, so it exposes encoder delay/padding and cannot receive a gapless guarantee. The independently encoded Vorbis pair also lacks a reliable application-level end-trim guarantee and shows a discontinuity. MacAmp preserves all source samples, including intentional silence, rather than applying silence removal to hide those limits.
+ADTS AAC contains no packet table in these fixtures, so it exposes encoder delay/padding and cannot receive a gapless guarantee. The independently encoded Vorbis pair also lacks a reliable application-level end-trim guarantee and shows a discontinuity. MioAmp preserves all source samples, including intentional silence, rather than applying silence removal to hide those limits.
 
 A 44.1 kHz WAV → 48 kHz Opus production-engine pair emitted the correct transition and end events. Sample-continuous mixed-rate output is not claimed because it passes through sample-rate conversion and was not compared against a single converted reference timeline.
 

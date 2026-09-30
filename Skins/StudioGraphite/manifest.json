@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "id": "studio-graphite",
   "name": "Studio Graphite",
-  "author": "MacAmp Project",
+  "author": "MioAmp Project",
   "version": "1.0.0",
-  "license": "Original artwork; distributed with MacAmp",
+  "license": "Original artwork; distributed with MioAmp",
   "colors": {
     "color.window.background": "#1B1B1B",
     "color.display.background": "#262626",

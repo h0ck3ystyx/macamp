@@ -1,8 +1,8 @@
-# MacAmp skin schema v1
+# MioAmp skin schema v1
 
 September 25, 2026 · Schema version 1
 
-MacAmp skins are declarative directories. A skin changes presentation only; it cannot define actions, layouts, scripts, network access, or audio behavior. Graphite, Paper, and creator-authored skins all pass through `SkinResolver` and produce the shared `ResolvedSkin` contract.
+MioAmp skins are declarative directories. A skin changes presentation only; it cannot define actions, layouts, scripts, network access, or audio behavior. Graphite, Paper, and creator-authored skins all pass through `SkinResolver` and produce the shared `ResolvedSkin` contract.
 
 ## Directory format
 
@@ -15,7 +15,7 @@ MySkin/
     pause.svg
 ```
 
-The creator workflow edits a directory and exports it as a `.macampskin` ZIP. Import and preview safely extract to an app-controlled directory and invoke the same resolver. The archive must contain `manifest.json` at its root, without an extra enclosing directory.
+The creator workflow edits a directory and exports it as a `.mioampskin` ZIP. Import and preview safely extract to an app-controlled directory and invoke the same resolver. The archive must contain `manifest.json` at its root, without an extra enclosing directory.
 
 `manifest.json` uses this shape:
 

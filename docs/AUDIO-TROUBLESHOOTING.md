@@ -1,19 +1,19 @@
 # Audio buffering diagnostics
 
-MacAmp writes focused playback diagnostics to the macOS Unified Log with subsystem `com.macamp.app` and category `AudioBuffer`. Normal playback produces one buffer-plan entry for the current track and one for its prefetched successor. Additional entries appear only when a decoder or storage read is slow, the scheduled queue is nearly empty, or playback runs out of queued data.
+MioAmp writes focused playback diagnostics to the macOS Unified Log with subsystem `io.github.h0ck3ystyx.mioamp` and category `AudioBuffer`. Normal playback produces one buffer-plan entry for the current track and one for its prefetched successor. Additional entries appear only when a decoder or storage read is slow, the scheduled queue is nearly empty, or playback runs out of queued data.
 
 To watch the log while reproducing a stutter:
 
 ```sh
 log stream --style compact --level info \
-  --predicate 'subsystem == "com.macamp.app" AND category == "AudioBuffer"'
+  --predicate 'subsystem == "io.github.h0ck3ystyx.mioamp" AND category == "AudioBuffer"'
 ```
 
 To collect the previous ten minutes after a stutter:
 
 ```sh
 log show --last 10m --info --style compact \
-  --predicate 'subsystem == "com.macamp.app" AND category == "AudioBuffer"'
+  --predicate 'subsystem == "io.github.h0ck3ystyx.mioamp" AND category == "AudioBuffer"'
 ```
 
 The messages mean:

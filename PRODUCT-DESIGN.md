@@ -1,10 +1,10 @@
-# MacAmp — product design and requirements
+# MioAmp — product design and requirements
 
 Version 0.1 · September 25, 2026 · Draft for product definition
 
 **Proposal:** a small, native Mac audio player with the character of classic Winamp: a compact player, detachable playlist and equalizer, and an interface people can make their own. Open a file, press play, arrange the pieces, pick a skin. Everything essential works offline.
 
-“MacAmp” is a working name drawn from this workspace. This document defines a proposed product, not implemented capabilities. Requirements, dimensions, budgets, and priorities below are recommendations unless explicitly identified as research findings.
+“MioAmp” is a working name drawn from this workspace. This document defines a proposed product, not implemented capabilities. Requirements, dimensions, budgets, and priorities below are recommendations unless explicitly identified as research findings.
 
 ## 1. Product intent
 
@@ -28,7 +28,7 @@ Winamp’s documentation describes a playlist with drag-and-drop loading and sav
 
 Webamp is a browser reimplementation of Winamp 2 with skin support. Its repository also contains an equalizer-preset parser and a separate prototype for modern skins. It is useful as an interaction and compatibility reference; it does not establish that a native Mac app can inherit its behavior without additional work. [Webamp project](https://github.com/captbaritone/webamp)
 
-The Winamp Skin Museum’s implementation documents skins as ZIP archives and generates consistent screenshots for browsing them. This suggests two valuable ideas for MacAmp: portable skin packages and previews that make a skin understandable before installation. [Skin Museum technical documentation](https://github.com/captbaritone/webamp/blob/master/packages/skin-database/docs/database.md)
+The Winamp Skin Museum’s implementation documents skins as ZIP archives and generates consistent screenshots for browsing them. This suggests two valuable ideas for MioAmp: portable skin packages and previews that make a skin understandable before installation. [Skin Museum technical documentation](https://github.com/captbaritone/webamp/blob/master/packages/skin-database/docs/database.md)
 
 | Reference idea | Proposed interpretation for Mac |
 | --- | --- |
@@ -82,7 +82,7 @@ Start with player above playlist; EQ is hidden until requested. A fully expanded
 Conceptual layout, not final artwork:
 
 ```text
-┌ MACAMP ──────────────────────── − × ┐
+┌ MIOAMP ──────────────────────── − × ┐
 │ 03:42     Artist — Track title        │
 │ ▂▅▇▃▆▂    FLAC · 44.1 kHz · Stereo   │
 │ ───────────────●───────────────────   │
@@ -177,7 +177,7 @@ Two levels of customization:
 1. **Everyday:** choose a skin, change accent/display colors, choose scale, and save a variation without editing files.
 2. **Creator:** export a documented starter package, edit assets and manifest, import/preview locally, and share the resulting file.
 
-Proposed `.macampskin` format: a ZIP package containing versioned `manifest.json`, preview image, and PNG assets at 1×/2× resolutions. Optional vector assets are deferred until a safe, consistent renderer is selected. Schema describes author, version, license/attribution, color tokens, font roles, asset states, and supported app-owned module templates. Font roles select installed/system fonts; font binaries are not bundled in P0.
+Proposed `.mioampskin` format: a ZIP package containing versioned `manifest.json`, preview image, and PNG assets at 1×/2× resolutions. Optional vector assets are deferred until a safe, consistent renderer is selected. Schema describes author, version, license/attribution, color tokens, font roles, asset states, and supported app-owned module templates. Font roles select installed/system fonts; font binaries are not bundled in P0.
 
 The app owns transport actions, focus order, accessible names, hit areas, and layout constraints. A skin may change presentation but cannot remove essential actions, start network requests, execute scripts, or alter audio behavior. This makes customization independent of decoder and playback code.
 

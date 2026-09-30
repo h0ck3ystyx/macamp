@@ -1,4 +1,4 @@
-# MacAmp 1.0 submission checklist
+# MioAmp 1.0 submission checklist
 
 ## Complete locally
 
@@ -18,8 +18,8 @@
 
 ## Account holder or external service required
 
-- [ ] Choose a cleared product name. “MacAmp” is the name of a historical commercial audio player and is also in current third-party use; a legal/name-availability decision is required.
-- [ ] Choose and register the final explicit bundle identifier. The project currently uses provisional `com.macamp.app`.
+- [x] Select the public product name `MioAmp`; a preliminary exact-name search found no relevant software or audio-player namesake. Formal trademark clearance remains the publisher's decision.
+- [ ] Register the selected bundle identifier `io.github.h0ck3ystyx.mioamp` in the Apple Developer account.
 - [ ] Supply Apple Developer Team ID and install a valid Apple Distribution identity/profile. This Mac currently reports zero valid code-signing identities.
 - [ ] Create the App Store Connect macOS app record; confirm name, SKU, primary language, bundle ID, and category.
 - [ ] Enter the verified public privacy and support URLs in the App Store Connect record.

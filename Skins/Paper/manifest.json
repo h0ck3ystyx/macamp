@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "id": "paper",
   "name": "Paper",
-  "author": "MacAmp Project",
+  "author": "MioAmp Project",
   "version": "1.0.0",
-  "license": "Original artwork; distributed with MacAmp",
+  "license": "Original artwork; distributed with MioAmp",
   "colors": {
     "color.window.background": "#EDE8DD",
     "color.display.background": "#FBF8F0",

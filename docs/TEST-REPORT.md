@@ -1,20 +1,20 @@
-# MacAmp MVP candidate test report
+# MioAmp MVP candidate test report
 
 Date: September 29, 2026
 Host: Apple silicon Mac mini, 16 GB  
 OS/toolchain: macOS 26.5.2, Xcode 26.2, Swift 6.2.3  
-Artifact: `build/MacAmp.app`, ad-hoc signed local candidate
+Artifact: `build/MioAmp.app`, ad-hoc signed local candidate
 
 ## Automated results
 
 - `./scripts/test.sh`: 112 passed, 0 failed; 5 AudioComponent-host cases intentionally skipped in the parallel Swift Testing host and covered by the serial probes below.
 - 10,000-entry data measurement in the debug test: playlist parse and missing reporting 0.171 seconds; queue append plus search 0.040 seconds; combined under 0.25 seconds.
-- `./scripts/package-app.sh`: release build succeeded and produced `build/MacAmp.app`.
-- `codesign --verify --deep --strict --verbose=2 build/MacAmp.app`: valid on disk and satisfies its designated requirement.
-- `plutil -lint build/MacAmp.app/Contents/Info.plist`: OK.
+- `./scripts/package-app.sh`: release build succeeded and produced `build/MioAmp.app`.
+- `codesign --verify --deep --strict --verbose=2 build/MioAmp.app`: valid on disk and satisfies its designated requirement.
+- `plutil -lint build/MioAmp.app/Contents/Info.plist`: OK.
 - Packaged resources contain Studio Graphite, Paper, Terminal, and CreatorExample. `otool -L` shows system frameworks only; ZIPFoundation is statically linked.
 - `./scripts/validate-app-bundle.sh`: the ad-hoc development bundle contains valid App Sandbox, user-selected read/write, and app-scoped bookmark entitlements plus its privacy manifest, compiled app icon, and release resources. Validation also checks version/build, linked libraries, expected architectures, and embedded test/debug artifacts.
-- `./scripts/archive-app-store.sh`: Xcode 26.2 produced `/tmp/MacAmp-AppStore.xcarchive`; its 1.0.0 (1) unsigned application passed structural validation and contains a universal `arm64`/`x86_64` executable. App Store distribution signing and delivery validation remain pending the final App ID and authorized profile.
+- `./scripts/archive-app-store.sh`: Xcode 26.2 produced `/tmp/MioAmp-1.0.0-1.xcarchive`; its 1.0.0 (1) unsigned application passed structural validation with bundle ID `io.github.h0ck3ystyx.mioamp` and contains a universal `arm64`/`x86_64` executable. App Store distribution signing and delivery validation remain pending App ID registration and an authorized profile.
 - Release binary audit found system libraries only, no embedded test/debug artifacts, no URL endpoint or local source path strings, and one executable. The statically linked ZIPFoundation resource bundle includes its own no-collection privacy manifest and declares its user-selected file timestamp access reason.
 - The release host has zero valid code-signing identities, so an Apple Distribution archive cannot be produced until the account holder installs authorized credentials.
 - A first parallel run exposed a fatal Metal-unavailable initializer. The renderer now presents an accessible nonfatal fallback when device, command queue, shader compilation, or pipeline setup is unavailable; the complete 106-test rerun passed.
@@ -42,7 +42,8 @@ Expanded frame and boundary results are in `Tests/Fixtures/Audio/results-macos26
 
 - Visualization foundation tests cover schema-3 round trips, schema-1/schema-2 migration defaults, six distinct built-in preset identities, silence floor, 1 kHz band placement, antiphase stereo power, −6 dB level response, and sequence-gap history reset. The real audio tap, Metal rendering, and visible controls are not implemented at this checkpoint.
 - Portable playlists cover M3U/M3U8 import/export, PLS import, relative paths, duplicate order, UTF-8/Latin-1 handling, missing files, and unsupported remote entries.
-- Session tests cover schema 1→2 migration, atomic backup recovery, queue policy restoration, paused relaunch semantics, and non-destructive ChuckAmp-to-MacAmp Application Support migration.
+- Session tests cover schema 1→2 migration, atomic backup recovery, queue policy restoration, paused relaunch semantics, and non-destructive MacAmp/ChuckAmp-to-MioAmp Application Support migration with the newest former name taking priority.
+- Skin package tests prove `.mioampskin` round trips and continued import support for both `.macampskin` and `.chuckskin` packages.
 - Skin tests cover preview/install/export/remove, creator and accent round trips, traversal, symlink, duplicate, corrupt image, file-count, compressed/expanded-byte, image-dimension, and decoded-memory rejection.
 - Coordinator and UI tests cover Undo, clearing the queue, partial-import notices, presentation persistence, layout recovery, resized-frame preservation, scale/compact restoration, scaled typography, attached-window reflow, explicit skin control styling, accessibility labels and values, focus order, valid-action states, queue state distinctions, and command routing.
 - Playlist rows support native local drag-and-drop reordering through the same persisted, Undo-aware move command as the arrow controls; invalid and no-op destinations are rejected, and reordering is disabled while search filtering makes the full order ambiguous.

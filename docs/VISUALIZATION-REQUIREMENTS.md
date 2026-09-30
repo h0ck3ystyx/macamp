@@ -1,10 +1,10 @@
-# MacAmp visualization research and requirements
+# MioAmp visualization research and requirements
 
 September 28, 2026 · Proposed feature expansion · Research, not implemented functionality
 
 Related: [product definition](../PRODUCT-DESIGN.md), [implementation spec](VISUALIZATION-BUILD-SPEC.md).
 
-The original product document calls the project ChuckAmp; the current package and application use MacAmp. This document follows the implemented name. Advanced visualizations were previously exploratory: the scope below is a proposed visualization release, not a retroactive claim about the existing MVP.
+The original product document calls the project ChuckAmp; the current package and application use MioAmp. This document follows the implemented name. Advanced visualizations were previously exploratory: the scope below is a proposed visualization release, not a retroactive claim about the existing MVP.
 
 ## Recommendation
 

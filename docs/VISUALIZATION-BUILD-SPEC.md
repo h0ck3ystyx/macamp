@@ -1,4 +1,4 @@
-# MacAmp visualization build specification
+# MioAmp visualization build specification
 
 September 28, 2026 · Implementation started · Companion to [requirements and research](VISUALIZATION-REQUIREMENTS.md)
 
@@ -9,11 +9,11 @@ Implementation checkpoint: VIZ-0 contracts and package scaffolding are complete.
 Inspected source, not a new runtime verification:
 
 - `Package.swift`: Swift tools 6.2, macOS 14, modular Swift package targets.
-- `Packages/MacAmpKit/Sources/Audio/ProductionAudioEngine.swift`: `NativeAudioEngineClient`; two player lanes → track mixer → EQ → peak limiter → main mixer/output.
-- `Packages/MacAmpKit/Sources/PlayerUI/PlayerViews.swift`: player/compact/EQ/playlist views; no spectrum implementation found in inspected app sources.
-- `Packages/MacAmpKit/Sources/PlayerUI/PlayerUIModule.swift`: `PlayerUIWindowController`, snap and scale geometry.
-- `Packages/MacAmpKit/Sources/Contracts/PersistenceAndSkins.swift`: four `PlayerModule` cases and session schema 3.
-- `MacAmp/App/main.swift`: composition and command routing.
+- `Packages/MioAmpKit/Sources/Audio/ProductionAudioEngine.swift`: `NativeAudioEngineClient`; two player lanes → track mixer → EQ → peak limiter → main mixer/output.
+- `Packages/MioAmpKit/Sources/PlayerUI/PlayerViews.swift`: player/compact/EQ/playlist views; no spectrum implementation found in inspected app sources.
+- `Packages/MioAmpKit/Sources/PlayerUI/PlayerUIModule.swift`: `PlayerUIWindowController`, snap and scale geometry.
+- `Packages/MioAmpKit/Sources/Contracts/PersistenceAndSkins.swift`: four `PlayerModule` cases and session schema 3.
+- `MioAmp/App/main.swift`: composition and command routing.
 
 The renderer must extend this architecture, not create another decoder, player, or media-command owner. Read [shared contracts](CONTRACTS.md) and [audio implementation](AUDIO-IMPLEMENTATION.md) before editing. Do not use decoded-ahead buffers as if they were currently audible: the engine can schedule seconds ahead.
 
@@ -94,7 +94,7 @@ Preserve aspect ratio and scale to the drawable. Lower internal resolution befor
 
 ## 6. Presets, skins, and persistence
 
-V1 `.macampviz` files are UTF-8 JSON, max 64 KiB, containing schema version, ID/name/author, an allowlisted built-in effect ID, palette, and bounded parameter overrides. They contain no assets, paths, URLs, shader code, script, or executable component. Export creates a variant; it does not export the renderer itself.
+V1 `.mioampviz` files are UTF-8 JSON, max 64 KiB, containing schema version, ID/name/author, an allowlisted built-in effect ID, palette, and bounded parameter overrides. They contain no assets, paths, URLs, shader code, script, or executable component. Export creates a variant; it does not export the renderer itself.
 
 Example proposal:
 
@@ -164,7 +164,7 @@ The decision report compares projectM with a narrowly scoped Butterchurn experim
 
 ```text
 Implement V0 from docs/VISUALIZATION-REQUIREMENTS.md and
-docs/VISUALIZATION-BUILD-SPEC.md against the existing MacAmp app. Read the current
+docs/VISUALIZATION-BUILD-SPEC.md against the existing MioAmp app. Read the current
 contracts and audio graph first. Freeze the analysis/render interfaces in VIZ-0,
 then implement VIZ-1, VIZ-2's prototype scope, and VIZ-3's prototype scope. You may
 delegate bounded tasks to three workers with nonoverlapping ownership.

@@ -1,11 +1,11 @@
-# MacAmp App Store decisions
+# MioAmp App Store decisions
 
 Use this file to close the release decisions in `APP-STORE-RELEASE-PLAN.md`. A decision is final only when its status is `accepted`. Record the reason and date so a later build does not silently change store compatibility or identity.
 
 | Decision | Proposed value | Status | Owner/action |
 | --- | --- | --- | --- |
-| Product name | Public name must be cleared; `MacAmp` has a documented historical commercial use and current third-party use | blocked | Product owner/legal owner chooses a cleared name; `Modular Player` is an unchecked fallback candidate |
-| Bundle identifier | Reverse-DNS identifier under a publisher-controlled domain | pending | Product owner supplies domain; release coordinator registers App ID |
+| Product name | `MioAmp` | accepted | Selected by the product owner; preliminary exact-name research found no relevant software or audio-player namesake |
+| Bundle identifier | `io.github.h0ck3ystyx.mioamp` | accepted | Implemented in the project; account holder registers the matching App ID |
 | Public version | 1.0.0; increment build number for every upload | accepted | Implemented in the project and validated archive; product owner requested store preparation |
 | Architectures | Universal `arm64` + `x86_64`; Intel hardware QA still required | accepted | Universal archive built successfully on 2026-09-29 |
 | Minimum macOS | macOS 14 if the full release matrix can run there | proposed | QA must provide macOS 14 evidence |
@@ -14,7 +14,7 @@ Use this file to close the release decisions in `APP-STORE-RELEASE-PLAN.md`. A d
 | EU trader status | Declare the publisher's actual status and verify it if required | pending | Account holder |
 | Privacy posture | No accounts, ads, analytics, tracking, telemetry, or off-device data collection | accepted | Source, dependency, entitlement, binary-string, and privacy-manifest review completed 2026-09-29 |
 | Support owner | Public support contact and URL | pending | Product owner |
-| Privacy policy | https://github.com/h0ck3ystyx/macamp/blob/main/PRIVACY.md | accepted | Public URL returned HTTP 200 on 2026-09-29 |
+| Privacy policy | https://github.com/h0ck3ystyx/mioamp/blob/main/PRIVACY.md | accepted | Reverify after the GitHub repository rename |
 | Release method | Manual release after App Review approval | proposed | Product owner |
 
 ## Decision record
@@ -33,19 +33,25 @@ Implications: Archive validation requires both slices.
 
 2026-09-29 — Privacy posture
 Value: No collection or tracking.
-Reason: MacAmp is offline and contains no network, account, advertising, analytics, or telemetry implementation. ZIPFoundation's bundled privacy manifest declares only user-selected file timestamp access and no collection.
+Reason: MioAmp is offline and contains no network, account, advertising, analytics, or telemetry implementation. ZIPFoundation's bundled privacy manifest declares only user-selected file timestamp access and no collection.
 Approved by: Release coordinator based on the release binary.
 Implications: App Store Connect answer is “No, we do not collect data from this app.”
 
-2026-09-29 — Product name risk
-Value: `MacAmp` is not cleared for a public store listing.
-Reason: Research found a historical commercial MacAMP audio player first released in 1997, a current namesake project, and an active historical/brand site. This is enough conflict to require the rights owner's decision or a rename.
-Approved by: Release coordinator as a release blocker, not a legal determination.
-Implications: Do not create the immutable App Store record or publish final artwork under this name until resolved.
+2026-09-29 — Product name
+Value: `MioAmp`.
+Reason: The product owner selected the name. A preliminary exact-name web, App Store, and GitHub search found no relevant software or audio-player namesake; this research is not a legal opinion or trademark clearance.
+Approved by: Product owner.
+Implications: Use MioAmp for the application, store metadata, repository, support material, and artwork.
+
+2026-09-29 — Bundle identifier
+Value: `io.github.h0ck3ystyx.mioamp`.
+Reason: The identifier aligns with the public GitHub namespace and selected product name.
+Approved by: Product owner through the MioAmp rename; implemented by the release coordinator.
+Implications: Register this exact App ID before distribution signing and keep it stable after release.
 
 2026-09-29 — Privacy policy
-Value: https://github.com/h0ck3ystyx/macamp/blob/main/PRIVACY.md
-Reason: The public policy matches the verified offline/no-collection release binary and returned HTTP 200 after push.
+Value: https://github.com/h0ck3ystyx/mioamp/blob/main/PRIVACY.md
+Reason: The policy matches the verified offline/no-collection release binary. Its renamed repository URL must be reverified after the GitHub repository rename.
 Approved by: Release coordinator based on the product implementation.
 Implications: Use this URL for the App Privacy field unless a dedicated product site replaces it.
 

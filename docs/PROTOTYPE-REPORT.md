@@ -1,8 +1,8 @@
-# MacAmp prototype report
+# MioAmp prototype report
 
 Date: September 25, 2026
 
-Artifact: `build/MacAmp.app` (local ad-hoc signature)
+Artifact: `build/MioAmp.app` (local ad-hoc signature)
 
 The prototype gate in `BUILD-PLAN.md` is complete. This is a development build, not a notarized public release or the full P0 MVP.
 
@@ -32,8 +32,8 @@ Audio probe evidence:
 
 Packaging evidence:
 
-- `./scripts/package-app.sh` produced `build/MacAmp.app`.
-- `codesign --verify --deep --strict --verbose=2 build/MacAmp.app` passed.
+- `./scripts/package-app.sh` produced `build/MioAmp.app`.
+- `codesign --verify --deep --strict --verbose=2 build/MioAmp.app` passed.
 - Studio Graphite, Paper, and the creator example are present under the app’s resources.
 
 ## Manual app evidence
@@ -51,7 +51,7 @@ The freshly packaged app was launched and inspected through the macOS accessibil
 
 - Complete and test ALAC, HE-AAC/ADTS, Ogg Vorbis, and Ogg Opus; broaden corrupt/container fixtures and oldest-supported-OS coverage.
 - Complete M3U/M3U8/PLS, named saved lists, 10,000-row performance, reauthorization/Locate UI, Finder document types, and system media/Now Playing integration.
-- Add external `.macampskin` import/export/remove, package resource limits, Terminal skin, accent editor, and creator round-trip validation.
+- Add external `.mioampskin` import/export/remove, package resource limits, Terminal skin, accent editor, and creator round-trip validation.
 - Persist shuffle/repeat/selection and full window/skin state with schema migration.
 - Run the physical output/sleep/headphone, multi-display/Spaces, full VoiceOver, long-run performance, five-person usability, signing, notarization, and clean-Mac release gates.
 

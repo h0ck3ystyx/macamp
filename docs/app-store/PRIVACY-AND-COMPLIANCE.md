@@ -1,4 +1,4 @@
-# Privacy and compliance answers — MacAmp 1.0
+# Privacy and compliance answers — MioAmp 1.0
 
 These answers describe the current release binary and must be rechecked if code or dependencies change.
 
@@ -6,7 +6,7 @@ These answers describe the current release binary and must be rechecked if code 
 
 - Data collection: **No, we do not collect data from this app.**
 - Tracking: **No.**
-- Privacy policy URL: **https://github.com/h0ck3ystyx/macamp/blob/main/PRIVACY.md** (public and HTTP 200 verified September 29, 2026).
+- Privacy policy URL: **https://github.com/h0ck3ystyx/mioamp/blob/main/PRIVACY.md** (reverify after the GitHub repository rename).
 - Privacy choices URL: omit; the app does not maintain an off-device account or data record.
 
 Evidence: the app contains no network entitlement, network client, analytics, ads, telemetry, sign-in, or upload implementation. Its privacy manifest declares no tracking, collected-data types, tracking domains, or required-reason API use. User-selected files and preferences remain on device.
@@ -14,7 +14,7 @@ Evidence: the app contains no network entitlement, network client, analytics, ad
 ## Encryption and export compliance
 
 - `ITSAppUsesNonExemptEncryption`: **No (`false`).**
-- Rationale: MacAmp does not implement or bundle encryption. It uses no network service. Apple platform security around the sandbox, code signing, file storage, and App Store delivery is operating-system functionality rather than app-provided non-exempt encryption.
+- Rationale: MioAmp does not implement or bundle encryption. It uses no network service. Apple platform security around the sandbox, code signing, file storage, and App Store delivery is operating-system functionality rather than app-provided non-exempt encryption.
 
 ## Content rights
 

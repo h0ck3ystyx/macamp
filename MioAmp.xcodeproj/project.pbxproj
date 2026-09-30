@@ -1,0 +1,319 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		100000000000000000000001 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000001 /* main.swift */; };
+		100000000000000000000002 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000004 /* PrivacyInfo.xcprivacy */; };
+		100000000000000000000003 /* Skins in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000005 /* Skins */; };
+		100000000000000000000004 /* THIRD-PARTY-NOTICES.md in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000006 /* THIRD-PARTY-NOTICES.md */; };
+		100000000000000000000005 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000008 /* Assets.xcassets */; };
+		100000000000000000000010 /* MioAmpContracts in Frameworks */ = {isa = PBXBuildFile; productRef = 900000000000000000000001 /* MioAmpContracts */; };
+		100000000000000000000011 /* MioAmpAudio in Frameworks */ = {isa = PBXBuildFile; productRef = 900000000000000000000002 /* MioAmpAudio */; };
+		100000000000000000000012 /* MioAmpLibrary in Frameworks */ = {isa = PBXBuildFile; productRef = 900000000000000000000003 /* MioAmpLibrary */; };
+		100000000000000000000013 /* MioAmpSkins in Frameworks */ = {isa = PBXBuildFile; productRef = 900000000000000000000004 /* MioAmpSkins */; };
+		100000000000000000000014 /* MioAmpPlayerUI in Frameworks */ = {isa = PBXBuildFile; productRef = 900000000000000000000005 /* MioAmpPlayerUI */; };
+		100000000000000000000015 /* MioAmpMacIntegration in Frameworks */ = {isa = PBXBuildFile; productRef = 900000000000000000000006 /* MioAmpMacIntegration */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		200000000000000000000001 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		200000000000000000000002 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		200000000000000000000003 /* MioAmp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MioAmp.entitlements; sourceTree = "<group>"; };
+		200000000000000000000004 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		200000000000000000000005 /* Skins */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Skins; sourceTree = SOURCE_ROOT; };
+		200000000000000000000006 /* THIRD-PARTY-NOTICES.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "THIRD-PARTY-NOTICES.md"; sourceTree = SOURCE_ROOT; };
+		200000000000000000000007 /* MioAmp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MioAmp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		200000000000000000000008 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		300000000000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				100000000000000000000010 /* MioAmpContracts in Frameworks */,
+				100000000000000000000011 /* MioAmpAudio in Frameworks */,
+				100000000000000000000012 /* MioAmpLibrary in Frameworks */,
+				100000000000000000000013 /* MioAmpSkins in Frameworks */,
+				100000000000000000000014 /* MioAmpPlayerUI in Frameworks */,
+				100000000000000000000015 /* MioAmpMacIntegration in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		400000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				400000000000000000000002 /* MioAmp */,
+				200000000000000000000005 /* Skins */,
+				200000000000000000000006 /* THIRD-PARTY-NOTICES.md */,
+				400000000000000000000005 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		400000000000000000000002 /* MioAmp */ = {
+			isa = PBXGroup;
+			children = (
+				400000000000000000000003 /* App */,
+				400000000000000000000004 /* Resources */,
+			);
+			path = MioAmp;
+			sourceTree = "<group>";
+		};
+		400000000000000000000003 /* App */ = {
+			isa = PBXGroup;
+			children = (200000000000000000000001 /* main.swift */,);
+			path = App;
+			sourceTree = "<group>";
+		};
+		400000000000000000000004 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				200000000000000000000002 /* Info.plist */,
+				200000000000000000000003 /* MioAmp.entitlements */,
+				200000000000000000000004 /* PrivacyInfo.xcprivacy */,
+				200000000000000000000008 /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		400000000000000000000005 /* Products */ = {
+			isa = PBXGroup;
+			children = (200000000000000000000007 /* MioAmp.app */,);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		500000000000000000000001 /* MioAmp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 700000000000000000000002 /* Build configuration list for PBXNativeTarget "MioAmp" */;
+			buildPhases = (
+				300000000000000000000002 /* Sources */,
+				300000000000000000000001 /* Frameworks */,
+				300000000000000000000003 /* Resources */,
+			);
+			buildRules = ();
+			dependencies = ();
+			name = MioAmp;
+			packageProductDependencies = (
+				900000000000000000000001 /* MioAmpContracts */,
+				900000000000000000000002 /* MioAmpAudio */,
+				900000000000000000000003 /* MioAmpLibrary */,
+				900000000000000000000004 /* MioAmpSkins */,
+				900000000000000000000005 /* MioAmpPlayerUI */,
+				900000000000000000000006 /* MioAmpMacIntegration */,
+			);
+			productName = MioAmp;
+			productReference = 200000000000000000000007 /* MioAmp.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		600000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2620;
+				LastUpgradeCheck = 2620;
+				TargetAttributes = {500000000000000000000001 = {CreatedOnToolsVersion = 26.2;};};
+			};
+			buildConfigurationList = 700000000000000000000001 /* Build configuration list for PBXProject "MioAmp" */;
+			compatibilityVersion = "Xcode 16.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (en, Base,);
+			mainGroup = 400000000000000000000001;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (800000000000000000000001 /* XCLocalSwiftPackageReference "." */,);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 400000000000000000000005 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (500000000000000000000001 /* MioAmp */,);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		300000000000000000000003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				100000000000000000000002 /* PrivacyInfo.xcprivacy in Resources */,
+				100000000000000000000003 /* Skins in Resources */,
+				100000000000000000000004 /* THIRD-PARTY-NOTICES.md in Resources */,
+				100000000000000000000005 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		300000000000000000000002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (100000000000000000000001 /* main.swift in Sources */,);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		710000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		710000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		710000000000000000000003 /* AppStore */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				SDKROOT = macosx;
+			};
+			name = AppStore;
+		};
+		720000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = MioAmp/Resources/MioAmp.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_USER_SELECTED_FILES = readwrite;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MioAmp/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0.0;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -parse-as-library";
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.h0ck3ystyx.mioamp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		720000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = MioAmp/Resources/MioAmp.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_USER_SELECTED_FILES = readwrite;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MioAmp/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -parse-as-library";
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.h0ck3ystyx.mioamp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		720000000000000000000003 /* AppStore */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = MioAmp/Resources/MioAmp.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_USER_SELECTED_FILES = readwrite;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MioAmp/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -parse-as-library";
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.h0ck3ystyx.mioamp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = AppStore;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		700000000000000000000001 /* Build configuration list for PBXProject "MioAmp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				710000000000000000000001 /* Debug */,
+				710000000000000000000002 /* Release */,
+				710000000000000000000003 /* AppStore */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		700000000000000000000002 /* Build configuration list for PBXNativeTarget "MioAmp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				720000000000000000000001 /* Debug */,
+				720000000000000000000002 /* Release */,
+				720000000000000000000003 /* AppStore */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		800000000000000000000001 /* XCLocalSwiftPackageReference "." */ = {isa = XCLocalSwiftPackageReference; relativePath = .; };
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		900000000000000000000001 /* MioAmpContracts */ = {isa = XCSwiftPackageProductDependency; package = 800000000000000000000001 /* XCLocalSwiftPackageReference "." */; productName = MioAmpContracts; };
+		900000000000000000000002 /* MioAmpAudio */ = {isa = XCSwiftPackageProductDependency; package = 800000000000000000000001 /* XCLocalSwiftPackageReference "." */; productName = MioAmpAudio; };
+		900000000000000000000003 /* MioAmpLibrary */ = {isa = XCSwiftPackageProductDependency; package = 800000000000000000000001 /* XCLocalSwiftPackageReference "." */; productName = MioAmpLibrary; };
+		900000000000000000000004 /* MioAmpSkins */ = {isa = XCSwiftPackageProductDependency; package = 800000000000000000000001 /* XCLocalSwiftPackageReference "." */; productName = MioAmpSkins; };
+		900000000000000000000005 /* MioAmpPlayerUI */ = {isa = XCSwiftPackageProductDependency; package = 800000000000000000000001 /* XCLocalSwiftPackageReference "." */; productName = MioAmpPlayerUI; };
+		900000000000000000000006 /* MioAmpMacIntegration */ = {isa = XCSwiftPackageProductDependency; package = 800000000000000000000001 /* XCLocalSwiftPackageReference "." */; productName = MioAmpMacIntegration; };
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 600000000000000000000001 /* Project object */;
+}

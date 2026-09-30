@@ -3,19 +3,19 @@
 import PackageDescription
 
 let package = Package(
-    name: "MacAmp",
+    name: "MioAmp",
     platforms: [.macOS(.v14)],
     products: [
-        .executable(name: "MacAmp", targets: ["MacAmpApp"]),
+        .executable(name: "MioAmp", targets: ["MioAmpApp"]),
         .executable(name: "AudioProbe", targets: ["AudioProbe"]),
-        .library(name: "MacAmpContracts", targets: ["Contracts"]),
-        .library(name: "MacAmpAudio", targets: ["Audio"]),
-        .library(name: "MacAmpAudioAnalysis", targets: ["AudioAnalysis"]),
-        .library(name: "MacAmpVisualizations", targets: ["Visualizations"]),
-        .library(name: "MacAmpLibrary", targets: ["Library"]),
-        .library(name: "MacAmpSkins", targets: ["Skins"]),
-        .library(name: "MacAmpPlayerUI", targets: ["PlayerUI"]),
-        .library(name: "MacAmpMacIntegration", targets: ["MacIntegration"]),
+        .library(name: "MioAmpContracts", targets: ["Contracts"]),
+        .library(name: "MioAmpAudio", targets: ["Audio"]),
+        .library(name: "MioAmpAudioAnalysis", targets: ["AudioAnalysis"]),
+        .library(name: "MioAmpVisualizations", targets: ["Visualizations"]),
+        .library(name: "MioAmpLibrary", targets: ["Library"]),
+        .library(name: "MioAmpSkins", targets: ["Skins"]),
+        .library(name: "MioAmpPlayerUI", targets: ["PlayerUI"]),
+        .library(name: "MioAmpMacIntegration", targets: ["MacIntegration"]),
     ],
     dependencies: [
         .package(url: "https://github.com/weichsel/ZIPFoundation.git", exact: "0.9.19"),
@@ -23,24 +23,24 @@ let package = Package(
     targets: [
         .target(
             name: "CAudioDecoders",
-            path: "Packages/MacAmpKit/Sources/CAudioDecoders",
+            path: "Packages/MioAmpKit/Sources/CAudioDecoders",
             publicHeadersPath: "include"
         ),
         .target(
             name: "CVisualizationBridge",
-            path: "Packages/MacAmpKit/Sources/CVisualizationBridge",
+            path: "Packages/MioAmpKit/Sources/CVisualizationBridge",
             publicHeadersPath: "include"
         ),
-        .target(name: "Contracts", path: "Packages/MacAmpKit/Sources/Contracts"),
+        .target(name: "Contracts", path: "Packages/MioAmpKit/Sources/Contracts"),
         .target(
             name: "AudioAnalysis",
             dependencies: ["Contracts", "CVisualizationBridge"],
-            path: "Packages/MacAmpKit/Sources/AudioAnalysis"
+            path: "Packages/MioAmpKit/Sources/AudioAnalysis"
         ),
         .target(
             name: "Visualizations",
             dependencies: ["Contracts"],
-            path: "Packages/MacAmpKit/Sources/Visualizations"
+            path: "Packages/MioAmpKit/Sources/Visualizations"
         ),
         .target(
             name: "Audio",
@@ -49,12 +49,12 @@ let package = Package(
                 "CAudioDecoders",
                 "AudioAnalysis",
             ],
-            path: "Packages/MacAmpKit/Sources/Audio"
+            path: "Packages/MioAmpKit/Sources/Audio"
         ),
         .target(
             name: "Library",
             dependencies: ["Contracts"],
-            path: "Packages/MacAmpKit/Sources/Library"
+            path: "Packages/MioAmpKit/Sources/Library"
         ),
         .target(
             name: "Skins",
@@ -62,27 +62,27 @@ let package = Package(
                 "Contracts",
                 .product(name: "ZIPFoundation", package: "ZIPFoundation"),
             ],
-            path: "Packages/MacAmpKit/Sources/Skins"
+            path: "Packages/MioAmpKit/Sources/Skins"
         ),
         .target(
             name: "PlayerUI",
             dependencies: ["Contracts", "Skins", "Visualizations"],
-            path: "Packages/MacAmpKit/Sources/PlayerUI"
+            path: "Packages/MioAmpKit/Sources/PlayerUI"
         ),
         .target(
             name: "MacIntegration",
             dependencies: ["Contracts", "Audio", "Library"],
-            path: "Packages/MacAmpKit/Sources/MacIntegration"
+            path: "Packages/MioAmpKit/Sources/MacIntegration"
         ),
         .target(
             name: "TestSupport",
             dependencies: ["Contracts"],
-            path: "Packages/MacAmpKit/Sources/TestSupport"
+            path: "Packages/MioAmpKit/Sources/TestSupport"
         ),
         .executableTarget(
-            name: "MacAmpApp",
+            name: "MioAmpApp",
             dependencies: ["Contracts", "Audio", "Library", "Skins", "PlayerUI", "MacIntegration"],
-            path: "MacAmp/App"
+            path: "MioAmp/App"
         ),
         .executableTarget(
             name: "AudioProbe",
@@ -92,32 +92,32 @@ let package = Package(
         .testTarget(
             name: "ContractsTests",
             dependencies: ["Contracts", "TestSupport"],
-            path: "Packages/MacAmpKit/Tests/ContractsTests"
+            path: "Packages/MioAmpKit/Tests/ContractsTests"
         ),
         .testTarget(
             name: "AudioTests",
             dependencies: ["Contracts", "Audio"],
-            path: "Packages/MacAmpKit/Tests/AudioTests"
+            path: "Packages/MioAmpKit/Tests/AudioTests"
         ),
         .testTarget(
             name: "AudioAnalysisTests",
             dependencies: ["Contracts", "AudioAnalysis"],
-            path: "Packages/MacAmpKit/Tests/AudioAnalysisTests"
+            path: "Packages/MioAmpKit/Tests/AudioAnalysisTests"
         ),
         .testTarget(
             name: "VisualizationsTests",
             dependencies: ["Contracts", "Visualizations"],
-            path: "Packages/MacAmpKit/Tests/VisualizationsTests"
+            path: "Packages/MioAmpKit/Tests/VisualizationsTests"
         ),
         .testTarget(
             name: "LibraryTests",
             dependencies: ["Contracts", "Library", "TestSupport"],
-            path: "Packages/MacAmpKit/Tests/LibraryTests"
+            path: "Packages/MioAmpKit/Tests/LibraryTests"
         ),
         .testTarget(
             name: "PlayerUITests",
             dependencies: ["Contracts", "PlayerUI", "Skins"],
-            path: "Packages/MacAmpKit/Tests/PlayerUITests"
+            path: "Packages/MioAmpKit/Tests/PlayerUITests"
         ),
         .testTarget(
             name: "SkinsTests",
@@ -126,12 +126,12 @@ let package = Package(
                 "Skins",
                 .product(name: "ZIPFoundation", package: "ZIPFoundation"),
             ],
-            path: "Packages/MacAmpKit/Tests/SkinsTests"
+            path: "Packages/MioAmpKit/Tests/SkinsTests"
         ),
         .testTarget(
             name: "MacIntegrationTests",
             dependencies: ["Contracts", "Audio", "Library", "MacIntegration", "TestSupport"],
-            path: "Packages/MacAmpKit/Tests/MacIntegrationTests"
+            path: "Packages/MioAmpKit/Tests/MacIntegrationTests"
         ),
     ]
 )

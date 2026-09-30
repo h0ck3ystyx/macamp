@@ -1,6 +1,6 @@
-# App Review notes — MacAmp 1.0
+# App Review notes — MioAmp 1.0
 
-MacAmp is an offline, sandboxed player for audio files selected by the user. It has no account, login, purchase, subscription, network service, or hidden feature.
+MioAmp is an offline, sandboxed player for audio files selected by the user. It has no account, login, purchase, subscription, network service, or hidden feature.
 
 To exercise the app:
 
@@ -9,7 +9,7 @@ To exercise the app:
 3. Click **EQ** or choose **Window > Show Equalizer** to test the ten-band equalizer and presets.
 4. Click **LIST** or choose **Window > Show Playlist**. Reorder tracks by dragging rows. **Edit > Clear Playlist** clears all items.
 5. Choose **Window > Show Visualization** and select among the bundled original visualization presets.
-6. Choose **Skins > Studio Graphite**, **Paper**, or **Terminal**. The import/export items in that menu operate on MacAmp's documented `.macampskin` package format.
+6. Choose **Skins > Studio Graphite**, **Paper**, or **Terminal**. The import/export items in that menu operate on MioAmp's documented `.mioampskin` package format.
 7. Quit and reopen the app. The queue and interface state restore paused. macOS security-scoped bookmarks preserve access to files the reviewer selected. If a file moved, select it and use **File > Locate Selected File…**.
 
 The app intentionally rejects remote URLs in imported playlists. Network volumes work only when mounted in Finder and explicitly selected by the user. A disconnected volume produces an unavailable item rather than attempting a network connection.

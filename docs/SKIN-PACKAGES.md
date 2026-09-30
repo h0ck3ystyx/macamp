@@ -1,4 +1,4 @@
-# MacAmp skin package implementation
+# MioAmp skin package implementation
 
 September 25, 2026 · MVP implementation notes
 
@@ -9,7 +9,7 @@ September 25, 2026 · MVP implementation notes
 1. `preview(packageURL:)` validates and extracts into a private temporary directory. It does not install or change the active skin.
 2. `install(packageURL:)` validates into a staging directory, then atomically moves the complete directory under the configured installed-skins root.
 3. `installedSkin(id:)` resolves a previously installed skin.
-4. `export(id:to:)` writes an installed skin to a new `.macampskin` file.
+4. `export(id:to:)` writes an installed skin to a new `.mioampskin` file.
 5. `export(directory:to:)` validates and packages a creator directory.
 6. `remove(id:)` removes only an item under the configured external-skins root. Bundled resources are outside this root.
 7. `save(variation:basedOn:)` persists an accent/display variation as an independent skin.
@@ -18,7 +18,7 @@ The UI should perform file operations away from the main actor. Preview returns 
 
 ## Package format and limits
 
-`.macampskin` is a standard ZIP archive whose root directly contains `manifest.json`. MacAmp also accepts the former `.chuckskin` extension so packages created before the product rename remain usable. ZIPFoundation 0.9.19 performs in-process ZIP reading and writing. Its upstream repository is `weichsel/ZIPFoundation`; it is distributed under the MIT License. No subprocess or shell extractor receives untrusted input.
+`.mioampskin` is a standard ZIP archive whose root directly contains `manifest.json`. MioAmp also accepts the former `.macampskin` and `.chuckskin` extensions so packages created before either product rename remain usable. ZIPFoundation 0.9.19 performs in-process ZIP reading and writing. Its upstream repository is `weichsel/ZIPFoundation`; it is distributed under the MIT License. No subprocess or shell extractor receives untrusted input.
 
 The default policy is:
 
@@ -47,7 +47,7 @@ Export follows the inverse path. It resolves the source directory, validates art
 2. Change `id`, `name`, `author`, `version`, and license text.
 3. Edit the six required colors, three font roles, and artwork files. Keep `asset.window.frame`, `asset.transport.play`, and `asset.transport.pause`.
 4. Call `SkinResolver.resolve(directory:)` for immediate manifest feedback.
-5. Call `SkinPackageManager.export(directory:to:)` with a new `.macampskin` destination.
+5. Call `SkinPackageManager.export(directory:to:)` with a new `.mioampskin` destination.
 6. Call `preview(packageURL:)` and inspect every player state before sharing.
 7. Import the same file with `install(packageURL:)` to prove the shareable package round trip.
 
