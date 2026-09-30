@@ -14,7 +14,7 @@ Use this file to close the release decisions in `APP-STORE-RELEASE-PLAN.md`. A d
 | EU trader status | Declare the publisher's actual status and verify it if required | pending | Account holder |
 | Privacy posture | No accounts, ads, analytics, tracking, telemetry, or off-device data collection | accepted | Source, dependency, entitlement, binary-string, and privacy-manifest review completed 2026-09-29 |
 | Support owner | Public support contact and URL | pending | Product owner |
-| Privacy policy | Public policy URL matching the no-collection posture | pending | Product owner/release coordinator |
+| Privacy policy | https://github.com/h0ck3ystyx/macamp/blob/main/PRIVACY.md | accepted | Public URL returned HTTP 200 on 2026-09-29 |
 | Release method | Manual release after App Review approval | proposed | Product owner |
 
 ## Decision record
@@ -42,6 +42,12 @@ Value: `MacAmp` is not cleared for a public store listing.
 Reason: Research found a historical commercial MacAMP audio player first released in 1997, a current namesake project, and an active historical/brand site. This is enough conflict to require the rights owner's decision or a rename.
 Approved by: Release coordinator as a release blocker, not a legal determination.
 Implications: Do not create the immutable App Store record or publish final artwork under this name until resolved.
+
+2026-09-29 — Privacy policy
+Value: https://github.com/h0ck3ystyx/macamp/blob/main/PRIVACY.md
+Reason: The public policy matches the verified offline/no-collection release binary and returned HTTP 200 after push.
+Approved by: Release coordinator based on the product implementation.
+Implications: Use this URL for the App Privacy field unless a dedicated product site replaces it.
 
 Append accepted decisions here using this format:
 

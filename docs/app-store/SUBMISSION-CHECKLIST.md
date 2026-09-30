@@ -13,6 +13,7 @@
 - [x] Bundle checks for identity, version, architecture, icon, resources, linked libraries, signature, profile, and entitlements
 - [x] Third-party notices and dependency pinning
 - [x] English metadata, privacy answers, compliance draft, review notes, support copy, and screenshot plan
+- [x] Public privacy policy and issue-based support URLs; both returned HTTP 200 and repository Issues are enabled
 - [x] Automated suite: 112 passed, 5 serial AudioComponent tests intentionally skipped and covered by AudioProbe lanes
 
 ## Account holder or external service required
@@ -21,7 +22,7 @@
 - [ ] Choose and register the final explicit bundle identifier. The project currently uses provisional `com.macamp.app`.
 - [ ] Supply Apple Developer Team ID and install a valid Apple Distribution identity/profile. This Mac currently reports zero valid code-signing identities.
 - [ ] Create the App Store Connect macOS app record; confirm name, SKU, primary language, bundle ID, and category.
-- [ ] Publish `PRIVACY.md` and `SUPPORT.md` at public, stable URLs and enter them in App Store Connect.
+- [ ] Enter the verified public privacy and support URLs in the App Store Connect record.
 - [ ] Supply App Review contact name, email, and international-format phone number.
 - [ ] Declare actual EU DSA trader status and choose territories.
 - [ ] Confirm current agreements; confirm free price and manual release.
