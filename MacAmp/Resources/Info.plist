@@ -7,19 +7,23 @@
     <key>CFBundleExecutable</key>
     <string>MacAmp</string>
     <key>CFBundleIdentifier</key>
-    <string>com.macamp.app</string>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
     <string>MacAmp</string>
     <key>CFBundleDisplayName</key>
     <string>MacAmp</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
+    <key>CFBundleIconName</key>
+    <string>AppIcon</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>0.1.0</string>
+    <string>$(MARKETING_VERSION)</string>
     <key>CFBundleVersion</key>
-    <string>1</string>
+    <string>$(CURRENT_PROJECT_VERSION)</string>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
     <key>LSApplicationCategoryType</key>
@@ -41,7 +45,7 @@
             <string>Alternate</string>
             <key>CFBundleTypeExtensions</key>
             <array>
-                <string>mp3</string><string>m4a</string><string>aac</string><string>flac</string>
+                <string>mp3</string><string>m4a</string><string>mp4</string><string>aac</string><string>alac</string><string>flac</string>
                 <string>wav</string><string>aif</string><string>aiff</string><string>ogg</string>
                 <string>oga</string><string>opus</string>
             </array>

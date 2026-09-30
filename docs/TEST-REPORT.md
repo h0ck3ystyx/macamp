@@ -13,8 +13,10 @@ Artifact: `build/MacAmp.app`, ad-hoc signed local candidate
 - `codesign --verify --deep --strict --verbose=2 build/MacAmp.app`: valid on disk and satisfies its designated requirement.
 - `plutil -lint build/MacAmp.app/Contents/Info.plist`: OK.
 - Packaged resources contain Studio Graphite, Paper, Terminal, and CreatorExample. `otool -L` shows system frameworks only; ZIPFoundation is statically linked.
-- `./scripts/validate-app-bundle.sh`: the ad-hoc development bundle contains valid App Sandbox, user-selected read/write, and app-scoped bookmark entitlements plus its privacy manifest and release resources.
-- `./scripts/archive-app-store.sh`: Xcode 26.2 produced `build/MacAmp.xcarchive`; its unsigned application passed structural validation and contains a universal `arm64`/`x86_64` executable. App Store distribution signing and delivery validation remain pending the final App ID and authorized profile.
+- `./scripts/validate-app-bundle.sh`: the ad-hoc development bundle contains valid App Sandbox, user-selected read/write, and app-scoped bookmark entitlements plus its privacy manifest, compiled app icon, and release resources. Validation also checks version/build, linked libraries, expected architectures, and embedded test/debug artifacts.
+- `./scripts/archive-app-store.sh`: Xcode 26.2 produced `/tmp/MacAmp-AppStore.xcarchive`; its 1.0.0 (1) unsigned application passed structural validation and contains a universal `arm64`/`x86_64` executable. App Store distribution signing and delivery validation remain pending the final App ID and authorized profile.
+- Release binary audit found system libraries only, no embedded test/debug artifacts, no URL endpoint or local source path strings, and one executable. The statically linked ZIPFoundation resource bundle includes its own no-collection privacy manifest and declares its user-selected file timestamp access reason.
+- The release host has zero valid code-signing identities, so an Apple Distribution archive cannot be produced until the account holder installs authorized credentials.
 - A first parallel run exposed a fatal Metal-unavailable initializer. The renderer now presents an accessible nonfatal fallback when device, command queue, shader compilation, or pipeline setup is unavailable; the complete 106-test rerun passed.
 
 ## Serial Core Audio results

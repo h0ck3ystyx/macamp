@@ -4,7 +4,7 @@ MacAmp is a native Mac audio-player prototype inspired by classic Winamp's compa
 
 ## Requirements
 
-- Apple-silicon Mac
+- Apple-silicon or Intel Mac
 - macOS 14 or newer
 - Xcode 26.2 / Swift 6.2.3 (the first verified toolchain)
 
@@ -28,7 +28,7 @@ The native `MacAmp-AppStore` scheme in `MacAmp.xcodeproj` is the archive and man
 ./scripts/archive-app-store.sh
 ```
 
-For an authorized signing environment, set `MACAMP_ALLOW_SIGNING=1`, `MACAMP_DEVELOPMENT_TEAM`, and the final `MACAMP_BUNDLE_IDENTIFIER`. Optional `MACAMP_VERSION` and `MACAMP_BUILD_NUMBER` values override the archive version. Xcode must have access to the matching App ID, distribution certificate, and provisioning profile. Once the signed archive passes validation, `./scripts/export-app-store.sh` produces the App Store Connect delivery package without uploading it.
+For an authorized signing environment, set `MACAMP_ALLOW_SIGNING=1`, `MACAMP_DEVELOPMENT_TEAM`, and the final `MACAMP_BUNDLE_IDENTIFIER`. Optional `MACAMP_VERSION` and `MACAMP_BUILD_NUMBER` values override the archive version. Xcode must have access to the matching App ID, distribution certificate, and provisioning profile. Once the signed archive passes validation, `./scripts/export-app-store.sh` produces the App Store Connect delivery package without uploading it. The prepared metadata, privacy, review, and submission packet is in `docs/app-store/`.
 
 ## Current state
 

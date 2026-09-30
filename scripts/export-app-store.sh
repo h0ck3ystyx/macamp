@@ -13,6 +13,9 @@ app_bundle="$archive_path/Products/Applications/MacAmp.app"
 }
 
 MACAMP_BUNDLE_IDENTIFIER="${MACAMP_BUNDLE_IDENTIFIER:-com.macamp.app}" \
+MACAMP_VERSION="${MACAMP_VERSION:-1.0.0}" \
+MACAMP_BUILD_NUMBER="${MACAMP_BUILD_NUMBER:-1}" \
+MACAMP_EXPECTED_ARCHS="${MACAMP_EXPECTED_ARCHS:-arm64 x86_64}" \
   "$repo_root/scripts/validate-app-bundle.sh" "$app_bundle" app-store
 
 rm -rf "$export_path"

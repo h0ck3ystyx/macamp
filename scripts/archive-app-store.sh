@@ -17,6 +17,9 @@ xcode_args=(
   -archivePath "$archive_path"
   -derivedDataPath "$derived_data"
   -clonedSourcePackagesDirPath "$package_cache"
+  -packageCachePath "$repo_root/.build/xcode-package-cache"
+  -onlyUsePackageVersionsFromResolvedFile
+  -skipPackageUpdates
   -quiet
 )
 
@@ -46,6 +49,9 @@ xcodebuild "${xcode_args[@]}" archive
 
 app_bundle="$archive_path/Products/Applications/MacAmp.app"
 MACAMP_BUNDLE_IDENTIFIER="${MACAMP_BUNDLE_IDENTIFIER:-com.macamp.app}" \
+MACAMP_VERSION="${MACAMP_VERSION:-1.0.0}" \
+MACAMP_BUILD_NUMBER="${MACAMP_BUILD_NUMBER:-1}" \
+MACAMP_EXPECTED_ARCHS="${MACAMP_EXPECTED_ARCHS:-arm64 x86_64}" \
   "$repo_root/scripts/validate-app-bundle.sh" "$app_bundle" "$validation_mode"
 
 echo "$archive_path"

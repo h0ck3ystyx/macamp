@@ -8,12 +8,15 @@ Uploading a build to App Store Connect or submitting it to App Review is an exte
 
 ## 1. Current baseline
 
-The application, audio pipeline, playlist, EQ, skin system, media commands, persistence, and visualization MVP exist and the automated suite passes. The present package is a development artifact:
+The application, audio pipeline, playlist, EQ, skin system, media commands, persistence, and visualization MVP exist and the automated suite passes. The release foundation now includes:
 
 - `scripts/package-app.sh` builds with SwiftPM, assembles the bundle manually, and ad-hoc signs it.
-- The bundle identifier is the provisional `com.macamp.app`, version is `0.1.0`, and build is `1`.
-- The built executable is Apple-silicon `arm64` only.
-- There is no App Sandbox entitlement file, App Store provisioning profile, asset-catalog app icon, privacy manifest, Xcode archive/export workflow, or App Store Connect delivery validation.
+- The bundle identifier remains provisional `com.macamp.app`; version is `1.0.0`, build `1`.
+- The Xcode archive is universal `arm64` and `x86_64`; the ad-hoc SwiftPM package remains native-host architecture for local development.
+- App Sandbox entitlements, a privacy manifest, an original asset-catalog icon, the native Xcode target/scheme, archive/export scripts, and strict bundle validation are implemented.
+- An unsigned universal archive passes local validation. Distribution signing/profile, final App ID, upload, and App Store Connect processing require publisher credentials.
+- The English metadata, privacy/compliance answers, review notes, support/privacy copy, screenshot plan, and final external-action checklist are prepared in `docs/app-store/`.
+- Public use of the `MacAmp` name is blocked pending a naming/rights decision because it conflicts with a historical commercial audio player name.
 - Manual release gates remain for VoiceOver, performance, long-run playback, sleep/wake, physical audio routes, network-volume recovery, and supported macOS versions.
 
 Developer ID signing and notarization are a separate lane for distribution outside the Mac App Store. They are not acceptance criteria for this plan.

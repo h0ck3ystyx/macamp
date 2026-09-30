@@ -21,8 +21,18 @@ rm -rf "$app_bundle" "$legacy_app_bundle"
 mkdir -p "$app_bundle/Contents/MacOS" "$app_bundle/Contents/Resources"
 ditto "$binary_path" "$app_bundle/Contents/MacOS/MacAmp"
 ditto "$repo_root/MacAmp/Resources/Info.plist" "$app_bundle/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier ${MACAMP_BUNDLE_IDENTIFIER:-com.macamp.app}" "$app_bundle/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${MACAMP_VERSION:-1.0.0}" "$app_bundle/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${MACAMP_BUILD_NUMBER:-1}" "$app_bundle/Contents/Info.plist"
 ditto "$repo_root/MacAmp/Resources/PrivacyInfo.xcprivacy" "$app_bundle/Contents/Resources/PrivacyInfo.xcprivacy"
 ditto "$repo_root/Skins" "$app_bundle/Contents/Resources/Skins"
 ditto "$repo_root/THIRD-PARTY-NOTICES.md" "$app_bundle/Contents/Resources/THIRD-PARTY-NOTICES.md"
+xcrun actool "$repo_root/MacAmp/Resources/Assets.xcassets" \
+  --compile "$app_bundle/Contents/Resources" \
+  --platform macosx \
+  --minimum-deployment-target 14.0 \
+  --app-icon AppIcon \
+  --output-partial-info-plist "$output_root/assetcatalog-info.plist" \
+  >/dev/null
 codesign --force --sign - --entitlements "$repo_root/MacAmp/Resources/MacAmp.entitlements" "$app_bundle"
 echo "$app_bundle"
