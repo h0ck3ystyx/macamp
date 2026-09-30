@@ -14,7 +14,7 @@ Use this file to close the release decisions in `APP-STORE-RELEASE-PLAN.md`. A d
 | EU trader status | Declare the publisher's actual status and verify it if required | pending | Account holder |
 | Privacy posture | No accounts, ads, analytics, tracking, telemetry, or off-device data collection | accepted | Source, dependency, entitlement, binary-string, and privacy-manifest review completed 2026-09-29 |
 | Support owner | Public support contact and URL | pending | Product owner |
-| Privacy policy | https://github.com/h0ck3ystyx/mioamp/blob/main/PRIVACY.md | accepted | Reverify after the GitHub repository rename |
+| Privacy policy | https://github.com/h0ck3ystyx/mioamp/blob/main/PRIVACY.md | accepted | Public URL returned HTTP 200 after the repository rename on 2026-09-29 |
 | Release method | Manual release after App Review approval | proposed | Product owner |
 
 ## Decision record
@@ -51,7 +51,7 @@ Implications: Register this exact App ID before distribution signing and keep it
 
 2026-09-29 — Privacy policy
 Value: https://github.com/h0ck3ystyx/mioamp/blob/main/PRIVACY.md
-Reason: The policy matches the verified offline/no-collection release binary. Its renamed repository URL must be reverified after the GitHub repository rename.
+Reason: The policy matches the verified offline/no-collection release binary. Its renamed public repository URL returned HTTP 200.
 Approved by: Release coordinator based on the product implementation.
 Implications: Use this URL for the App Privacy field unless a dedicated product site replaces it.
 
