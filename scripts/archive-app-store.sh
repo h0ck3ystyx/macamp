@@ -36,7 +36,7 @@ if [[ -n "${MIOAMP_BUILD_NUMBER:-}" ]]; then
   xcode_args+=(CURRENT_PROJECT_VERSION="$MIOAMP_BUILD_NUMBER")
 fi
 
-validation_mode=app-store
+validation_mode=archive
 if [[ "${MIOAMP_ALLOW_SIGNING:-0}" != "1" ]]; then
   xcode_args+=(CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO)
   validation_mode=unsigned

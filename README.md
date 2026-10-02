@@ -28,7 +28,7 @@ The native `MioAmp-AppStore` scheme in `MioAmp.xcodeproj` is the archive and man
 ./scripts/archive-app-store.sh
 ```
 
-For an authorized signing environment, set `MIOAMP_ALLOW_SIGNING=1`, `MIOAMP_DEVELOPMENT_TEAM`, and the final `MIOAMP_BUNDLE_IDENTIFIER`. Optional `MIOAMP_VERSION` and `MIOAMP_BUILD_NUMBER` values override the archive version. Xcode must have access to the matching App ID, distribution certificate, and provisioning profile. Once the signed archive passes validation, `./scripts/export-app-store.sh` produces the App Store Connect delivery package without uploading it. The prepared metadata, privacy, review, and submission packet is in `docs/app-store/`.
+For an authorized signing environment, set `MIOAMP_ALLOW_SIGNING=1`; Team ID `7ZH96S5LF4` and bundle ID `io.github.h0ck3ystyx.mioamp` are configured in the project. Optional `MIOAMP_DEVELOPMENT_TEAM`, `MIOAMP_BUNDLE_IDENTIFIER`, `MIOAMP_VERSION`, and `MIOAMP_BUILD_NUMBER` values override release settings. `./scripts/export-app-store.sh` lets Xcode resolve cloud-managed distribution certificates and the matching profile, then validates the signed App Store Connect `.pkg` without uploading it. The prepared metadata, privacy, review, and submission packet is in `docs/app-store/`.
 
 ## Current state
 

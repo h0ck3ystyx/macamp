@@ -14,7 +14,7 @@ The application, audio pipeline, playlist, EQ, skin system, media commands, pers
 - The selected bundle identifier is `io.github.h0ck3ystyx.mioamp`; version is `1.0.0`, build `1`. The matching App ID still needs registration.
 - The Xcode archive is universal `arm64` and `x86_64`; the ad-hoc SwiftPM package remains native-host architecture for local development.
 - App Sandbox entitlements, a privacy manifest, an original asset-catalog icon, the native Xcode target/scheme, archive/export scripts, and strict bundle validation are implemented.
-- An unsigned universal archive passes local validation. Distribution signing/profile, final App ID, upload, and App Store Connect processing require publisher credentials.
+- An unsigned universal archive and an Apple Distribution-signed `.pkg` pass local validation. The explicit App ID, Team ID, cloud-managed certificates, and Mac Team Store profile are resolved; upload and App Store Connect processing remain.
 - The English metadata, privacy/compliance answers, review notes, support/privacy copy, screenshot plan, and final external-action checklist are prepared in `docs/app-store/`.
 - The public product name is `MioAmp`. Preliminary exact-name research found no relevant software or audio-player namesake; formal trademark clearance remains the publisher's decision.
 - Manual release gates remain for VoiceOver, performance, long-run playback, sleep/wake, physical audio routes, network-volume recovery, and supported macOS versions.

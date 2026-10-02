@@ -14,9 +14,10 @@ Artifact: `build/MioAmp.app`, ad-hoc signed local candidate
 - `plutil -lint build/MioAmp.app/Contents/Info.plist`: OK.
 - Packaged resources contain Studio Graphite, Paper, Terminal, and CreatorExample. `otool -L` shows system frameworks only; ZIPFoundation is statically linked.
 - `./scripts/validate-app-bundle.sh`: the ad-hoc development bundle contains valid App Sandbox, user-selected read/write, and app-scoped bookmark entitlements plus its privacy manifest, compiled app icon, and release resources. Validation also checks version/build, linked libraries, expected architectures, and embedded test/debug artifacts.
-- `./scripts/archive-app-store.sh`: Xcode 26.2 produced `/tmp/MioAmp-1.0.0-1.xcarchive`; its 1.0.0 (1) unsigned application passed structural validation with bundle ID `io.github.h0ck3ystyx.mioamp` and contains a universal `arm64`/`x86_64` executable. App Store distribution signing and delivery validation remain pending App ID registration and an authorized profile.
+- `./scripts/archive-app-store.sh`: Xcode 26.2 produced `/tmp/MioAmp-1.0.0-1.xcarchive`; its 1.0.0 (1) unsigned application passed structural validation with bundle ID `io.github.h0ck3ystyx.mioamp` and contains a universal `arm64`/`x86_64` executable.
+- October 2 signing verification: Team `7ZH96S5LF4` and the explicit App ID produced `Mac Team Store Provisioning Profile: io.github.h0ck3ystyx.mioamp`. Xcode exported `/tmp/MioAmp-signed-export/MioAmp.pkg` using Apple Distribution signing with the correct team, profile, sandbox, user-selected read/write, and app-scoped bookmark entitlements. The exported application remains universal `arm64`/`x86_64`.
 - Release binary audit found system libraries only, no embedded test/debug artifacts, no URL endpoint or local source path strings, and one executable. The statically linked ZIPFoundation resource bundle includes its own no-collection privacy manifest and declares its user-selected file timestamp access reason.
-- The release host has zero valid code-signing identities, so an Apple Distribution archive cannot be produced until the account holder installs authorized credentials.
+- `security find-identity` reports no locally held signing identities because distribution uses Xcode cloud-managed certificates. The successful signed export and its distribution summary are the authoritative release-signing evidence.
 - A first parallel run exposed a fatal Metal-unavailable initializer. The renderer now presents an accessible nonfatal fallback when device, command queue, shader compilation, or pipeline setup is unavailable; the complete 106-test rerun passed.
 
 ## Serial Core Audio results
@@ -77,4 +78,4 @@ The FLAC metadata fallback was checked in the packaged app with a locally suppli
 
 ## Not run
 
-macOS 14 codec behavior, a complete VoiceOver audit, multi-display/Spaces behavior, removable-volume reauthorization, physical device disconnect/sleep-wake, long-run CPU/memory, five-participant usability, final App Store identity/signing/provisioning/upload, and optional direct-download Developer ID signing/notarization require environments, hardware, participants, credentials, or product decisions not available in this run.
+macOS 14 codec behavior, a complete VoiceOver audit, multi-display/Spaces behavior, removable-volume reauthorization, physical device disconnect/sleep-wake, long-run CPU/memory, five-participant usability, App Store Connect upload/processing, and optional direct-download Developer ID signing/notarization require environments, hardware, participants, credentials, or product decisions not available in this run.

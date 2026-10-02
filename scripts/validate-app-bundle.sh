@@ -45,7 +45,7 @@ plist_value() {
 
 if [[ "$validation_mode" == "unsigned" ]]; then
   plutil -lint "$repo_root/MioAmp/Resources/MioAmp.entitlements" >/dev/null
-elif [[ "$validation_mode" == "development" || "$validation_mode" == "app-store" ]]; then
+elif [[ "$validation_mode" == "development" || "$validation_mode" == "archive" || "$validation_mode" == "app-store" ]]; then
   codesign --verify --deep --strict "$app_bundle"
   entitlements_file="$(mktemp -t mioamp-entitlements).plist"
   trap 'rm -f "$entitlements_file"' EXIT
@@ -60,13 +60,16 @@ elif [[ "$validation_mode" == "development" || "$validation_mode" == "app-store"
   [[ "$(entitlement_value com.apple.security.files.user-selected.read-write)" == "true" ]] || fail "user-selected read/write entitlement is missing"
   [[ "$(entitlement_value com.apple.security.files.bookmarks.app-scope)" == "true" ]] || fail "app-scoped bookmark entitlement is missing"
 else
-  fail "unknown validation mode '$validation_mode'; use unsigned, development, or app-store"
+  fail "unknown validation mode '$validation_mode'; use unsigned, development, archive, or app-store"
 fi
 
-if [[ "$validation_mode" == "app-store" ]]; then
+if [[ "$validation_mode" == "archive" || "$validation_mode" == "app-store" ]]; then
   signature_details="$(codesign -dv --verbose=4 "$app_bundle" 2>&1)"
   team_identifier="$(sed -n 's/^TeamIdentifier=//p' <<<"$signature_details")"
   [[ -n "$team_identifier" && "$team_identifier" != "not set" ]] || fail "TeamIdentifier is missing"
+fi
+
+if [[ "$validation_mode" == "app-store" ]]; then
   grep -Eq '^Authority=(Apple Distribution|Mac App Distribution|3rd Party Mac Developer Application)' <<<"$signature_details" || fail "Mac App Store distribution signing authority is missing"
   [[ -f "$app_bundle/Contents/embedded.provisionprofile" ]] || fail "embedded provisioning profile is missing"
 fi

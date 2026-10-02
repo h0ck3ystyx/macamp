@@ -9,6 +9,7 @@
 - [x] Music category, document types, skin UTI, and encryption declaration
 - [x] Original app icon asset catalog and compiled icon validation
 - [x] Universal arm64 + x86_64 unsigned archive
+- [x] Apple Distribution-signed universal `.pkg` with the explicit MioAmp Mac Team Store profile
 - [x] Reproducible archive/export scripts with externalized team, identifier, version, and build
 - [x] Bundle checks for identity, version, architecture, icon, resources, linked libraries, signature, profile, and entitlements
 - [x] Third-party notices and dependency pinning
@@ -19,8 +20,8 @@
 ## Account holder or external service required
 
 - [x] Select the public product name `MioAmp`; a preliminary exact-name search found no relevant software or audio-player namesake. Formal trademark clearance remains the publisher's decision.
-- [ ] Register the selected bundle identifier `io.github.h0ck3ystyx.mioamp` in the Apple Developer account.
-- [ ] Supply Apple Developer Team ID and install a valid Apple Distribution identity/profile. This Mac currently reports zero valid code-signing identities.
+- [x] Register the selected bundle identifier `io.github.h0ck3ystyx.mioamp` in the Apple Developer account.
+- [x] Configure Team ID `7ZH96S5LF4`; Xcode cloud-managed Apple Distribution and Mac Installer Distribution certificates plus the explicit MioAmp Mac Team Store profile produced a signed `.pkg` on 2026-10-02.
 - [ ] Create the App Store Connect macOS app record; confirm name, SKU, primary language, bundle ID, and category.
 - [ ] Enter the verified public privacy and support URLs in the App Store Connect record.
 - [ ] Supply App Review contact name, email, and international-format phone number.

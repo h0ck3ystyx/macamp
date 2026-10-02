@@ -47,7 +47,7 @@ Implications: Use MioAmp for the application, store metadata, repository, suppor
 Value: `io.github.h0ck3ystyx.mioamp`.
 Reason: The identifier aligns with the public GitHub namespace and selected product name.
 Approved by: Product owner through the MioAmp rename; implemented by the release coordinator.
-Implications: Register this exact App ID before distribution signing and keep it stable after release.
+Implications: The exact App ID is registered under Team `7ZH96S5LF4`; keep it stable after release.
 
 2026-09-29 — Privacy policy
 Value: https://github.com/h0ck3ystyx/mioamp/blob/main/PRIVACY.md
